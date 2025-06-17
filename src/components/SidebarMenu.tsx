@@ -37,13 +37,34 @@ export default function SidebarMenu() {
             Menu
           </h2>
         </div>
-        <div className="p-4">
+        <div className="p-4 space-y-2">
           <Link
             href="/"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={toggleMenu}
           >
             Home
+          </Link>
+          <Link
+            href="/configurator"
+            className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            onClick={toggleMenu}
+          >
+            Configurator
+          </Link>
+          <Link
+            href="/docs"
+            className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            onClick={toggleMenu}
+          >
+            Documentation
+          </Link>
+          <Link
+            href="/sdk-examples"
+            className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+            onClick={toggleMenu}
+          >
+            SDK Examples
           </Link>
         </div>
       </nav>
