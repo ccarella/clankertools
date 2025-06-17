@@ -14,7 +14,7 @@ export default function SidebarMenu() {
       <button
         onClick={toggleMenu}
         aria-label="Toggle menu"
-        className="fixed top-4 left-4 z-50 rounded-md p-2 text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:text-gray-300 dark:hover:bg-gray-700"
+        className="fixed top-4 left-4 z-50 rounded-md p-2 text-foreground hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring"
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
@@ -28,19 +28,19 @@ export default function SidebarMenu() {
       )}
 
       <nav
-        className={`fixed left-0 top-0 z-40 h-full w-64 transform bg-white shadow-lg transition-transform duration-300 dark:bg-gray-800 ${
+        className={`fixed left-0 top-0 z-40 h-full w-64 transform bg-sidebar shadow-lg transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex h-16 items-center border-b border-gray-200 px-4 dark:border-gray-700">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+        <div className="flex h-16 items-center border-b border-sidebar-border px-4">
+          <h2 className="text-lg font-semibold text-sidebar-foreground">
             Menu
           </h2>
         </div>
         <div className="p-4">
           <Link
             href="/"
-            className="block rounded-md px-4 py-2 text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
+            className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={toggleMenu}
           >
             Home
