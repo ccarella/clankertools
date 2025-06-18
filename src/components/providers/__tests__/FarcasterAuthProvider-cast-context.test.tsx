@@ -4,7 +4,17 @@ import { FarcasterAuthProvider, useFarcasterAuth } from '../FarcasterAuthProvide
 import farcasterFrame from '@farcaster/frame-sdk';
 import { CastContext } from '@/lib/types/cast-context';
 
-jest.mock('@farcaster/frame-sdk');
+jest.mock('@farcaster/frame-sdk', () => ({
+  __esModule: true,
+  default: {
+    actions: {
+      ready: jest.fn(),
+      signIn: jest.fn(),
+      openUrl: jest.fn(),
+    },
+    context: {},
+  },
+}));
 
 const mockSdk = farcasterFrame as jest.Mocked<typeof farcasterFrame>;
 
@@ -28,7 +38,7 @@ const TestComponent = ({ autoSignIn = false }: { autoSignIn?: boolean }) => {
 describe('FarcasterAuthProvider - Cast Context', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockSdk.actions.ready.mockResolvedValue(undefined);
+    (mockSdk.actions.ready as jest.Mock).mockResolvedValue(undefined);
   });
 
   it('should capture cast context during authentication', async () => {
@@ -61,7 +71,7 @@ describe('FarcasterAuthProvider - Cast Context', () => {
       launchContext: castContext
     });
 
-    mockSdk.actions.signIn.mockResolvedValue(undefined);
+    (mockSdk.actions.signIn as jest.Mock).mockResolvedValue(undefined);
 
     const { getByTestId } = render(
       <FarcasterAuthProvider>
@@ -94,7 +104,7 @@ describe('FarcasterAuthProvider - Cast Context', () => {
       }
     });
 
-    mockSdk.actions.signIn.mockResolvedValue(undefined);
+    (mockSdk.actions.signIn as jest.Mock).mockResolvedValue(undefined);
 
     const { getByTestId } = render(
       <FarcasterAuthProvider>
@@ -130,7 +140,7 @@ describe('FarcasterAuthProvider - Cast Context', () => {
       }
     });
 
-    mockSdk.actions.signIn.mockResolvedValue(undefined);
+    (mockSdk.actions.signIn as jest.Mock).mockResolvedValue(undefined);
 
     const { getByTestId } = render(
       <FarcasterAuthProvider>
@@ -174,7 +184,7 @@ describe('FarcasterAuthProvider - Cast Context', () => {
       launchContext: castContext
     });
 
-    mockSdk.actions.signIn.mockResolvedValue(undefined);
+    (mockSdk.actions.signIn as jest.Mock).mockResolvedValue(undefined);
 
     const { getByTestId, rerender } = render(
       <FarcasterAuthProvider>

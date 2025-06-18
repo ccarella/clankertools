@@ -133,7 +133,8 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
-      await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(mockSdkInstance.deployToken).toHaveBeenCalledWith(
@@ -177,7 +178,8 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
-      await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(data.success).toBe(true);
@@ -199,7 +201,8 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
-      await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(mockSdkInstance.deployToken).toHaveBeenCalledWith(
@@ -226,7 +229,8 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
-      await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const data = await response.json();
 
       expect(response.status).toBe(400);
       expect(data.error).toContain('Invalid cast context');
@@ -251,7 +255,8 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
-      await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const data = await response.json();
 
       expect(response.status).toBe(400);
       expect(data.error).toContain('Invalid cast context type');
@@ -277,7 +282,8 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
-      await response.json();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const data = await response.json();
 
       expect(response.status).toBe(200);
       expect(mockSdkInstance.deployToken).toHaveBeenCalledWith(
