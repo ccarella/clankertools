@@ -23,8 +23,10 @@ jest.mock('@farcaster/frame-sdk', () => ({
     actions: {
       ready: jest.fn(),
     },
-    navigation: {
-      goBack: jest.fn(),
+    back: {
+      enableWebNavigation: jest.fn(),
+      show: jest.fn(),
+      hide: jest.fn(),
     },
   },
 }))

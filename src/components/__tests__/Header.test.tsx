@@ -21,8 +21,10 @@ jest.mock('next/navigation', () => ({
 jest.mock('@farcaster/frame-sdk', () => ({
   __esModule: true,
   default: {
-    navigation: {
-      goBack: jest.fn(),
+    back: {
+      enableWebNavigation: jest.fn(),
+      show: jest.fn(),
+      hide: jest.fn(),
     },
   },
 }))

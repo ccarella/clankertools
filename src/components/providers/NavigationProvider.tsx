@@ -98,6 +98,34 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     dispatch({ type: 'INIT_CURRENT_PATH', payload: pathname })
   }, [pathname])
 
+  useEffect(() => {
+    const initializeFarcasterBackNavigation = async () => {
+      try {
+        await sdk.back.enableWebNavigation()
+      } catch (error) {
+        console.warn('Failed to enable Farcaster web navigation:', error)
+      }
+    }
+
+    initializeFarcasterBackNavigation()
+  }, [])
+
+  useEffect(() => {
+    const manageFarcasterBackButton = async () => {
+      try {
+        if (state.canGoBack) {
+          await sdk.back.show()
+        } else {
+          await sdk.back.hide()
+        }
+      } catch (error) {
+        console.warn('Failed to manage Farcaster back button:', error)
+      }
+    }
+
+    manageFarcasterBackButton()
+  }, [state.canGoBack])
+
   const navigate = useCallback((path: string) => {
     dispatch({ type: 'NAVIGATE', payload: path })
     router.push(path)
@@ -116,10 +144,9 @@ export function NavigationProvider({ children }: NavigationProviderProps) {
     if (state.canGoBack) {
       dispatch({ type: 'GO_BACK' })
       try {
-        await sdk.navigation.goBack()
-      } catch (error) {
-        console.warn('Farcaster SDK goBack failed, falling back to router:', error)
         router.back()
+      } catch (error) {
+        console.warn('Router back failed:', error)
       }
     }
   }, [state.canGoBack, router])

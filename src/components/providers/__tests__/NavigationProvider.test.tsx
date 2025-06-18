@@ -19,8 +19,10 @@ jest.mock('next/navigation', () => ({
 jest.mock('@farcaster/frame-sdk', () => ({
   __esModule: true,
   default: {
-    navigation: {
-      goBack: jest.fn(),
+    back: {
+      enableWebNavigation: jest.fn(),
+      show: jest.fn(),
+      hide: jest.fn(),
     },
   },
 }))
@@ -131,11 +133,7 @@ describe('NavigationProvider', () => {
     expect(mockRouter.replace).toHaveBeenCalledWith('/replaced-path')
   })
 
-  it('handles back navigation with Farcaster SDK', async () => {
-    const mockGoBack = jest.fn()
-    const sdk = await import('@farcaster/frame-sdk')
-    sdk.default.navigation.goBack = mockGoBack
-
+  it('handles back navigation with router', async () => {
     render(
       <NavigationProvider>
         <TestComponent />
@@ -152,7 +150,7 @@ describe('NavigationProvider', () => {
       fireEvent.click(screen.getByTestId('back-button'))
     })
 
-    expect(mockGoBack).toHaveBeenCalled()
+    expect(mockRouter.back).toHaveBeenCalled()
     expect(screen.getByTestId('current-index')).toHaveTextContent('0')
     expect(screen.getByTestId('can-go-back')).toHaveTextContent('false')
   })
