@@ -1,13 +1,17 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 
-jest.mock('@farcaster/frame-sdk', () => ({
-  default: {
+jest.mock('@farcaster/frame-sdk', () => {
+  const mockSdk = {
     actions: {
       openUrl: jest.fn(),
     },
-  },
-}));
+  };
+  return {
+    __esModule: true,
+    default: mockSdk,
+  };
+});
 
 jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
   useFarcasterAuth: jest.fn(),
@@ -26,6 +30,10 @@ describe('FarcasterShare', () => {
   beforeEach(() => {
     (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: true });
     jest.clearAllMocks();
+    // Ensure sdk is properly mocked
+    if (sdk?.actions?.openUrl) {
+      (sdk.actions.openUrl as jest.Mock).mockClear();
+    }
   });
 
   it('renders share button', () => {
@@ -40,7 +48,7 @@ describe('FarcasterShare', () => {
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+    expect(sdk.actions?.openUrl).toHaveBeenCalledWith(
       expect.stringContaining('https://warpcast.com/~/compose?text=')
     );
   });
@@ -52,7 +60,7 @@ describe('FarcasterShare', () => {
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+    expect(sdk.actions?.openUrl).toHaveBeenCalledWith(
       expect.stringContaining(encodeURIComponent(customMessage))
     );
   });
@@ -119,8 +127,9 @@ describe('FarcasterShare', () => {
 
   it('shows loading state while sharing', async () => {
     let resolveShare: () => void;
-    (sdk.actions.openUrl as jest.Mock).mockImplementationOnce(() => 
-      new Promise((resolve) => { resolveShare = resolve; })
+    const mockOpenUrl = sdk.actions?.openUrl as jest.Mock;
+    mockOpenUrl?.mockImplementationOnce(() => 
+      new Promise<void>((resolve) => { resolveShare = resolve; })
     );
 
     render(<FarcasterShare {...defaultProps} />);
@@ -152,7 +161,7 @@ describe('FarcasterShare', () => {
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+    expect(sdk.actions?.openUrl).toHaveBeenCalledWith(
       expect.stringContaining('channelKey=clanker')
     );
   });
