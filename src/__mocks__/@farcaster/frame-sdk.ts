@@ -1,4 +1,8 @@
-const mockProvider = {
+type EthereumProvider = {
+  request: jest.MockedFunction<(args: { method: string }) => Promise<unknown>>;
+};
+
+const mockProvider: EthereumProvider = {
   request: jest.fn(),
 };
 
@@ -22,8 +26,8 @@ const mockSdk = {
   }),
   wallet: {
     ethProvider: mockProvider,
-    getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
-    getSolanaProvider: jest.fn().mockResolvedValue(undefined),
+    getEthereumProvider: jest.fn().mockResolvedValue(mockProvider) as jest.MockedFunction<() => Promise<EthereumProvider | undefined>>,
+    getSolanaProvider: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<() => Promise<unknown>>,
   },
 };
 
