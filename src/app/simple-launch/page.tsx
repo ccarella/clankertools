@@ -7,10 +7,6 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { Clanker, PublicClient, WalletClient } from "clanker-sdk";
-import { createPublicClient, createWalletClient, http } from "viem";
-import { base } from "viem/chains";
-import { privateKeyToAccount } from "viem/accounts";
 
 type FormData = {
   name: string;
@@ -94,54 +90,33 @@ export default function SimpleLaunchPage() {
       setViewState("deploying");
       
       try {
-        // For demo purposes, we'll need proper wallet setup
-        // This is a placeholder - in production, you'd use the user's connected wallet
-        const account = privateKeyToAccount('0x0000000000000000000000000000000000000000000000000000000000000001' as `0x${string}`);
+        // Prepare form data for API
+        const formData = new FormData();
+        formData.append("name", data.name);
+        formData.append("symbol", data.symbol);
         
-        const publicClient = createPublicClient({
-          chain: base,
-          transport: http(),
-        }) as PublicClient;
-        
-        const wallet = createWalletClient({
-          account,
-          chain: base,
-          transport: http(),
-        }) as WalletClient;
-        
-        // Initialize Clanker client
-        const clanker = new Clanker({
-          wallet,
-          publicClient,
-        });
-        
-        // Convert image file to IPFS URL (placeholder - would need actual IPFS upload)
-        const imageUrl = "ipfs://placeholder-image-hash";
-        
-        // Deploy token with proper configuration
-        const tokenAddress = await clanker.deployToken({
-          name: data.name,
-          symbol: data.symbol,
-          image: imageUrl,
-          pool: {
-            quoteToken: "0x4200000000000000000000000000000000000006" as `0x${string}`, // WETH on Base
-            initialMarketCap: "0.1", // 0.1 ETH initial market cap
-          },
-          rewardsConfig: {
-            creatorReward: 80, // 80% creator reward
-            creatorAdmin: account.address,
-            creatorRewardRecipient: account.address,
-            interfaceAdmin: "0x1eaf444ebDf6495C57aD52A04C61521bBf564ace" as `0x${string}`,
-            interfaceRewardRecipient: "0x1eaf444ebDf6495C57aD52A04C61521bBf564ace" as `0x${string}`,
-          },
+        if (data.image) {
+          formData.append("image", data.image);
+        }
+
+        // Call deployment API
+        const response = await fetch("/api/deploy/simple", {
+          method: "POST",
+          body: formData,
         });
 
-        setTokenAddress(tokenAddress);
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(result.error || "Deployment failed");
+        }
+
+        setTokenAddress(result.tokenAddress);
         setViewState("success");
         
         // Redirect to token page after a short delay
         setTimeout(() => {
-          router.push(`/token/${tokenAddress}`);
+          router.push(`/token/${result.tokenAddress}`);
         }, 2000);
       } catch (error) {
         console.error("Deployment error:", error);

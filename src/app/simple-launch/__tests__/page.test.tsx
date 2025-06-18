@@ -7,27 +7,29 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('clanker-sdk', () => ({
-  Clanker: jest.fn().mockImplementation(() => ({
-    deployToken: jest.fn().mockResolvedValue('0x123...'),
-  })),
-}));
+// Mock fetch for API calls
+global.fetch = jest.fn();
 
-jest.mock('viem', () => ({
-  createPublicClient: jest.fn(),
-  createWalletClient: jest.fn(),
-  http: jest.fn(),
-}));
-
-jest.mock('viem/accounts', () => ({
-  privateKeyToAccount: jest.fn().mockReturnValue({
-    address: '0xtest...',
-  }),
-}));
-
-jest.mock('viem/chains', () => ({
-  base: {},
-}));
+// Mock Response for tests
+if (typeof Response === 'undefined') {
+  global.Response = class Response {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    constructor(private body: any, private init?: ResponseInit) {}
+    
+    async json() {
+      return JSON.parse(this.body);
+    }
+    
+    get ok() {
+      return !this.init || (this.init.status && this.init.status >= 200 && this.init.status < 300);
+    }
+    
+    get status() {
+      return this.init?.status || 200;
+    }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  } as any;
+}
 
 // Suppress console.error for deployment error test
 const originalError = console.error;
@@ -239,15 +241,12 @@ describe('SimpleLaunchPage', () => {
   describe('Token Deployment', () => {
     it('shows loading state during deployment', async () => {
       // Create a promise that we can control
-      let resolveDeployment: (value: string) => void;
-      const deploymentPromise = new Promise((resolve) => {
+      let resolveDeployment: (value: Response) => void;
+      const deploymentPromise = new Promise<Response>((resolve) => {
         resolveDeployment = resolve;
       });
       
-      const { Clanker } = jest.requireMock('clanker-sdk');
-      Clanker.mockImplementationOnce(() => ({
-        deployToken: jest.fn().mockReturnValue(deploymentPromise),
-      }));
+      (fetch as jest.Mock).mockReturnValue(deploymentPromise);
       
       render(<SimpleLaunchPage />);
       
@@ -281,13 +280,27 @@ describe('SimpleLaunchPage', () => {
       
       // Resolve the deployment promise to clean up
       await act(async () => {
-        resolveDeployment('0x123...');
+        resolveDeployment(new Response(JSON.stringify({
+          success: true,
+          tokenAddress: '0x123...',
+          txHash: '0xabc...',
+          imageUrl: 'ipfs://test',
+        }), { status: 200 }));
         // Wait for component to update
         await new Promise(resolve => setTimeout(resolve, 0));
       });
     });
 
     it('handles deployment success', async () => {
+      (fetch as jest.Mock).mockResolvedValue(
+        new Response(JSON.stringify({
+          success: true,
+          tokenAddress: '0x123...',
+          txHash: '0xabc...',
+          imageUrl: 'ipfs://test',
+        }), { status: 200 })
+      );
+      
       render(<SimpleLaunchPage />);
       
       const nameInput = screen.getByLabelText(/name/i);
@@ -322,10 +335,12 @@ describe('SimpleLaunchPage', () => {
     });
 
     it('handles deployment errors', async () => {
-      const { Clanker } = jest.requireMock('clanker-sdk');
-      Clanker.mockImplementationOnce(() => ({
-        deployToken: jest.fn().mockRejectedValue(new Error('Deployment failed')),
-      }));
+      (fetch as jest.Mock).mockResolvedValue(
+        new Response(JSON.stringify({
+          success: false,
+          error: 'Deployment failed',
+        }), { status: 500 })
+      );
       
       render(<SimpleLaunchPage />);
       
