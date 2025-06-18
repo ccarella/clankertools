@@ -19,8 +19,8 @@ interface TransactionData extends TransactionMetadata {
 // Initialize Redis client lazily
 function getRedisClient() {
   return new Redis({
-    url: process.env.UPSTASH_REDIS_REST_URL || '',
-    token: process.env.UPSTASH_REDIS_REST_TOKEN || '',
+    url: process.env.KV_REST_API_URL || '',
+    token: process.env.KV_REST_API_TOKEN || '',
   });
 }
 
