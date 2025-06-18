@@ -12,6 +12,8 @@ jest.mock('@/providers/WalletProvider', () => ({
   useWallet: jest.fn(),
 }));
 
+jest.mock('@/providers/HapticProvider');
+
 // Mock the useWalletBalance hook
 jest.mock('@/hooks/useWalletBalance', () => ({
   useWalletBalance: jest.fn(() => ({

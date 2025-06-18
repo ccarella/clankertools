@@ -17,6 +17,8 @@ jest.mock('@/components/providers/FarcasterProvider', () => ({
   FarcasterProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+jest.mock('@/providers/HapticProvider');
+
 describe('Mobile Layout Tests', () => {
   beforeEach(() => {
     (usePathname as jest.Mock).mockReturnValue('/');

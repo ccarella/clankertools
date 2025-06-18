@@ -7,6 +7,7 @@ import { uploadToIPFS } from '@/lib/ipfs';
 import { trackTransaction } from '@/lib/transaction-tracker';
 import { getNetworkConfig } from '@/lib/network-config';
 import { Redis } from '@upstash/redis';
+import { CastContext, TokenCastRelationship } from '@/lib/types/cast-context';
 
 export const runtime = 'edge';
 
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
     const rawSymbol = formData.get('symbol') as string;
     const imageFile = formData.get('image') as Blob;
     const fid = formData.get('fid') as string;
+    const castContextString = formData.get('castContext') as string;
     
     // Sanitize inputs
     const name = rawName ? sanitizeInput(rawName) : '';
@@ -165,6 +167,27 @@ export async function POST(request: NextRequest) {
         { success: false, error: 'Symbol must be between 3 and 8 characters' },
         { status: 400, headers: getSecurityHeaders(request) }
       );
+    }
+
+    // Parse cast context if provided
+    let castContext: CastContext | null = null;
+    if (castContextString) {
+      try {
+        const parsed = JSON.parse(castContextString);
+        if (parsed && parsed.type === 'cast') {
+          castContext = parsed as CastContext;
+        } else if (parsed && parsed.type && !['cast', 'notification', 'share', 'direct'].includes(parsed.type)) {
+          return NextResponse.json(
+            { success: false, error: 'Invalid cast context type' },
+            { status: 400, headers: getSecurityHeaders(request) }
+          );
+        }
+      } catch {
+        return NextResponse.json(
+          { success: false, error: 'Invalid cast context JSON' },
+          { status: 400, headers: getSecurityHeaders(request) }
+        );
+      }
     }
 
     // Check environment variables
@@ -292,6 +315,12 @@ export async function POST(request: NextRequest) {
             interfaceAdmin: interfaceAdmin as `0x${string}`,
             interfaceRewardRecipient: interfaceRewardRecipient as `0x${string}`,
           },
+          context: castContext ? {
+            interface: 'Clanker Tools',
+            platform: 'Farcaster',
+            messageId: castContext.castId,
+            id: castContext.parentCastId || castContext.castId,
+          } : undefined,
         });
 
         // Handle different return types from SDK
@@ -388,6 +417,35 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('Failed to track transaction:', error);
       // Don't fail the request if tracking fails
+    }
+
+    // Store cast context relationship if provided
+    if (castContext && tokenAddress) {
+      try {
+        const redisClient = getRedisClient();
+        if (redisClient) {
+          const castRelationship: TokenCastRelationship = {
+            tokenAddress,
+            castId: castContext.castId,
+            parentCastId: castContext.parentCastId,
+            authorFid: castContext.author.fid,
+            authorUsername: castContext.author.username,
+            embedUrl: castContext.embedUrl,
+            createdAt: Date.now(),
+          };
+          
+          await redisClient.set(
+            `token:${tokenAddress}:cast`,
+            castRelationship,
+            {
+              ex: 60 * 60 * 24 * 30, // 30 days expiration
+            }
+          );
+        }
+      } catch (error) {
+        console.error('Failed to store cast context:', error);
+        // Don't fail the request if storing context fails
+      }
     }
 
     return NextResponse.json({

@@ -4,6 +4,7 @@ import ProfilePage from '../page';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 
 jest.mock('@/components/providers/FarcasterAuthProvider');
+jest.mock('@/providers/HapticProvider');
 jest.mock('@/components/auth', () => ({
   AuthStatus: () => <div>Auth Status</div>,
 }));
@@ -41,6 +42,7 @@ describe('ProfilePage Security', () => {
       getQuickAuthToken: mockGetQuickAuthToken,
       error: null,
       clearError: jest.fn(),
+      castContext: null,
     });
 
     render(<ProfilePage />);
@@ -74,6 +76,7 @@ describe('ProfilePage Security', () => {
       getQuickAuthToken: mockGetQuickAuthToken,
       error: null,
       clearError: jest.fn(),
+      castContext: null,
     });
 
     render(<ProfilePage />);
@@ -99,6 +102,7 @@ describe('ProfilePage Security', () => {
       getQuickAuthToken: jest.fn(),
       error: null,
       clearError: jest.fn(),
+      castContext: null,
     });
 
     render(<ProfilePage />);

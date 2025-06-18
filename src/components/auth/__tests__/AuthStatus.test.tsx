@@ -18,6 +18,7 @@ describe('AuthStatus', () => {
     signOut: jest.fn(),
     clearError: jest.fn(),
     getQuickAuthToken: jest.fn(),
+    castContext: null,
   };
 
   beforeEach(() => {

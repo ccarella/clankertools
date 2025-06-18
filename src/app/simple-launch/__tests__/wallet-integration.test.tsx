@@ -22,6 +22,8 @@ jest.mock('@/components/wallet/WalletButton', () => ({
   WalletButton: () => <button>Connect Wallet</button>,
 }));
 
+jest.mock('@/providers/HapticProvider');
+
 // Mock fetch
 global.fetch = jest.fn();
 
@@ -49,7 +51,7 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
 
   it('should not show wallet connection section when user is not authenticated', () => {
     (useWallet as jest.Mock).mockReturnValue({ isConnected: false, address: null });
-    (useFarcasterAuth as jest.Mock).mockReturnValue({ user: null });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ user: null, castContext: null });
 
     render(<SimpleLaunchPage />);
 
@@ -59,7 +61,8 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
   it('should show wallet connection section when user is authenticated', () => {
     (useWallet as jest.Mock).mockReturnValue({ isConnected: false, address: null });
     (useFarcasterAuth as jest.Mock).mockReturnValue({ 
-      user: { fid: '12345', username: 'testuser' } 
+      user: { fid: '12345', username: 'testuser' },
+      castContext: null
     });
 
     render(<SimpleLaunchPage />);
@@ -76,7 +79,8 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       address: walletAddress 
     });
     (useFarcasterAuth as jest.Mock).mockReturnValue({ 
-      user: { fid: '12345', username: 'testuser' } 
+      user: { fid: '12345', username: 'testuser' },
+      castContext: null
     });
 
     render(<SimpleLaunchPage />);
@@ -91,7 +95,8 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       address: '0x1234567890123456789012345678901234567890' 
     });
     (useFarcasterAuth as jest.Mock).mockReturnValue({ 
-      user: { fid: '12345', username: 'testuser' } 
+      user: { fid: '12345', username: 'testuser' },
+      castContext: null
     });
 
     render(<SimpleLaunchPage />);
@@ -113,7 +118,8 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       address: walletAddress 
     });
     (useFarcasterAuth as jest.Mock).mockReturnValue({ 
-      user: { fid: '12345', username: 'testuser' } 
+      user: { fid: '12345', username: 'testuser' },
+      castContext: null
     });
 
     render(<SimpleLaunchPage />);
@@ -192,7 +198,8 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       address: walletAddress 
     });
     (useFarcasterAuth as jest.Mock).mockReturnValue({ 
-      user: { fid: '12345', username: 'testuser' } 
+      user: { fid: '12345', username: 'testuser' },
+      castContext: null
     });
 
     render(<SimpleLaunchPage />);
@@ -224,7 +231,8 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       address: walletAddress 
     });
     (useFarcasterAuth as jest.Mock).mockReturnValue({ 
-      user: { fid: '12345', username: 'testuser' } 
+      user: { fid: '12345', username: 'testuser' },
+      castContext: null
     });
 
     render(<SimpleLaunchPage />);

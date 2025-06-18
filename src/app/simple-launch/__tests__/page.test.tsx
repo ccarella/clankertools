@@ -7,6 +7,44 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('@/providers/WalletProvider', () => ({
+  useWallet: jest.fn(() => ({
+    isConnected: false,
+    address: null,
+  })),
+}));
+
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  useFarcasterAuth: jest.fn(() => ({
+    user: { fid: '12345', username: 'testuser' },
+    isAuthenticated: true,
+    isLoading: false,
+    error: null,
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    clearError: jest.fn(),
+    getQuickAuthToken: jest.fn(),
+    castContext: null,
+  })),
+}));
+
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(() => ({
+    isEnabled: jest.fn(() => true),
+    buttonPress: jest.fn(() => Promise.resolve()),
+    toggleStateChange: jest.fn(() => Promise.resolve()),
+    navigationTap: jest.fn(() => Promise.resolve()),
+    menuItemSelect: jest.fn(() => Promise.resolve()),
+    cardSelect: jest.fn(() => Promise.resolve()),
+    tabSwitch: jest.fn(() => Promise.resolve()),
+    isSupported: jest.fn(() => true),
+    enable: jest.fn(),
+    disable: jest.fn(),
+    toggle: jest.fn(),
+  })),
+  HapticProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 // Mock fetch for API calls
 global.fetch = jest.fn();
 
