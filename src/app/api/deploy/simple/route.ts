@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Clanker } from 'clanker-sdk';
 import { createPublicClient, createWalletClient, http } from 'viem';
-import { base } from 'viem/chains';
+import { base, baseSepolia } from 'viem/chains';
 import { privateKeyToAccount } from 'viem/accounts';
 import { uploadToIPFS } from '@/lib/ipfs';
 import { trackTransaction } from '@/lib/transaction-tracker';
+import { getNetworkConfig } from '@/lib/network-config';
 
 export const runtime = 'edge';
 
@@ -165,6 +166,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get network configuration
+    let networkConfig;
+    try {
+      networkConfig = getNetworkConfig();
+    } catch (error) {
+      console.error('Network configuration error:', error);
+      return NextResponse.json(
+        { success: false, error: 'Network configuration error' },
+        { status: 500, headers: getSecurityHeaders(request) }
+      );
+    }
+
     // Upload image to IPFS
     let imageUrl: string;
     try {
@@ -177,18 +190,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Setup wallet and clients
+    // Setup wallet and clients with the configured network
     const account = privateKeyToAccount(privateKey as `0x${string}`);
+    const chain = networkConfig.isMainnet ? base : baseSepolia;
     
     const publicClient = createPublicClient({
-      chain: base,
-      transport: http(),
+      chain,
+      transport: http(networkConfig.rpcUrl),
     });
     
     const wallet = createWalletClient({
       account,
-      chain: base,
-      transport: http(),
+      chain,
+      transport: http(networkConfig.rpcUrl),
     });
 
     // Initialize Clanker SDK
@@ -325,6 +339,8 @@ export async function POST(request: NextRequest) {
       tokenAddress,
       txHash: txHash || null,
       imageUrl,
+      network: networkConfig.name,
+      chainId: networkConfig.chainId,
     }, { headers: getSecurityHeaders(request) });
   } catch (error) {
     console.error('Unexpected error:', error);
