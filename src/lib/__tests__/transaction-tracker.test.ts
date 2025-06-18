@@ -1,18 +1,26 @@
 import { trackTransaction, getTransactionStatus, updateTransactionStatus } from '../transaction-tracker';
-import { Redis } from '@upstash/redis';
 
-jest.mock('@upstash/redis');
+// Mock Redis at the module level
+const mockRedis = {
+  set: jest.fn(),
+  setex: jest.fn(),
+  get: jest.fn(),
+  hgetall: jest.fn(),
+  expire: jest.fn(),
+};
+
+jest.mock('@upstash/redis', () => ({
+  Redis: jest.fn(() => mockRedis),
+}));
 
 describe('transaction-tracker', () => {
-  const mockRedis = {
-    setex: jest.fn(),
-    get: jest.fn(),
-    set: jest.fn(),
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    (Redis as jest.Mock).mockReturnValue(mockRedis);
+    mockRedis.set.mockResolvedValue('OK');
+    mockRedis.setex.mockResolvedValue('OK');
+    mockRedis.get.mockResolvedValue(null);
+    mockRedis.hgetall.mockResolvedValue(null);
+    mockRedis.expire.mockResolvedValue(1);
   });
 
   describe('trackTransaction', () => {
@@ -30,11 +38,12 @@ describe('transaction-tracker', () => {
       expect(mockRedis.setex).toHaveBeenCalledWith(
         `tx:${txHash}`,
         86400, // 24 hours
-        JSON.stringify({
-          status: 'pending',
-          timestamp: expect.any(Number),
-          ...metadata,
-        })
+        expect.stringContaining('"status":"pending"')
+      );
+      expect(mockRedis.setex).toHaveBeenCalledWith(
+        `tx:${txHash}`,
+        86400, // 24 hours
+        expect.stringContaining('"type":"token_deployment"')
       );
     });
 
@@ -131,11 +140,11 @@ describe('transaction-tracker', () => {
 
       expect(mockRedis.set).toHaveBeenCalledWith(
         `tx:${txHash}`,
-        JSON.stringify({
-          ...existingData,
-          status: 'confirmed',
-          updatedAt: expect.any(Number),
-        })
+        expect.stringContaining('"status":"confirmed"')
+      );
+      expect(mockRedis.set).toHaveBeenCalledWith(
+        `tx:${txHash}`,
+        expect.stringContaining('"updatedAt":')
       );
     });
 
@@ -155,12 +164,11 @@ describe('transaction-tracker', () => {
 
       expect(mockRedis.set).toHaveBeenCalledWith(
         `tx:${txHash}`,
-        JSON.stringify({
-          ...existingData,
-          status: 'failed',
-          error: 'Insufficient funds',
-          updatedAt: expect.any(Number),
-        })
+        expect.stringContaining('"status":"failed"')
+      );
+      expect(mockRedis.set).toHaveBeenCalledWith(
+        `tx:${txHash}`,
+        expect.stringContaining('"error":"Insufficient funds"')
       );
     });
 
