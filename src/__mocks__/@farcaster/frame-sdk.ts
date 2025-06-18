@@ -3,10 +3,10 @@ const mockSdk = {
     ready: jest.fn().mockResolvedValue(undefined),
     signIn: jest.fn(),
   },
-  quickAuth: jest.fn(),
-  context: {
+  quickAuth: Promise.resolve({ token: null }),
+  context: Promise.resolve({
     user: null,
-  },
+  }),
 };
 
 export default mockSdk;

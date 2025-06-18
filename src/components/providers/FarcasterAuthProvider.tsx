@@ -61,25 +61,26 @@ export const FarcasterAuthProvider: React.FC<FarcasterAuthProviderProps> = ({ ch
     setError(null);
     
     try {
-      const result = await sdk.actions.signIn();
+      await sdk.actions.signIn({
+        nonce: crypto.randomUUID(),
+      });
       
-      if (result.type === 'sign-in.success') {
-        // Get user context from SDK
-        const userContext = sdk.context?.user;
+      // For successful sign-in, get user context directly from SDK
+      const context = await sdk.context;
+      const userContext = context?.user;
+      
+      if (userContext) {
+        const userData: FarcasterUser = {
+          fid: userContext.fid,
+          username: userContext.username,
+          displayName: userContext.displayName,
+          pfpUrl: userContext.pfpUrl,
+        };
         
-        if (userContext) {
-          const userData: FarcasterUser = {
-            fid: userContext.fid,
-            username: userContext.username,
-            displayName: userContext.displayName,
-            pfpUrl: userContext.pfpUrl,
-          };
-          
-          setUser(userData);
-          sessionStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
-        }
-      } else if (result.type === 'sign-in.error') {
-        setError(result.error?.message || 'Sign in failed');
+        setUser(userData);
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+      } else {
+        setError('Failed to get user context after sign in');
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
@@ -100,8 +101,8 @@ export const FarcasterAuthProvider: React.FC<FarcasterAuthProviderProps> = ({ ch
 
   const getQuickAuthToken = useCallback(async (): Promise<string | null> => {
     try {
-      const result = await sdk.quickAuth();
-      if (result.success && result.token) {
+      const result = await sdk.quickAuth;
+      if (result && result.token) {
         return result.token;
       }
       return null;

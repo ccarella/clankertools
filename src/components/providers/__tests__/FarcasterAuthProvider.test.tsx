@@ -73,13 +73,11 @@ describe('FarcasterAuthProvider', () => {
 
   describe('Sign In', () => {
     it('should sign in successfully and store user data', async () => {
-      mockSdk.actions.signIn.mockResolvedValue({
-        type: 'sign-in.success',
-      });
+      mockSdk.actions.signIn.mockResolvedValue({});
       
-      mockSdk.context = {
+      mockSdk.context = Promise.resolve({
         user: mockUser,
-      } as typeof sdk.context;
+      });
 
       const { result } = renderHook(() => useFarcasterAuth(), {
         wrapper: FarcasterAuthProvider,
@@ -89,7 +87,9 @@ describe('FarcasterAuthProvider', () => {
         await result.current.signIn();
       });
 
-      expect(mockSdk.actions.signIn).toHaveBeenCalled();
+      expect(mockSdk.actions.signIn).toHaveBeenCalledWith({
+        nonce: expect.any(String),
+      });
       expect(result.current.user).toEqual(mockUser);
       expect(result.current.isAuthenticated).toBe(true);
       expect(result.current.isLoading).toBe(false);
@@ -99,12 +99,9 @@ describe('FarcasterAuthProvider', () => {
       );
     });
 
-    it('should handle sign in errors gracefully', async () => {
-      const errorMessage = 'User rejected sign in';
-      mockSdk.actions.signIn.mockResolvedValue({
-        type: 'sign-in.error',
-        error: { message: errorMessage },
-      });
+    it('should handle sign in errors when no user context', async () => {
+      mockSdk.actions.signIn.mockResolvedValue({});
+      mockSdk.context = Promise.resolve({ user: null });
 
       const { result } = renderHook(() => useFarcasterAuth(), {
         wrapper: FarcasterAuthProvider,
@@ -116,17 +113,18 @@ describe('FarcasterAuthProvider', () => {
 
       expect(result.current.user).toBeNull();
       expect(result.current.isAuthenticated).toBe(false);
-      expect(result.current.error).toBe(errorMessage);
+      expect(result.current.error).toBe('Failed to get user context after sign in');
       expect(result.current.isLoading).toBe(false);
     });
 
     it('should set loading state during sign in', async () => {
-      let resolveSignIn: (value: { type: string }) => void;
-      const signInPromise = new Promise<{ type: string }>((resolve) => {
+      let resolveSignIn: (value: unknown) => void;
+      const signInPromise = new Promise<unknown>((resolve) => {
         resolveSignIn = resolve;
       });
       
       mockSdk.actions.signIn.mockReturnValue(signInPromise);
+      mockSdk.context = Promise.resolve({ user: mockUser });
 
       const { result } = renderHook(() => useFarcasterAuth(), {
         wrapper: FarcasterAuthProvider,
@@ -139,7 +137,7 @@ describe('FarcasterAuthProvider', () => {
       expect(result.current.isLoading).toBe(true);
 
       await act(async () => {
-        resolveSignIn!({ type: 'sign-in.success' });
+        resolveSignIn!({});
         await signInPromise;
       });
 
@@ -188,25 +186,23 @@ describe('FarcasterAuthProvider', () => {
 
   describe('Error Handling', () => {
     it('should clear error when signing in again', async () => {
-      mockSdk.actions.signIn.mockResolvedValueOnce({
-        type: 'sign-in.error',
-        error: { message: 'First error' },
-      } as ReturnType<typeof sdk.actions.signIn>);
-
       const { result } = renderHook(() => useFarcasterAuth(), {
         wrapper: FarcasterAuthProvider,
       });
+
+      // First simulate a failed sign in (no user context)
+      mockSdk.actions.signIn.mockResolvedValueOnce({});
+      mockSdk.context = Promise.resolve({ user: null });
 
       await act(async () => {
         await result.current.signIn();
       });
 
-      expect(result.current.error).toBe('First error');
+      expect(result.current.error).toBe('Failed to get user context after sign in');
 
-      mockSdk.actions.signIn.mockResolvedValueOnce({
-        type: 'sign-in.success',
-      });
-      mockSdk.context = { user: mockUser } as typeof sdk.context;
+      // Then simulate a successful sign in
+      mockSdk.actions.signIn.mockResolvedValueOnce({});
+      mockSdk.context = Promise.resolve({ user: mockUser });
 
       await act(async () => {
         await result.current.signIn();
@@ -245,11 +241,10 @@ describe('FarcasterAuthProvider', () => {
     it('should get Quick Auth JWT token', async () => {
       const mockToken = 'jwt-token-12345';
       const mockQuickAuthResult = {
-        success: true,
         token: mockToken,
       };
       
-      mockSdk.quickAuth.mockResolvedValue(mockQuickAuthResult);
+      mockSdk.quickAuth = Promise.resolve(mockQuickAuthResult);
 
       const { result } = renderHook(() => useFarcasterAuth(), {
         wrapper: FarcasterAuthProvider,
@@ -260,12 +255,11 @@ describe('FarcasterAuthProvider', () => {
         token = await result.current.getQuickAuthToken();
       });
 
-      expect(mockSdk.quickAuth).toHaveBeenCalled();
       expect(token).toBe(mockToken);
     });
 
     it('should handle Quick Auth errors', async () => {
-      mockSdk.quickAuth.mockRejectedValue(new Error('Quick Auth failed'));
+      mockSdk.quickAuth = Promise.reject(new Error('Quick Auth failed'));
 
       const { result } = renderHook(() => useFarcasterAuth(), {
         wrapper: FarcasterAuthProvider,
