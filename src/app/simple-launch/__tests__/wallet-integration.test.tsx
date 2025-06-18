@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import SimpleLaunchPage from '../page';
 import { useWallet } from '@/providers/WalletProvider';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
+import { useHaptic } from '@/providers/HapticProvider';
 
 // Mock the dependencies
 jest.mock('next/navigation', () => ({
@@ -16,6 +17,10 @@ jest.mock('@/providers/WalletProvider', () => ({
 
 jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
   useFarcasterAuth: jest.fn(),
+}));
+
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
 }));
 
 jest.mock('@/components/wallet/WalletButton', () => ({
@@ -37,6 +42,13 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
     push: jest.fn(),
     back: jest.fn(),
   };
+  const mockHaptic = {
+    buttonPress: jest.fn().mockResolvedValue(undefined),
+    toggleStateChange: jest.fn().mockResolvedValue(undefined),
+    cardSelect: jest.fn().mockResolvedValue(undefined),
+    isEnabled: jest.fn().mockReturnValue(true),
+    isSupported: jest.fn().mockReturnValue(true),
+  };
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -45,6 +57,7 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       ok: true,
       json: async () => ({ success: true }),
     });
+    (useHaptic as jest.Mock).mockReturnValue(mockHaptic);
   });
 
   it('should not show wallet connection section when user is not authenticated', () => {

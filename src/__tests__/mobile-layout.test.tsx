@@ -6,6 +6,7 @@ import LaunchOptionCard from '@/components/LaunchOptionCard';
 import BottomNavigation from '@/components/BottomNavigation';
 import { usePathname } from 'next/navigation';
 import { Zap } from 'lucide-react';
+import { useHaptic } from '@/providers/HapticProvider';
 
 // Mock next/navigation
 jest.mock('next/navigation', () => ({
@@ -17,9 +18,22 @@ jest.mock('@/components/providers/FarcasterProvider', () => ({
   FarcasterProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
+}));
+
 describe('Mobile Layout Tests', () => {
+  const mockHaptic = {
+    cardSelect: jest.fn().mockResolvedValue(undefined),
+    navigationTap: jest.fn().mockResolvedValue(undefined),
+    isEnabled: jest.fn().mockReturnValue(true),
+    isSupported: jest.fn().mockReturnValue(true),
+  };
+
   beforeEach(() => {
+    jest.clearAllMocks();
     (usePathname as jest.Mock).mockReturnValue('/');
+    (useHaptic as jest.Mock).mockReturnValue(mockHaptic);
   });
 
   describe('Viewport and Overflow', () => {

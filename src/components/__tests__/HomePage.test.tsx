@@ -1,17 +1,33 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import HomePage from '../HomePage';
+import { useHaptic } from '@/providers/HapticProvider';
 
 // Mock next/link
 jest.mock('next/link', () => {
-  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  const MockLink = ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
+    <a href={href} {...props}>{children}</a>
   );
   MockLink.displayName = 'MockLink';
   return MockLink;
 });
 
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
+}));
+
 describe('HomePage', () => {
+  const mockHaptic = {
+    cardSelect: jest.fn().mockResolvedValue(undefined),
+    isEnabled: jest.fn().mockReturnValue(true),
+    isSupported: jest.fn().mockReturnValue(true),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useHaptic as jest.Mock).mockReturnValue(mockHaptic);
+  });
   it('renders all launch option cards', () => {
     render(<HomePage />);
     
@@ -70,5 +86,28 @@ describe('HomePage', () => {
     // Check for proper bottom spacing for navigation
     const mainDiv = container.querySelector('.pb-16');
     expect(mainDiv).toBeInTheDocument();
+  });
+
+  it('triggers haptic feedback on template tap', async () => {
+    render(<HomePage />);
+
+    const firstLink = screen.getByRole('link', { name: /simple launch/i });
+    fireEvent.click(firstLink);
+
+    await waitFor(() => {
+      expect(mockHaptic.cardSelect).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('does not trigger haptic when disabled', async () => {
+    mockHaptic.isEnabled.mockReturnValue(false);
+    render(<HomePage />);
+
+    const firstLink = screen.getByRole('link', { name: /simple launch/i });
+    fireEvent.click(firstLink);
+
+    await waitFor(() => {
+      expect(mockHaptic.cardSelect).not.toHaveBeenCalled();
+    });
   });
 });

@@ -3,9 +3,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SignInButton } from '../SignInButton';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
+import { useHaptic } from '@/providers/HapticProvider';
 
 // Mock the auth hook
 jest.mock('@/components/providers/FarcasterAuthProvider');
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
+}));
 
 const mockUseFarcasterAuth = useFarcasterAuth as jest.MockedFunction<typeof useFarcasterAuth>;
 
@@ -28,6 +32,10 @@ describe('SignInButton', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseFarcasterAuth.mockReturnValue(defaultAuthState);
+    (useHaptic as jest.Mock).mockReturnValue({
+      buttonPress: jest.fn().mockResolvedValue(undefined),
+      isEnabled: jest.fn().mockReturnValue(true),
+    });
   });
 
   describe('Unauthenticated State', () => {

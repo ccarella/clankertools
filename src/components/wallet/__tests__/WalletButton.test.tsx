@@ -5,6 +5,7 @@ import { WalletButton } from '../WalletButton';
 import { WalletProvider } from '@/providers/WalletProvider';
 import * as walletHooks from '@/providers/WalletProvider';
 import * as balanceHooks from '@/hooks/useWalletBalance';
+import { useHaptic } from '@/providers/HapticProvider';
 
 // Mock the useWallet hook
 jest.mock('@/providers/WalletProvider', () => ({
@@ -21,6 +22,10 @@ jest.mock('@/hooks/useWalletBalance', () => ({
   })),
 }));
 
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
+}));
+
 const mockUseWallet = walletHooks.useWallet as jest.MockedFunction<typeof walletHooks.useWallet>;
 const mockUseWalletBalance = balanceHooks.useWalletBalance as jest.MockedFunction<typeof balanceHooks.useWalletBalance>;
 
@@ -35,6 +40,10 @@ describe('WalletButton', () => {
       balance: null,
       isLoading: false,
       error: null,
+    });
+    (useHaptic as jest.Mock).mockReturnValue({
+      buttonPress: jest.fn().mockResolvedValue(undefined),
+      isEnabled: jest.fn().mockReturnValue(true),
     });
   });
 

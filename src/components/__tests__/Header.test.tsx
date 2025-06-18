@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import Header from '../Header'
 import { FarcasterAuthProvider } from '../providers/FarcasterAuthProvider'
 import { NavigationProvider } from '../providers/NavigationProvider'
+import { useHaptic } from '@/providers/HapticProvider'
 
 const mockRouter = {
   push: jest.fn(),
@@ -16,6 +17,10 @@ const mockRouter = {
 jest.mock('next/navigation', () => ({
   useRouter: () => mockRouter,
   usePathname: () => '/test-path',
+}))
+
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
 }))
 
 jest.mock('@farcaster/frame-sdk', () => ({
@@ -32,6 +37,10 @@ jest.mock('@farcaster/frame-sdk', () => ({
 describe('Header', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    ;(useHaptic as jest.Mock).mockReturnValue({
+      buttonPress: jest.fn().mockResolvedValue(undefined),
+      isEnabled: jest.fn().mockReturnValue(true),
+    })
   })
 
   const renderWithProviders = (component: React.ReactElement) => {

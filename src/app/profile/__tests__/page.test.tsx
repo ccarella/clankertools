@@ -2,8 +2,12 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ProfilePage from '../page';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
+import { useHaptic } from '@/providers/HapticProvider';
 
 jest.mock('@/components/providers/FarcasterAuthProvider');
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
+}));
 jest.mock('@/components/auth', () => ({
   AuthStatus: () => <div>Auth Status</div>,
 }));
@@ -22,6 +26,10 @@ describe('ProfilePage Security', () => {
     jest.clearAllMocks();
     jest.spyOn(console, 'log').mockImplementation();
     jest.spyOn(window, 'alert').mockImplementation();
+    (useHaptic as jest.Mock).mockReturnValue({
+      buttonPress: jest.fn().mockResolvedValue(undefined),
+      isEnabled: jest.fn().mockReturnValue(true),
+    });
   });
 
   afterEach(() => {

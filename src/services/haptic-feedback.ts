@@ -9,6 +9,10 @@ export class HapticFeedbackService {
   private capabilities: string[] = [];
   private readonly STORAGE_KEY = 'haptic-feedback-enabled';
 
+  private isReactNative(): boolean {
+    return typeof navigator !== 'undefined' && (navigator as any).product === 'ReactNative';
+  }
+
   async init(): Promise<void> {
     try {
       // Check SDK capabilities
@@ -136,7 +140,10 @@ export class HapticFeedbackService {
   // Card interaction haptics
   async cardSelect(): Promise<void> {
     await this.safeHaptic(async () => {
-      if (this.hasCapability('haptics.impactOccurred')) {
+      if (this.isReactNative()) {
+        const Haptics = await import('react-native-haptic-feedback');
+        await Haptics.default.trigger('impactMedium', { enableVibrateFallback: true });
+      } else if (this.hasCapability('haptics.impactOccurred')) {
         await sdk.haptics.impactOccurred('rigid');
       }
     });

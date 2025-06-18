@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { LucideIcon } from 'lucide-react';
+import { useHaptic } from '@/providers/HapticProvider';
 
 interface LaunchOptionCardProps {
   title: string;
@@ -16,8 +17,16 @@ export default function LaunchOptionCard({
   icon: Icon,
   iconColor = 'bg-primary'
 }: LaunchOptionCardProps) {
+  const haptic = useHaptic();
+
+  const handleClick = async () => {
+    if (haptic.isEnabled()) {
+      await haptic.cardSelect();
+    }
+  };
+
   return (
-    <Link href={href} className="block">
+    <Link href={href} className="block" onClick={handleClick}>
       <div className="flex items-center p-3 bg-background border border-border rounded-xl hover:bg-accent/5 active:bg-accent/10 transition-colors">
         <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${iconColor} mr-3 shrink-0`}>
           <Icon size={20} className="text-white" />

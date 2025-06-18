@@ -2,9 +2,24 @@ import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { useRouter } from 'next/navigation';
 import SimpleLaunchPage from '../page';
+import { useWallet } from '@/providers/WalletProvider';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
+import { useHaptic } from '@/providers/HapticProvider';
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
+}));
+
+jest.mock('@/providers/WalletProvider', () => ({
+  useWallet: jest.fn(),
+}));
+
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  useFarcasterAuth: jest.fn(),
+}));
+
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(),
 }));
 
 // Mock fetch for API calls
@@ -50,6 +65,14 @@ describe('SimpleLaunchPage', () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     jest.clearAllMocks();
+    (useWallet as jest.Mock).mockReturnValue({ isConnected: false, address: null });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ user: null });
+    (useHaptic as jest.Mock).mockReturnValue({
+      buttonPress: jest.fn().mockResolvedValue(undefined),
+      cardSelect: jest.fn().mockResolvedValue(undefined),
+      toggleStateChange: jest.fn().mockResolvedValue(undefined),
+      isEnabled: jest.fn().mockReturnValue(true),
+    });
   });
 
   it('renders all form fields', () => {
