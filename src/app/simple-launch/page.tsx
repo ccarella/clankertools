@@ -5,8 +5,12 @@ import { ArrowLeft, Plus, Camera, Upload, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { useWallet } from "@/providers/WalletProvider";
+import { useFarcasterAuth } from "@/components/providers/FarcasterAuthProvider";
+import { WalletButton } from "@/components/wallet/WalletButton";
 
 type FormData = {
   name: string;
@@ -16,14 +20,21 @@ type FormData = {
 
 type ViewState = "form" | "review" | "deploying" | "success" | "error";
 
+function truncateAddress(address: string): string {
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+}
+
 export default function SimpleLaunchPage() {
   const router = useRouter();
+  const { isConnected, address } = useWallet();
+  const { user } = useFarcasterAuth();
   const [viewState, setViewState] = useState<ViewState>("form");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [deploymentError, setDeploymentError] = useState<string>("");
   const [, setTokenAddress] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cameraSupported, setCameraSupported] = useState(false);
+  const [enableCreatorRewards, setEnableCreatorRewards] = useState(true);
 
   const {
     register,
@@ -90,6 +101,24 @@ export default function SimpleLaunchPage() {
       setViewState("deploying");
       
       try {
+        // Store wallet connection data if user is connected
+        if (user && isConnected && address) {
+          try {
+            await fetch("/api/connectWallet", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fid: user.fid,
+                walletAddress: address,
+                enableCreatorRewards,
+              }),
+            });
+          } catch (error) {
+            console.error("Failed to store wallet connection:", error);
+            // Continue with deployment even if wallet storage fails
+          }
+        }
+
         // Prepare form data for API
         const formData = new FormData();
         formData.append("name", data.name);
@@ -97,6 +126,11 @@ export default function SimpleLaunchPage() {
         
         if (data.image) {
           formData.append("image", data.image);
+        }
+        
+        // Include fid if user is authenticated
+        if (user?.fid) {
+          formData.append("fid", user.fid.toString());
         }
 
         // Call deployment API
@@ -283,6 +317,45 @@ export default function SimpleLaunchPage() {
               )}
             </div>
 
+            {/* Wallet Connection Section */}
+            {user && (
+              <div className="space-y-4 pt-6 border-t border-border">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground">
+                    Creator Rewards Wallet
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Connect your wallet to receive 80% of the platform fees
+                  </p>
+                </div>
+                
+                {!isConnected ? (
+                  <WalletButton />
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
+                      <span className="text-sm">Connected: {truncateAddress(address!)}</span>
+                      <WalletButton />
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="creator-rewards"
+                        checked={enableCreatorRewards}
+                        onCheckedChange={(checked) => setEnableCreatorRewards(!!checked)}
+                      />
+                      <label
+                        htmlFor="creator-rewards"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Use this wallet for creator rewards
+                      </label>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Split Information */}
             <div className="pt-8 border-t border-border">
               <p className="text-center text-lg font-medium text-foreground mb-8">
@@ -353,6 +426,12 @@ export default function SimpleLaunchPage() {
                     </div>
                   </div>
                 </div>
+                {user && isConnected && enableCreatorRewards && (
+                  <div className="flex justify-between py-2 border-b border-border">
+                    <span className="text-muted-foreground">Creator Wallet</span>
+                    <span className="font-medium text-sm">{truncateAddress(address!)}</span>
+                  </div>
+                )}
               </div>
             </Card>
 

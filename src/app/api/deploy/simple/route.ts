@@ -6,8 +6,39 @@ import { privateKeyToAccount } from 'viem/accounts';
 import { uploadToIPFS } from '@/lib/ipfs';
 import { trackTransaction } from '@/lib/transaction-tracker';
 import { getNetworkConfig } from '@/lib/network-config';
+import { Redis } from '@upstash/redis';
 
 export const runtime = 'edge';
+
+// Interface for wallet data
+interface WalletData {
+  walletAddress: string;
+  enableCreatorRewards: boolean;
+  connectedAt: number;
+}
+
+// Initialize Redis client
+let redis: Redis | null = null;
+
+function getRedisClient(): Redis | null {
+  if (!redis) {
+    const url = process.env.KV_REST_API_URL;
+    const token = process.env.KV_REST_API_TOKEN;
+
+    if (!url || !token) {
+      console.warn('Redis configuration missing, wallet lookup will be skipped');
+      return null;
+    }
+
+    try {
+      redis = new Redis({ url, token });
+    } catch (error) {
+      console.error('Failed to initialize Redis client:', error);
+      return null;
+    }
+  }
+  return redis;
+}
 
 // Security headers configuration
 function getSecurityHeaders(request: NextRequest): Headers {
@@ -98,6 +129,7 @@ export async function POST(request: NextRequest) {
     const rawName = formData.get('name') as string;
     const rawSymbol = formData.get('symbol') as string;
     const imageFile = formData.get('image') as Blob;
+    const fid = formData.get('fid') as string;
     
     // Sanitize inputs
     const name = rawName ? sanitizeInput(rawName) : '';
@@ -194,6 +226,30 @@ export async function POST(request: NextRequest) {
     const account = privateKeyToAccount(privateKey as `0x${string}`);
     const chain = networkConfig.isMainnet ? base : baseSepolia;
     
+    // Check for user's connected wallet if fid is provided
+    let creatorAdmin = account.address;
+    let creatorRewardRecipient = account.address;
+    
+    if (fid) {
+      try {
+        const redisClient = getRedisClient();
+        if (redisClient) {
+          const walletData = await redisClient.get<WalletData>(`wallet:${fid}`);
+          if (walletData && walletData.enableCreatorRewards) {
+            // Validate wallet address format
+            const walletAddressRegex = /^0x[a-fA-F0-9]{40}$/;
+            if (walletAddressRegex.test(walletData.walletAddress)) {
+              creatorAdmin = walletData.walletAddress as `0x${string}`;
+              creatorRewardRecipient = walletData.walletAddress as `0x${string}`;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching wallet data:', error);
+        // Continue with deployer address if Redis lookup fails
+      }
+    }
+    
     const publicClient = createPublicClient({
       chain,
       transport: http(networkConfig.rpcUrl),
@@ -231,8 +287,8 @@ export async function POST(request: NextRequest) {
           },
           rewardsConfig: {
             creatorReward,
-            creatorAdmin: account.address,
-            creatorRewardRecipient: account.address,
+            creatorAdmin: creatorAdmin as `0x${string}`,
+            creatorRewardRecipient: creatorRewardRecipient as `0x${string}`,
             interfaceAdmin: interfaceAdmin as `0x${string}`,
             interfaceRewardRecipient: interfaceRewardRecipient as `0x${string}`,
           },
