@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Header from "@/components/Header";
-import SidebarMenu from "@/components/SidebarMenu";
+import { Menu } from "lucide-react";
+import BottomNavigation from "@/components/BottomNavigation";
 import { FarcasterProvider } from "@/components/providers/FarcasterProvider";
 import "./globals.css";
 
@@ -37,13 +37,18 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground safe-area-inset`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <FarcasterProvider>
-          <SidebarMenu />
           <div className="flex min-h-screen flex-col">
-            <Header />
-            <main className="flex-1">{children}</main>
+            <header className="flex items-center justify-between p-4 bg-background">
+              <h1 className="text-xl font-bold">Clanker Tools</h1>
+              <button className="p-2 rounded-lg bg-muted/20">
+                <Menu size={24} className="text-foreground" />
+              </button>
+            </header>
+            <main className="flex-1 overflow-auto">{children}</main>
+            <BottomNavigation />
           </div>
         </FarcasterProvider>
       </body>

@@ -1,73 +1,61 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Zap, Scale, Users, Smile, Settings } from 'lucide-react';
+import LaunchOptionCard from '@/components/LaunchOptionCard';
+
+const launchOptions = [
+  {
+    title: 'Simple Launch',
+    description: 'One-tap token launch',
+    href: '/simple-launch',
+    icon: Zap,
+    iconColor: 'bg-purple-500',
+  },
+  {
+    title: 'Fair Launch',
+    description: 'Fair and transparent launch',
+    href: '/fair-launch',
+    icon: Scale,
+    iconColor: 'bg-purple-500',
+  },
+  {
+    title: 'Team/Project',
+    description: 'Launch for teams or projects',
+    href: '/team-launch',
+    icon: Users,
+    iconColor: 'bg-purple-500',
+  },
+  {
+    title: 'Memecoin Degen',
+    description: 'For meme and community tokens',
+    href: '/memecoin-launch',
+    icon: Smile,
+    iconColor: 'bg-purple-500',
+  },
+  {
+    title: 'The Works (Advanced)',
+    description: 'Full configuration options',
+    href: '/configurator',
+    icon: Settings,
+    iconColor: 'bg-purple-500',
+  },
+];
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen py-12">
-      <div data-testid="homepage-container" className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">Clanker Tools</h1>
-          <p className="text-lg text-muted-foreground">
-            Your gateway to Clanker v4 deployment and management
-          </p>
-          <div className="mt-6">
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/profile">View Profile</Link>
-            </Button>
-          </div>
-        </div>
-
-        <div data-testid="cards-grid" className="grid md:grid-cols-3 gap-6">
-          <div data-testid="feature-card">
-            <Card data-testid="configurator-card" className="flex flex-col h-full">
-              <CardHeader>
-                <CardTitle>Clanker v4 Configurator</CardTitle>
-                <CardDescription>
-                  Easily configure and deploy your Clanker v4 instance with our intuitive interface
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-end">
-                <Button asChild className="w-full">
-                  <Link href="/configurator">Launch Configurator</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div data-testid="feature-card">
-            <Card data-testid="docs-card" className="flex flex-col h-full">
-              <CardHeader>
-                <CardTitle>Documentation</CardTitle>
-                <CardDescription>
-                  Learn how to use Clanker v4 with comprehensive guides and API references
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-end">
-                <Button asChild variant="secondary" className="w-full">
-                  <Link href="/docs">View Docs</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div data-testid="feature-card">
-            <Card data-testid="sdk-card" className="flex flex-col h-full">
-              <CardHeader>
-                <CardTitle>SDK Examples</CardTitle>
-                <CardDescription>
-                  Explore code examples and integrations for the Clanker SDK
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-end">
-                <Button asChild variant="outline" className="w-full">
-                  <Link href="/sdk-examples">Browse Examples</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
+    <div className="flex flex-col min-h-screen pb-20">
+      <div className="flex-1 px-4 py-6">
+        <div className="space-y-3">
+          {launchOptions.map((option) => (
+            <LaunchOptionCard
+              key={option.href}
+              title={option.title}
+              description={option.description}
+              href={option.href}
+              icon={option.icon}
+              iconColor={option.iconColor}
+            />
+          ))}
         </div>
       </div>
-    </main>
+    </div>
   );
 }
