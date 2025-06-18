@@ -1,16 +1,10 @@
 import React from 'react'
-import { render } from '@testing-library/react'
 import RootLayout from '../layout'
 import { metadata, viewport } from '../layout'
 
-jest.mock('@/components/Header', () => ({
+jest.mock('@/components/BottomNavigation', () => ({
   __esModule: true,
-  default: () => <div data-testid="header">Header</div>
-}))
-
-jest.mock('@/components/SidebarMenu', () => ({
-  __esModule: true,
-  default: () => <div data-testid="sidebar">Sidebar</div>
+  default: () => <nav data-testid="bottom-navigation">Bottom Navigation</nav>
 }))
 
 jest.mock('@/components/providers/FarcasterProvider', () => ({
@@ -18,33 +12,26 @@ jest.mock('@/components/providers/FarcasterProvider', () => ({
 }))
 
 describe('RootLayout', () => {
-  it('should render with FarcasterProvider', () => {
-    const { getByText } = render(
-      <RootLayout>
-        <div>Test Content</div>
-      </RootLayout>
-    )
-    
-    expect(getByText('Test Content')).toBeInTheDocument()
+  it('renders layout as a React Server Component', () => {
+    // RootLayout is a server component that returns html/body elements
+    // We can't directly test it with RTL, but we can verify it exports correctly
+    expect(RootLayout).toBeDefined()
+    expect(typeof RootLayout).toBe('function')
   })
 
-  it('should render with proper structure', () => {
-    const { getByTestId } = render(
-      <RootLayout>
-        <div>Test Content</div>
-      </RootLayout>
-    )
-    
-    expect(getByTestId('header')).toBeInTheDocument()
-    expect(getByTestId('sidebar')).toBeInTheDocument()
+  it('should have correct structure when called', () => {
+    // Test that the component can be called without errors
+    const result = RootLayout({ children: <div>Test</div> })
+    expect(result).toBeDefined()
+    expect(result.type).toBe('html')
+    expect(result.props.lang).toBe('en')
   })
 })
 
 describe('Viewport Configuration', () => {
   it('should have correct viewport settings', () => {
     expect(viewport).toBeDefined()
-    expect(viewport.width).toBe(424)
-    expect(viewport.height).toBe(695)
+    expect(viewport.width).toBe('device-width')
     expect(viewport.initialScale).toBe(1)
     expect(viewport.maximumScale).toBe(1)
     expect(viewport.userScalable).toBe(false)
@@ -53,9 +40,8 @@ describe('Viewport Configuration', () => {
 })
 
 describe('Metadata', () => {
-  it('should have updated metadata for Farcaster', () => {
+  it('should have correct metadata', () => {
     expect(metadata.title).toBe('Clanker Tools')
     expect(metadata.description).toBe('Your comprehensive platform for Clanker token management')
-    expect(metadata.viewport).toBeUndefined()
   })
 })

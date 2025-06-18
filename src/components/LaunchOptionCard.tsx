@@ -18,15 +18,15 @@ export default function LaunchOptionCard({
 }: LaunchOptionCardProps) {
   return (
     <Link href={href} className="block">
-      <div className="flex items-center p-4 bg-background border border-border rounded-xl hover:bg-accent/5 transition-colors">
-        <div className={`flex items-center justify-center w-12 h-12 rounded-xl ${iconColor} mr-4`}>
-          <Icon size={24} className="text-white" />
+      <div className="flex items-center p-3 bg-background border border-border rounded-xl hover:bg-accent/5 active:bg-accent/10 transition-colors">
+        <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${iconColor} mr-3 shrink-0`}>
+          <Icon size={20} className="text-white" />
         </div>
-        <div className="flex-1">
-          <h3 className="font-semibold text-foreground text-lg mb-1">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-foreground text-base mb-0.5 truncate">
             {title}
           </h3>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-xs line-clamp-1">
             {description}
           </p>
         </div>

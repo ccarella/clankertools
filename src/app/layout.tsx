@@ -21,8 +21,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  width: 424,
-  height: 695,
+  width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
@@ -37,17 +36,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground overflow-hidden`}
       >
         <FarcasterProvider>
-          <div className="flex min-h-screen flex-col">
-            <header className="flex items-center justify-between p-4 bg-background">
-              <h1 className="text-xl font-bold">Clanker Tools</h1>
-              <button className="p-2 rounded-lg bg-muted/20">
-                <Menu size={24} className="text-foreground" />
+          <div className="flex h-screen flex-col overflow-hidden">
+            <header className="flex items-center justify-between p-3 bg-background shrink-0">
+              <h1 className="text-lg font-bold truncate">Clanker Tools</h1>
+              <button className="p-2 rounded-lg bg-muted/20 shrink-0">
+                <Menu size={20} className="text-foreground" />
               </button>
             </header>
-            <main className="flex-1 overflow-auto">{children}</main>
+            <main className="flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch">{children}</main>
             <BottomNavigation />
           </div>
         </FarcasterProvider>
