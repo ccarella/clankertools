@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "test:e2e": "echo 'E2E tests configured but Playwright not installed. Run: npx playwright install'",
+    "test:e2e:install": "npx playwright install"
   },
   "dependencies": {
     "@farcaster/frame-sdk": "^0.0.64",
