@@ -29,6 +29,6 @@ const mockSdk = {
     getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
     getSolanaProvider: jest.fn().mockResolvedValue(undefined),
   },
-} as any; // Use 'any' to bypass strict typing in mock
+} as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export default mockSdk;

@@ -6,7 +6,7 @@ import sdk from '@farcaster/frame-sdk';
 
 // Mock the Farcaster SDK
 jest.mock('@farcaster/frame-sdk');
-const mockSdk = sdk as any;
+const mockSdk = sdk as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 // Test component to access wallet context
 const TestComponent = () => {
