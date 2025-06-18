@@ -16,6 +16,9 @@ const mockSdk = {
       added: false,
     },
   }),
+  wallet: {
+    connectEthereum: jest.fn() as jest.MockedFunction<() => Promise<{ address: string; chainId: number }>>,
+  },
 };
 
 export default mockSdk;
