@@ -13,6 +13,7 @@ jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
 }));
 
 jest.mock('@farcaster/frame-sdk', () => ({
+  __esModule: true,
   default: {
     actions: {
       openUrl: jest.fn(),
