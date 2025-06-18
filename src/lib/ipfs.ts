@@ -1,9 +1,8 @@
 export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   // Validate environment variables
-  const apiKey = process.env.IPFS_API_KEY;
-  const apiSecret = process.env.IPFS_API_SECRET;
+  const pinataJWT = process.env.PINATA_JWT;
 
-  if (!apiKey || !apiSecret) {
+  if (!pinataJWT) {
     throw new Error('IPFS credentials not configured');
   }
 
@@ -33,12 +32,11 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   });
   formData.append('pinataMetadata', metadata);
 
-  // Pin to IPFS using Pinata
+  // Pin to IPFS using Pinata with JWT authentication
   const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
     method: 'POST',
     headers: {
-      'pinata_api_key': apiKey,
-      'pinata_secret_api_key': apiSecret,
+      'Authorization': `Bearer ${pinataJWT}`,
     },
     body: formData,
   });
