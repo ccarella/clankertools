@@ -141,7 +141,7 @@ export class HapticFeedbackService {
   async cardSelect(): Promise<void> {
     await this.safeHaptic(async () => {
       if (this.isReactNative()) {
-        const Haptics = await import('react-native-haptic-feedback');
+        const Haptics = await eval("import('react-native-haptic-feedback')");
         await Haptics.default.trigger('impactMedium', { enableVibrateFallback: true });
       } else if (this.hasCapability('haptics.impactOccurred')) {
         await sdk.haptics.impactOccurred('rigid');
