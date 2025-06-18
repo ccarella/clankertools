@@ -1,7 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
@@ -80,41 +79,6 @@
   --sidebar-ring: #BD93F9;
 }
 
-.dark {
-  /* Dracula Theme - Dark Mode (Original) */
-  --background: #282A36;
-  --foreground: #F8F8F2;
-  --card: #44475A;
-  --card-foreground: #F8F8F2;
-  --popover: #44475A;
-  --popover-foreground: #F8F8F2;
-  --primary: #BD93F9;
-  --primary-foreground: #282A36;
-  --secondary: #FF79C6;
-  --secondary-foreground: #282A36;
-  --muted: #6272A4;
-  --muted-foreground: #F8F8F2;
-  --accent: #8BE9FD;
-  --accent-foreground: #282A36;
-  --destructive: #FF5555;
-  --destructive-foreground: #282A36;
-  --border: #44475A;
-  --input: #44475A;
-  --ring: #BD93F9;
-  --chart-1: #8BE9FD;
-  --chart-2: #50FA7B;
-  --chart-3: #FFB86C;
-  --chart-4: #FF79C6;
-  --chart-5: #BD93F9;
-  --sidebar: #44475A;
-  --sidebar-foreground: #F8F8F2;
-  --sidebar-primary: #BD93F9;
-  --sidebar-primary-foreground: #282A36;
-  --sidebar-accent: #8BE9FD;
-  --sidebar-accent-foreground: #282A36;
-  --sidebar-border: #44475A;
-  --sidebar-ring: #BD93F9;
-}
 
 @layer base {
   * {
