@@ -11,6 +11,11 @@ export default function HomePage() {
           <p className="text-lg text-muted-foreground">
             Your gateway to Clanker v4 deployment and management
           </p>
+          <div className="mt-6">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/profile">View Profile</Link>
+            </Button>
+          </div>
         </div>
 
         <div data-testid="cards-grid" className="grid md:grid-cols-3 gap-6">

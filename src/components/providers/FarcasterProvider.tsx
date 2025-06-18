@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react'
 import sdk from '@farcaster/frame-sdk'
+import { FarcasterAuthProvider } from './FarcasterAuthProvider'
 
 interface FarcasterProviderProps {
   children: React.ReactNode
@@ -22,5 +23,5 @@ export function FarcasterProvider({ children }: FarcasterProviderProps) {
     initializeSDK()
   }, [])
 
-  return <>{children}</>
+  return <FarcasterAuthProvider>{children}</FarcasterAuthProvider>
 }

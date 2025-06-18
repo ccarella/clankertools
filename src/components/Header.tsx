@@ -1,3 +1,7 @@
+'use client';
+
+import { SignInButton } from '@/components/auth';
+
 export default function Header() {
   return (
     <header className="w-full border-b border-border bg-background">
@@ -6,6 +10,7 @@ export default function Header() {
           <h1 className="text-xl font-semibold text-foreground">
             Clanker Tools
           </h1>
+          <SignInButton variant="outline" size="sm" />
         </div>
       </div>
     </header>
