@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 export class Redis {
   private data = new Map<string, any>();
 
   constructor(config?: { url?: string; token?: string }) {
-    // Mock constructor
+    // Mock constructor - config is intentionally unused
   }
 
   async get(key: string) {
@@ -16,6 +19,7 @@ export class Redis {
 
   async setex(key: string, seconds: number, value: any) {
     this.data.set(key, value);
+    // Note: seconds parameter is intentionally ignored in mock
     return 'OK';
   }
 
@@ -24,6 +28,7 @@ export class Redis {
   }
 
   async expire(key: string, seconds: number) {
+    // Note: key and seconds parameters are intentionally ignored in mock
     return 1;
   }
 }
