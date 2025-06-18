@@ -6,7 +6,7 @@ import sdk from '@farcaster/frame-sdk';
 
 // Mock the Farcaster SDK
 jest.mock('@farcaster/frame-sdk');
-const mockSdk = sdk as jest.Mocked<typeof sdk>;
+const mockSdk = sdk as any;
 
 // Test component to access wallet context
 const TestComponent = () => {

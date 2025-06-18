@@ -1,4 +1,4 @@
-type EthereumProvider = {
+export type EthereumProvider = {
   request: jest.MockedFunction<(args: { method: string }) => Promise<unknown>>;
 };
 
@@ -26,9 +26,9 @@ const mockSdk = {
   }),
   wallet: {
     ethProvider: mockProvider,
-    getEthereumProvider: jest.fn().mockResolvedValue(mockProvider) as jest.MockedFunction<() => Promise<EthereumProvider | undefined>>,
-    getSolanaProvider: jest.fn().mockResolvedValue(undefined) as jest.MockedFunction<() => Promise<unknown>>,
+    getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
+    getSolanaProvider: jest.fn().mockResolvedValue(undefined),
   },
-};
+} as any; // Use 'any' to bypass strict typing in mock
 
 export default mockSdk;
