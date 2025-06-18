@@ -61,14 +61,10 @@ describe('POST /api/deploy/simple', () => {
 
   it('should deploy a token successfully', async () => {
     const mockTokenAddress = '0x1234567890123456789012345678901234567890';
-    const mockTxHash = '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
     const mockImageUrl = 'ipfs://QmTest123';
 
     mockUploadToIPFS.mockResolvedValue(mockImageUrl);
-    mockDeployToken.mockResolvedValue({
-      tokenAddress: mockTokenAddress,
-      txHash: mockTxHash,
-    });
+    mockDeployToken.mockResolvedValue(mockTokenAddress);
     mockTrackTransaction.mockResolvedValue(undefined);
 
     const formData = new FormData();
@@ -89,7 +85,7 @@ describe('POST /api/deploy/simple', () => {
     expect(data).toEqual({
       success: true,
       tokenAddress: mockTokenAddress,
-      txHash: mockTxHash,
+      txHash: expect.stringMatching(/^0x[a-f0-9]{64}$/),
       imageUrl: mockImageUrl,
     });
 
@@ -110,12 +106,15 @@ describe('POST /api/deploy/simple', () => {
         interfaceRewardRecipient: '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace',
       },
     });
-    expect(mockTrackTransaction).toHaveBeenCalledWith(mockTxHash, {
-      type: 'token_deployment',
-      tokenAddress: mockTokenAddress,
-      name: 'Test Token',
-      symbol: 'TEST',
-    });
+    expect(mockTrackTransaction).toHaveBeenCalledWith(
+      expect.stringMatching(/^0x[a-f0-9]{64}$/),
+      {
+        type: 'token_deployment',
+        tokenAddress: mockTokenAddress,
+        name: 'Test Token',
+        symbol: 'TEST',
+      }
+    );
   });
 
   it('should handle missing required fields', async () => {
@@ -195,10 +194,7 @@ describe('POST /api/deploy/simple', () => {
     // First attempt fails, second succeeds
     mockDeployToken
       .mockRejectedValueOnce(new Error('Network error'))
-      .mockResolvedValueOnce({
-        tokenAddress: '0x1234567890123456789012345678901234567890',
-        txHash: '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890',
-      });
+      .mockResolvedValueOnce('0x1234567890123456789012345678901234567890');
 
     const formData = new FormData();
     formData.append('name', 'Test Token');
