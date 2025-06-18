@@ -82,11 +82,30 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     setWalletState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Use Farcaster SDK wallet connection
-      const result = await sdk.wallet.connectEthereum();
+      // Get Ethereum provider from Farcaster SDK
+      const provider = await sdk.wallet.getEthereumProvider();
+      
+      if (!provider) {
+        throw new Error('No Ethereum provider available');
+      }
+
+      // Request accounts using EIP-1193
+      const accounts = await provider.request({ 
+        method: 'eth_requestAccounts' 
+      }) as string[];
+      
+      if (!accounts || accounts.length === 0) {
+        throw new Error('No accounts found');
+      }
+
+      // Get chain ID
+      const chainIdHex = await provider.request({ 
+        method: 'eth_chainId' 
+      }) as string;
+      const chainId = parseInt(chainIdHex, 16);
       
       // Validate network
-      if (result.chainId !== BASE_CHAIN_ID && result.chainId !== BASE_SEPOLIA_CHAIN_ID) {
+      if (chainId !== BASE_CHAIN_ID && chainId !== BASE_SEPOLIA_CHAIN_ID) {
         setWalletState(prev => ({
           ...prev,
           isLoading: false,
@@ -97,8 +116,8 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
 
       setWalletState({
         isConnected: true,
-        address: result.address,
-        chainId: result.chainId,
+        address: accounts[0],
+        chainId,
         balance: null, // Will be fetched separately
         isLoading: false,
         error: null,

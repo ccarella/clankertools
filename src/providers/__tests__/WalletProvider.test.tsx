@@ -8,11 +8,6 @@ import sdk from '@farcaster/frame-sdk';
 jest.mock('@farcaster/frame-sdk');
 const mockSdk = sdk as jest.Mocked<typeof sdk>;
 
-// Type for the wallet mock
-interface WalletMock {
-  connectEthereum: jest.MockedFunction<() => Promise<{ address: string; chainId: number }>>;
-}
-
 // Test component to access wallet context
 const TestComponent = () => {
   const wallet = useWallet();
@@ -37,6 +32,8 @@ describe('WalletProvider', () => {
     jest.clearAllMocks();
     // Clear sessionStorage before each test
     window.sessionStorage.clear();
+    // Reset the mock
+    mockSdk.wallet.getEthereumProvider.mockReset();
   });
 
   it('should provide initial wallet state', () => {
@@ -55,15 +52,16 @@ describe('WalletProvider', () => {
   });
 
   it('should connect wallet successfully', async () => {
-    const mockWalletResponse = {
-      address: '0x1234567890123456789012345678901234567890',
-      chainId: 8453, // Base chain ID
-    };
+    const mockAddress = '0x1234567890123456789012345678901234567890';
+    const mockChainId = 8453; // Base chain ID
 
     // Mock successful wallet connection
-    mockSdk.wallet = {
-      connectEthereum: jest.fn().mockResolvedValue(mockWalletResponse),
-    } as WalletMock;
+    const mockProvider = {
+      request: jest.fn()
+        .mockResolvedValueOnce([mockAddress]) // eth_requestAccounts
+        .mockResolvedValueOnce('0x' + mockChainId.toString(16)), // eth_chainId
+    };
+    mockSdk.wallet.getEthereumProvider.mockResolvedValue(mockProvider);
 
     render(
       <WalletProvider>
@@ -79,20 +77,23 @@ describe('WalletProvider', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('wallet-status')).toHaveTextContent('Connected');
-      expect(screen.getByTestId('wallet-address')).toHaveTextContent(mockWalletResponse.address);
+      expect(screen.getByTestId('wallet-address')).toHaveTextContent(mockAddress);
       expect(screen.getByTestId('wallet-chain-id')).toHaveTextContent('8453');
     });
 
-    expect(mockSdk.wallet.connectEthereum).toHaveBeenCalledTimes(1);
+    expect(mockSdk.wallet.getEthereumProvider).toHaveBeenCalledTimes(1);
+    expect(mockProvider.request).toHaveBeenCalledWith({ method: 'eth_requestAccounts' });
+    expect(mockProvider.request).toHaveBeenCalledWith({ method: 'eth_chainId' });
   });
 
   it('should handle wallet connection error', async () => {
     const errorMessage = 'User rejected connection';
 
     // Mock failed wallet connection
-    mockSdk.wallet = {
-      connectEthereum: jest.fn().mockRejectedValue(new Error(errorMessage)),
-    } as WalletMock;
+    const mockProvider = {
+      request: jest.fn().mockRejectedValue(new Error(errorMessage)),
+    };
+    mockSdk.wallet.getEthereumProvider.mockResolvedValue(mockProvider);
 
     render(
       <WalletProvider>
@@ -112,15 +113,38 @@ describe('WalletProvider', () => {
     });
   });
 
-  it('should disconnect wallet', async () => {
-    const mockWalletResponse = {
-      address: '0x1234567890123456789012345678901234567890',
-      chainId: 8453,
-    };
+  it('should handle no provider available', async () => {
+    // Mock no provider available
+    mockSdk.wallet.getEthereumProvider.mockResolvedValue(undefined);
 
-    mockSdk.wallet = {
-      connectEthereum: jest.fn().mockResolvedValue(mockWalletResponse),
-    } as WalletMock;
+    render(
+      <WalletProvider>
+        <TestComponent />
+      </WalletProvider>
+    );
+
+    const connectButton = screen.getByTestId('connect-button');
+
+    await act(async () => {
+      await userEvent.click(connectButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('wallet-status')).toHaveTextContent('Not Connected');
+      expect(screen.getByTestId('wallet-error')).toHaveTextContent('No Ethereum provider available');
+    });
+  });
+
+  it('should disconnect wallet', async () => {
+    const mockAddress = '0x1234567890123456789012345678901234567890';
+    const mockChainId = 8453;
+
+    const mockProvider = {
+      request: jest.fn()
+        .mockResolvedValueOnce([mockAddress])
+        .mockResolvedValueOnce('0x' + mockChainId.toString(16)),
+    };
+    mockSdk.wallet.getEthereumProvider.mockResolvedValue(mockProvider);
 
     render(
       <WalletProvider>
@@ -148,14 +172,15 @@ describe('WalletProvider', () => {
   });
 
   it('should show loading state during connection', async () => {
-    let resolveConnection: (value: { address: string; chainId: number }) => void;
-    const connectionPromise = new Promise<{ address: string; chainId: number }>((resolve) => {
-      resolveConnection = resolve;
+    let resolveAccounts: (value: string[]) => void = () => {};
+    const accountsPromise = new Promise<string[]>((resolve) => {
+      resolveAccounts = resolve;
     });
 
-    mockSdk.wallet = {
-      connectEthereum: jest.fn().mockReturnValue(connectionPromise),
-    } as WalletMock;
+    const mockProvider = {
+      request: jest.fn().mockReturnValue(accountsPromise),
+    };
+    mockSdk.wallet.getEthereumProvider.mockResolvedValue(mockProvider);
 
     render(
       <WalletProvider>
@@ -174,10 +199,9 @@ describe('WalletProvider', () => {
     });
 
     await act(async () => {
-      resolveConnection!({
-        address: '0x1234567890123456789012345678901234567890',
-        chainId: 8453,
-      });
+      resolveAccounts(['0x1234567890123456789012345678901234567890']);
+      // Now mock the chainId response
+      mockProvider.request.mockResolvedValueOnce('0x210d');
     });
 
     await waitFor(() => {
@@ -186,14 +210,15 @@ describe('WalletProvider', () => {
   });
 
   it('should validate Base network (chainId 8453)', async () => {
-    const mockWalletResponse = {
-      address: '0x1234567890123456789012345678901234567890',
-      chainId: 1, // Ethereum mainnet, not Base
-    };
+    const mockAddress = '0x1234567890123456789012345678901234567890';
+    const wrongChainId = 1; // Ethereum mainnet, not Base
 
-    mockSdk.wallet = {
-      connectEthereum: jest.fn().mockResolvedValue(mockWalletResponse),
-    } as WalletMock;
+    const mockProvider = {
+      request: jest.fn()
+        .mockResolvedValueOnce([mockAddress])
+        .mockResolvedValueOnce('0x' + wrongChainId.toString(16)),
+    };
+    mockSdk.wallet.getEthereumProvider.mockResolvedValue(mockProvider);
 
     render(
       <WalletProvider>
@@ -211,14 +236,15 @@ describe('WalletProvider', () => {
   });
 
   it('should persist wallet state in sessionStorage', async () => {
-    const mockWalletResponse = {
-      address: '0x1234567890123456789012345678901234567890',
-      chainId: 8453,
-    };
+    const mockAddress = '0x1234567890123456789012345678901234567890';
+    const mockChainId = 8453;
 
-    mockSdk.wallet = {
-      connectEthereum: jest.fn().mockResolvedValue(mockWalletResponse),
-    } as WalletMock;
+    const mockProvider = {
+      request: jest.fn()
+        .mockResolvedValueOnce([mockAddress])
+        .mockResolvedValueOnce('0x' + mockChainId.toString(16)),
+    };
+    mockSdk.wallet.getEthereumProvider.mockResolvedValue(mockProvider);
 
     const { unmount } = render(
       <WalletProvider>
@@ -238,8 +264,8 @@ describe('WalletProvider', () => {
     const storedState = sessionStorage.getItem('wallet-state');
     expect(storedState).toBeTruthy();
     const parsedState = JSON.parse(storedState!);
-    expect(parsedState.address).toBe(mockWalletResponse.address);
-    expect(parsedState.chainId).toBe(mockWalletResponse.chainId);
+    expect(parsedState.address).toBe(mockAddress);
+    expect(parsedState.chainId).toBe(mockChainId);
 
     // Unmount and remount to test persistence
     unmount();
@@ -252,7 +278,7 @@ describe('WalletProvider', () => {
 
     // Should restore state from sessionStorage
     expect(screen.getByTestId('wallet-status')).toHaveTextContent('Connected');
-    expect(screen.getByTestId('wallet-address')).toHaveTextContent(mockWalletResponse.address);
+    expect(screen.getByTestId('wallet-address')).toHaveTextContent(mockAddress);
   });
 
   it('should throw error when useWallet is used outside of WalletProvider', () => {
