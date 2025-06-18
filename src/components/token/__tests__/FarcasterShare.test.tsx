@@ -120,7 +120,7 @@ describe('FarcasterShare', () => {
   it('shows loading state while sharing', async () => {
     let resolveShare: () => void;
     (sdk.actions.openUrl as jest.Mock).mockImplementationOnce(() => 
-      new Promise((resolve) => { resolveShare = resolve; })
+      new Promise<void>((resolve) => { resolveShare = resolve; })
     );
 
     render(<FarcasterShare {...defaultProps} />);

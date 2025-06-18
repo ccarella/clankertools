@@ -8,12 +8,13 @@ import { trackTransaction } from '@/lib/transaction-tracker';
 
 export const runtime = 'edge';
 
-// CORS configuration
-function getCorsHeaders(request: NextRequest): Headers {
+// Security headers configuration
+function getSecurityHeaders(request: NextRequest): Headers {
   const headers = new Headers();
   const origin = request.headers.get('origin');
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['*'];
   
+  // CORS headers
   if (origin && (allowedOrigins.includes('*') || allowedOrigins.includes(origin))) {
     headers.set('Access-Control-Allow-Origin', origin);
   } else if (allowedOrigins.includes('*')) {
@@ -24,7 +25,38 @@ function getCorsHeaders(request: NextRequest): Headers {
   headers.set('Access-Control-Allow-Headers', 'Content-Type');
   headers.set('Access-Control-Max-Age', '86400');
   
+  // Security headers
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('X-XSS-Protection', '1; mode=block');
+  headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  
   return headers;
+}
+
+// Input sanitization
+function sanitizeInput(input: string): string {
+  // Remove HTML tags and dangerous characters
+  return input
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/[<>"'&]/g, '') // Remove dangerous characters
+    .trim();
+}
+
+// Validate file type and size
+function validateImageFile(file: Blob): { valid: boolean; error?: string } {
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif', 'image/webp'];
+  
+  if (file.size > MAX_FILE_SIZE) {
+    return { valid: false, error: 'Image file is too large (max 10MB)' };
+  }
+  
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return { valid: false, error: 'Invalid image type. Allowed types: PNG, JPEG, GIF, WebP' };
+  }
+  
+  return { valid: true };
 }
 
 // Custom error class for SDK errors
@@ -41,7 +73,7 @@ class TokenDeploymentError extends Error {
 }
 
 export async function OPTIONS(request: NextRequest) {
-  const headers = getCorsHeaders(request);
+  const headers = getSecurityHeaders(request);
   return new NextResponse(null, { status: 204, headers });
 }
 
@@ -56,36 +88,49 @@ export async function POST(request: NextRequest) {
     if (request.method !== 'POST') {
       return NextResponse.json(
         { success: false, error: 'Method not allowed' },
-        { status: 405, headers: getCorsHeaders(request) }
+        { status: 405, headers: getSecurityHeaders(request) }
       );
     }
 
     // Parse form data
     const formData = await request.formData();
-    const name = formData.get('name') as string;
-    const symbol = formData.get('symbol') as string;
+    const rawName = formData.get('name') as string;
+    const rawSymbol = formData.get('symbol') as string;
     const imageFile = formData.get('image') as Blob;
+    
+    // Sanitize inputs
+    const name = rawName ? sanitizeInput(rawName) : '';
+    const symbol = rawSymbol ? sanitizeInput(rawSymbol) : '';
 
     // Validate required fields
     if (!name || !symbol || !imageFile) {
       return NextResponse.json(
         { success: false, error: 'Missing required fields: name, symbol, and image' },
-        { status: 400, headers: getCorsHeaders(request) }
+        { status: 400, headers: getSecurityHeaders(request) }
       );
     }
 
+    // Validate image file
+    const imageValidation = validateImageFile(imageFile);
+    if (!imageValidation.valid) {
+      return NextResponse.json(
+        { success: false, error: imageValidation.error },
+        { status: 400, headers: getSecurityHeaders(request) }
+      );
+    }
+    
     // Validate field constraints
     if (name.length > 32) {
       return NextResponse.json(
         { success: false, error: 'Token name must be 32 characters or less' },
-        { status: 400, headers: getCorsHeaders(request) }
+        { status: 400, headers: getSecurityHeaders(request) }
       );
     }
 
     if (symbol.length < 3 || symbol.length > 8) {
       return NextResponse.json(
         { success: false, error: 'Symbol must be between 3 and 8 characters' },
-        { status: 400, headers: getCorsHeaders(request) }
+        { status: 400, headers: getSecurityHeaders(request) }
       );
     }
 
@@ -98,13 +143,27 @@ export async function POST(request: NextRequest) {
       console.error('Missing required environment variables');
       return NextResponse.json(
         { success: false, error: 'Server configuration error' },
-        { status: 500, headers: getCorsHeaders(request) }
+        { status: 500, headers: getSecurityHeaders(request) }
       );
     }
 
     // Get configurable pool values
     const initialMarketCap = process.env.INITIAL_MARKET_CAP || '0.1';
-    const creatorReward = parseInt(process.env.CREATOR_REWARD || '80', 10);
+    const rawCreatorReward = parseInt(process.env.CREATOR_REWARD || '80', 10);
+    
+    // Validate creator reward percentage (0-100)
+    const creatorReward = (isNaN(rawCreatorReward) || rawCreatorReward < 0 || rawCreatorReward > 100) 
+      ? 80 
+      : rawCreatorReward;
+    
+    // Validate addresses are not zero addresses
+    if (interfaceAdmin === '0x0000000000000000000000000000000000000000' || 
+        interfaceRewardRecipient === '0x0000000000000000000000000000000000000000') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid interface addresses' },
+        { status: 500, headers: getSecurityHeaders(request) }
+      );
+    }
 
     // Upload image to IPFS
     let imageUrl: string;
@@ -114,7 +173,7 @@ export async function POST(request: NextRequest) {
       console.error('IPFS upload error:', error);
       return NextResponse.json(
         { success: false, error: 'Failed to upload image' },
-        { status: 500, headers: getCorsHeaders(request) }
+        { status: 500, headers: getSecurityHeaders(request) }
       );
     }
 
@@ -175,6 +234,11 @@ export async function POST(request: NextRequest) {
           txHash = result.txHash || result.transactionHash;
         }
 
+        // Validate transaction hash format if provided
+        if (txHash && !/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+          throw new Error('Invalid transaction hash format');
+        }
+        
         // If we don't have a transaction hash, we need to find it
         // This is a placeholder - in production, you'd monitor events or use a different method
         if (!txHash && tokenAddress) {
@@ -237,7 +301,7 @@ export async function POST(request: NextRequest) {
     if (!tokenAddress) {
       return NextResponse.json(
         { success: false, error: `Token deployment failed after ${maxRetries} attempts` },
-        { status: 500, headers: getCorsHeaders(request) }
+        { status: 500, headers: getSecurityHeaders(request) }
       );
     }
 
@@ -261,7 +325,7 @@ export async function POST(request: NextRequest) {
       tokenAddress,
       txHash: txHash || null,
       imageUrl,
-    }, { headers: getCorsHeaders(request) });
+    }, { headers: getSecurityHeaders(request) });
   } catch (error) {
     console.error('Unexpected error:', error);
     
@@ -277,13 +341,13 @@ export async function POST(request: NextRequest) {
       
       return NextResponse.json(
         errorResponse,
-        { status: 500, headers: getCorsHeaders(request) }
+        { status: 500, headers: getSecurityHeaders(request) }
       );
     }
     
     return NextResponse.json(
       { success: false, error: 'An unexpected error occurred' },
-      { status: 500, headers: getCorsHeaders(request) }
+      { status: 500, headers: getSecurityHeaders(request) }
     );
   }
 }
