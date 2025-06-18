@@ -77,7 +77,7 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
     
     // Setup viem mocks
     mockPublicClient = {
-      getBlock: jest.fn().mockResolvedValue({ number: 123456n }),
+      getBlock: jest.fn().mockResolvedValue({ number: BigInt(123456) }),
       waitForTransactionReceipt: jest.fn().mockResolvedValue({
         status: 'success',
         contractAddress: '0xabc123',

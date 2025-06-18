@@ -59,11 +59,15 @@ describe('Simple Launch Page - Cast Context', () => {
         fid: 123,
         username: 'testuser',
         displayName: 'Test User',
-        profileImage: 'https://example.com/pfp.png',
+        pfpUrl: 'https://example.com/pfp.png',
       },
       castContext,
       signIn: jest.fn(),
       signOut: jest.fn(),
+      isLoading: false,
+      error: null,
+      clearError: jest.fn(),
+      getQuickAuthToken: jest.fn(),
     });
 
     render(<SimpleLaunchPage />);
@@ -127,6 +131,10 @@ describe('Simple Launch Page - Cast Context', () => {
       castContext,
       signIn: jest.fn(),
       signOut: jest.fn(),
+      isLoading: false,
+      error: null,
+      clearError: jest.fn(),
+      getQuickAuthToken: jest.fn(),
     });
 
     render(<SimpleLaunchPage />);
@@ -146,6 +154,10 @@ describe('Simple Launch Page - Cast Context', () => {
       castContext: null,
       signIn: jest.fn(),
       signOut: jest.fn(),
+      isLoading: false,
+      error: null,
+      clearError: jest.fn(),
+      getQuickAuthToken: jest.fn(),
     });
 
     render(<SimpleLaunchPage />);
@@ -164,6 +176,10 @@ describe('Simple Launch Page - Cast Context', () => {
       castContext: null,
       signIn: jest.fn(),
       signOut: jest.fn(),
+      isLoading: false,
+      error: null,
+      clearError: jest.fn(),
+      getQuickAuthToken: jest.fn(),
     });
 
     render(<SimpleLaunchPage />);
