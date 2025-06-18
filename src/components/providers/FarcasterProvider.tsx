@@ -10,10 +10,12 @@ interface FarcasterProviderProps {
 export function FarcasterProvider({ children }: FarcasterProviderProps) {
   useEffect(() => {
     const initializeSDK = async () => {
-      try {
-        await sdk.actions.ready()
-      } catch (error) {
-        console.error('Failed to initialize Farcaster SDK:', error)
+      if (typeof window !== 'undefined') {
+        try {
+          await sdk.actions.ready()
+        } catch (error) {
+          console.error('Failed to initialize Farcaster SDK:', error)
+        }
       }
     }
     
