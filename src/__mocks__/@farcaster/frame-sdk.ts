@@ -30,6 +30,29 @@ const mockSdk = {
     getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
     getSolanaProvider: jest.fn().mockResolvedValue(undefined),
   },
+  getCapabilities: jest.fn().mockResolvedValue([]),
+  haptics: {
+    impactOccurred: jest.fn().mockResolvedValue(undefined),
+    notificationOccurred: jest.fn().mockResolvedValue(undefined),
+    selectionChanged: jest.fn().mockResolvedValue(undefined),
+  },
 } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+export const mockSDK = mockSdk;
+
+export const resetSDKMocks = () => {
+  mockSdk.actions.ready.mockClear();
+  mockSdk.actions.signIn.mockClear();
+  mockSdk.actions.openUrl.mockClear();
+  mockSdk.quickAuth.getToken.mockClear();
+  mockSdk.quickAuth.fetch.mockClear();
+  mockSdk.wallet.getEthereumProvider.mockClear();
+  mockSdk.wallet.getSolanaProvider.mockClear();
+  mockSdk.getCapabilities.mockClear();
+  mockSdk.haptics.impactOccurred.mockClear();
+  mockSdk.haptics.notificationOccurred.mockClear();
+  mockSdk.haptics.selectionChanged.mockClear();
+  mockProvider.request.mockClear();
+};
 
 export default mockSdk;
