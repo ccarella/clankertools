@@ -28,9 +28,6 @@ describe('Mobile Layout Tests', () => {
         <div className="flex h-screen flex-col overflow-hidden">
           <header className="flex items-center justify-between p-3 bg-background shrink-0">
             <h1 className="text-lg font-bold truncate">Clanker Tools</h1>
-            <button className="p-2 rounded-lg bg-muted/20 shrink-0">
-              Menu
-            </button>
           </header>
           <main className="flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch">
             <HomePage />

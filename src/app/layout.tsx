@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from "next/font/google";
 import BottomNavigation from "@/components/BottomNavigation";
 import { FarcasterProvider } from "@/components/providers/FarcasterProvider";
 import { HapticProvider } from "@/providers/HapticProvider";
-import SidebarMenu from "@/components/SidebarMenu";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -41,7 +40,6 @@ export default function RootLayout({
       >
         <FarcasterProvider>
           <HapticProvider>
-            <SidebarMenu />
             <div className="flex h-screen flex-col overflow-hidden">
               <header className="flex items-center justify-between p-3 bg-background shrink-0">
                 <h1 className="text-lg font-bold truncate">Clanker Tools</h1>
