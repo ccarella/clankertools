@@ -3,11 +3,29 @@
 import { useState } from 'react'
 import { Menu, X } from 'lucide-react'
 import { NavigationLink } from './NavigationLink'
+import { useHaptic } from '@/providers/HapticProvider'
 
 export default function SidebarMenu() {
   const [isOpen, setIsOpen] = useState(false)
+  const haptic = useHaptic()
 
-  const toggleMenu = () => setIsOpen(!isOpen)
+  const toggleMenu = async () => {
+    if (haptic.isEnabled()) {
+      haptic.toggleStateChange(!isOpen).catch(() => {
+        // Silently handle haptic errors
+      })
+    }
+    setIsOpen(!isOpen)
+  }
+
+  const handleNavigationClick = () => {
+    if (haptic.isEnabled()) {
+      haptic.menuItemSelect().catch(() => {
+        // Silently handle haptic errors
+      })
+    }
+    toggleMenu()
+  }
 
   return (
     <>
@@ -41,28 +59,28 @@ export default function SidebarMenu() {
           <NavigationLink
             href="/"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            onClick={toggleMenu}
+            onClick={handleNavigationClick}
           >
             Home
           </NavigationLink>
           <NavigationLink
             href="/configurator"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            onClick={toggleMenu}
+            onClick={handleNavigationClick}
           >
             Configurator
           </NavigationLink>
           <NavigationLink
             href="/docs"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            onClick={toggleMenu}
+            onClick={handleNavigationClick}
           >
             Documentation
           </NavigationLink>
           <NavigationLink
             href="/sdk-examples"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-            onClick={toggleMenu}
+            onClick={handleNavigationClick}
           >
             SDK Examples
           </NavigationLink>

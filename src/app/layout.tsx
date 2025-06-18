@@ -1,8 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Menu } from "lucide-react";
 import BottomNavigation from "@/components/BottomNavigation";
 import { FarcasterProvider } from "@/components/providers/FarcasterProvider";
+import { HapticProvider } from "@/providers/HapticProvider";
+import SidebarMenu from "@/components/SidebarMenu";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,16 +40,16 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground overflow-hidden`}
       >
         <FarcasterProvider>
-          <div className="flex h-screen flex-col overflow-hidden">
-            <header className="flex items-center justify-between p-3 bg-background shrink-0">
-              <h1 className="text-lg font-bold truncate">Clanker Tools</h1>
-              <button className="p-2 rounded-lg bg-muted/20 shrink-0">
-                <Menu size={20} className="text-foreground" />
-              </button>
-            </header>
-            <main className="flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch">{children}</main>
-            <BottomNavigation />
-          </div>
+          <HapticProvider>
+            <SidebarMenu />
+            <div className="flex h-screen flex-col overflow-hidden">
+              <header className="flex items-center justify-between p-3 bg-background shrink-0">
+                <h1 className="text-lg font-bold truncate">Clanker Tools</h1>
+              </header>
+              <main className="flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch">{children}</main>
+              <BottomNavigation />
+            </div>
+          </HapticProvider>
         </FarcasterProvider>
       </body>
     </html>

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SquareStack, BarChart3, Settings } from 'lucide-react';
+import { useHaptic } from '@/providers/HapticProvider';
 
 const navigationItems = [
   {
@@ -24,6 +25,13 @@ const navigationItems = [
 
 export default function BottomNavigation() {
   const pathname = usePathname();
+  const haptic = useHaptic();
+
+  const handleNavClick = async () => {
+    if (haptic.isEnabled()) {
+      await haptic.navigationTap();
+    }
+  };
 
   return (
     <nav className="bg-background border-t border-border safe-area-pb shrink-0">
@@ -36,6 +44,7 @@ export default function BottomNavigation() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={handleNavClick}
               className="flex flex-col items-center justify-center flex-1 h-full space-y-0.5 active:bg-accent/10 transition-colors"
             >
               <Icon 
