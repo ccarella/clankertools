@@ -8,12 +8,25 @@ jest.mock('next/navigation', () => ({
 }));
 
 jest.mock('clanker-sdk', () => ({
-  ClankerClient: jest.fn().mockImplementation(() => ({
-    createToken: jest.fn().mockResolvedValue({
-      address: '0x123...',
-      transactionHash: '0xabc...',
-    }),
+  Clanker: jest.fn().mockImplementation(() => ({
+    deployToken: jest.fn().mockResolvedValue('0x123...'),
   })),
+}));
+
+jest.mock('viem', () => ({
+  createPublicClient: jest.fn(),
+  createWalletClient: jest.fn(),
+  http: jest.fn(),
+}));
+
+jest.mock('viem/accounts', () => ({
+  privateKeyToAccount: jest.fn().mockReturnValue({
+    address: '0xtest...',
+  }),
+}));
+
+jest.mock('viem/chains', () => ({
+  base: {},
 }));
 
 // Suppress console.error for deployment error test
@@ -226,14 +239,14 @@ describe('SimpleLaunchPage', () => {
   describe('Token Deployment', () => {
     it('shows loading state during deployment', async () => {
       // Create a promise that we can control
-      let resolveDeployment: (value: { address: string; transactionHash: string }) => void;
+      let resolveDeployment: (value: string) => void;
       const deploymentPromise = new Promise((resolve) => {
         resolveDeployment = resolve;
       });
       
-      const { ClankerClient } = jest.requireMock('clanker-sdk');
-      ClankerClient.mockImplementationOnce(() => ({
-        createToken: jest.fn().mockReturnValue(deploymentPromise),
+      const { Clanker } = jest.requireMock('clanker-sdk');
+      Clanker.mockImplementationOnce(() => ({
+        deployToken: jest.fn().mockReturnValue(deploymentPromise),
       }));
       
       render(<SimpleLaunchPage />);
@@ -268,7 +281,7 @@ describe('SimpleLaunchPage', () => {
       
       // Resolve the deployment promise to clean up
       await act(async () => {
-        resolveDeployment({ address: '0x123...', transactionHash: '0xabc...' });
+        resolveDeployment('0x123...');
         // Wait for component to update
         await new Promise(resolve => setTimeout(resolve, 0));
       });
@@ -309,9 +322,9 @@ describe('SimpleLaunchPage', () => {
     });
 
     it('handles deployment errors', async () => {
-      const { ClankerClient } = jest.requireMock('clanker-sdk');
-      ClankerClient.mockImplementationOnce(() => ({
-        createToken: jest.fn().mockRejectedValue(new Error('Deployment failed')),
+      const { Clanker } = jest.requireMock('clanker-sdk');
+      Clanker.mockImplementationOnce(() => ({
+        deployToken: jest.fn().mockRejectedValue(new Error('Deployment failed')),
       }));
       
       render(<SimpleLaunchPage />);
