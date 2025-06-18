@@ -6,7 +6,9 @@ import sdk from '@farcaster/frame-sdk'
 jest.mock('@farcaster/frame-sdk', () => ({
   __esModule: true,
   default: {
-    ready: jest.fn(),
+    actions: {
+      ready: jest.fn(),
+    },
   },
 }))
 
@@ -33,7 +35,7 @@ describe('FarcasterProvider', () => {
     )
     
     await waitFor(() => {
-      expect(sdk.ready).toHaveBeenCalledTimes(1)
+      expect(sdk.actions.ready).toHaveBeenCalledTimes(1)
     })
   })
 
@@ -47,13 +49,13 @@ describe('FarcasterProvider', () => {
     )
     
     await waitFor(() => {
-      expect(sdk.ready).toHaveBeenCalledTimes(1)
+      expect(sdk.actions.ready).toHaveBeenCalledTimes(1)
     })
   })
 
   it('should not crash when sdk.ready() throws', async () => {
     const mockError = new Error('SDK initialization failed')
-    ;(sdk.ready as jest.Mock).mockRejectedValueOnce(mockError)
+    ;(sdk.actions.ready as jest.Mock).mockRejectedValueOnce(mockError)
     
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation()
     
