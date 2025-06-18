@@ -1,3 +1,11 @@
+export type EthereumProvider = {
+  request: jest.MockedFunction<(args: { method: string }) => Promise<unknown>>;
+};
+
+const mockProvider: EthereumProvider = {
+  request: jest.fn(),
+};
+
 const mockSdk = {
   actions: {
     ready: jest.fn().mockResolvedValue(undefined),
@@ -16,6 +24,11 @@ const mockSdk = {
       added: false,
     },
   }),
-};
+  wallet: {
+    ethProvider: mockProvider,
+    getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
+    getSolanaProvider: jest.fn().mockResolvedValue(undefined),
+  },
+} as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export default mockSdk;

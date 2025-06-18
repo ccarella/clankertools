@@ -4,6 +4,7 @@ import React, { useEffect } from 'react'
 import sdk from '@farcaster/frame-sdk'
 import { FarcasterAuthProvider } from './FarcasterAuthProvider'
 import { NavigationProvider } from './NavigationProvider'
+import { WalletProvider } from '@/providers/WalletProvider'
 
 interface FarcasterProviderProps {
   children: React.ReactNode
@@ -26,7 +27,9 @@ export function FarcasterProvider({ children }: FarcasterProviderProps) {
 
   return (
     <NavigationProvider>
-      <FarcasterAuthProvider>{children}</FarcasterAuthProvider>
+      <FarcasterAuthProvider>
+        <WalletProvider>{children}</WalletProvider>
+      </FarcasterAuthProvider>
     </NavigationProvider>
   )
 }
