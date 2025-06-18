@@ -14,7 +14,7 @@ const customJestConfig = {
     '^@farcaster/frame-sdk$': '<rootDir>/src/__mocks__/@farcaster/frame-sdk.ts',
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(@farcaster/frame-sdk)/)'
+    'node_modules/(?!(@farcaster/frame-sdk|@upstash/redis|uncrypto|clanker-sdk|zod)/)'
   ],
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
 }
