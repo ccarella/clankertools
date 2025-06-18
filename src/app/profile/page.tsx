@@ -12,8 +12,7 @@ export default function ProfilePage() {
   const handleGetToken = async () => {
     const token = await getQuickAuthToken();
     if (token) {
-      console.log('Quick Auth token obtained:', token);
-      alert('Token obtained! Check console for details.');
+      alert('Token obtained successfully!');
     } else {
       alert('Failed to get Quick Auth token');
     }
