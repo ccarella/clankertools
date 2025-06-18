@@ -3,11 +3,30 @@ import { render, waitFor } from '@testing-library/react'
 import { FarcasterProvider } from '../FarcasterProvider'
 import sdk from '@farcaster/frame-sdk'
 
+const mockRouter = {
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  forward: jest.fn(),
+  refresh: jest.fn(),
+  prefetch: jest.fn(),
+}
+
+jest.mock('next/navigation', () => ({
+  useRouter: () => mockRouter,
+  usePathname: () => '/test-path',
+}))
+
 jest.mock('@farcaster/frame-sdk', () => ({
   __esModule: true,
   default: {
     actions: {
       ready: jest.fn(),
+    },
+    back: {
+      enableWebNavigation: jest.fn(),
+      show: jest.fn(),
+      hide: jest.fn(),
     },
   },
 }))
