@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import sdk from '@farcaster/frame-sdk';
+import { CastContext } from '@/lib/types/cast-context';
+import { parseCastContext } from '@/lib/cast-context';
 
 interface FarcasterUser {
   fid: number;
@@ -12,6 +14,7 @@ interface FarcasterUser {
 
 interface FarcasterAuthContextType {
   user: FarcasterUser | null;
+  castContext: CastContext | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
@@ -39,10 +42,11 @@ const STORAGE_KEY = 'farcaster_user';
 
 export const FarcasterAuthProvider: React.FC<FarcasterAuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<FarcasterUser | null>(null);
+  const [castContext, setCastContext] = useState<CastContext | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Restore user from sessionStorage on mount
+  // Restore user from sessionStorage on mount and check for cast context
   useEffect(() => {
     const storedUser = sessionStorage.getItem(STORAGE_KEY);
     if (storedUser) {
@@ -54,6 +58,18 @@ export const FarcasterAuthProvider: React.FC<FarcasterAuthProviderProps> = ({ ch
         sessionStorage.removeItem(STORAGE_KEY);
       }
     }
+    
+    // Check for cast context on initial load
+    sdk.context.then(context => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const launchContext = (context as any)?.launchContext;
+      if (launchContext) {
+        const parsed = parseCastContext(launchContext);
+        setCastContext(parsed);
+      }
+    }).catch(err => {
+      console.error('Failed to get initial context:', err);
+    });
   }, []);
 
   const signIn = useCallback(async () => {
@@ -79,6 +95,14 @@ export const FarcasterAuthProvider: React.FC<FarcasterAuthProviderProps> = ({ ch
         
         setUser(userData);
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(userData));
+        
+        // Parse and store cast context if available
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const launchContext = (context as any)?.launchContext;
+        if (launchContext) {
+          const parsed = parseCastContext(launchContext);
+          setCastContext(parsed);
+        }
       } else {
         setError('Failed to get user context after sign in');
       }
@@ -91,6 +115,7 @@ export const FarcasterAuthProvider: React.FC<FarcasterAuthProviderProps> = ({ ch
 
   const signOut = useCallback(() => {
     setUser(null);
+    setCastContext(null);
     sessionStorage.removeItem(STORAGE_KEY);
     setError(null);
   }, []);
@@ -114,6 +139,7 @@ export const FarcasterAuthProvider: React.FC<FarcasterAuthProviderProps> = ({ ch
 
   const value: FarcasterAuthContextType = {
     user,
+    castContext,
     isAuthenticated: !!user,
     isLoading,
     error,

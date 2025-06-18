@@ -11,6 +11,7 @@ import { useForm } from "react-hook-form";
 import { useWallet } from "@/providers/WalletProvider";
 import { useFarcasterAuth } from "@/components/providers/FarcasterAuthProvider";
 import { WalletButton } from "@/components/wallet/WalletButton";
+import { CastContextDisplay } from "@/components/CastContextDisplay";
 
 type FormData = {
   name: string;
@@ -27,7 +28,7 @@ function truncateAddress(address: string): string {
 export default function SimpleLaunchPage() {
   const router = useRouter();
   const { isConnected, address } = useWallet();
-  const { user } = useFarcasterAuth();
+  const { user, castContext } = useFarcasterAuth();
   const [viewState, setViewState] = useState<ViewState>("form");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [deploymentError, setDeploymentError] = useState<string>("");
@@ -132,6 +133,11 @@ export default function SimpleLaunchPage() {
         if (user?.fid) {
           formData.append("fid", user.fid.toString());
         }
+        
+        // Include cast context if available
+        if (castContext) {
+          formData.append("castContext", JSON.stringify(castContext));
+        }
 
         // Call deployment API
         const response = await fetch("/api/deploy/simple", {
@@ -199,6 +205,11 @@ export default function SimpleLaunchPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
         {viewState === "form" && (
           <>
+            {/* Cast Context Display */}
+            {castContext && (
+              <CastContextDisplay context={castContext} />
+            )}
+            
             {/* Name Field */}
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium text-foreground">
