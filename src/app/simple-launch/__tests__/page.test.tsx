@@ -28,6 +28,12 @@ jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
   })),
 }));
 
+jest.mock('@/providers/HapticProvider', () => ({
+  useHaptic: jest.fn(() => ({
+    haptic: jest.fn(),
+  })),
+}));
+
 // Mock fetch for API calls
 global.fetch = jest.fn();
 
