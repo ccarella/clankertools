@@ -6,13 +6,11 @@ global.fetch = jest.fn();
 describe('uploadToIPFS', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    process.env.IPFS_API_KEY = 'test-api-key';
-    process.env.IPFS_API_SECRET = 'test-api-secret';
+    process.env.PINATA_JWT = 'test-jwt-token';
   });
 
   afterEach(() => {
-    delete process.env.IPFS_API_KEY;
-    delete process.env.IPFS_API_SECRET;
+    delete process.env.PINATA_JWT;
   });
 
   it('should upload image to IPFS successfully', async () => {
@@ -34,8 +32,7 @@ describe('uploadToIPFS', () => {
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          'pinata_api_key': 'test-api-key',
-          'pinata_secret_api_key': 'test-api-secret',
+          'Authorization': 'Bearer test-jwt-token',
         }),
         body: expect.any(FormData),
       })
@@ -43,7 +40,7 @@ describe('uploadToIPFS', () => {
   });
 
   it('should throw error when IPFS credentials are missing', async () => {
-    delete process.env.IPFS_API_KEY;
+    delete process.env.PINATA_JWT;
 
     const imageBlob = new Blob(['image data'], { type: 'image/png' });
     
