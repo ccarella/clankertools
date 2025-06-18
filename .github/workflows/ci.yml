@@ -104,5 +104,5 @@ jobs:
         urls: |
           http://localhost:3000
           http://localhost:3000/profile
-        uploadArtifacts: true
-        temporaryPublicStorage: true
+        uploadArtifacts: false
+        temporaryPublicStorage: false
