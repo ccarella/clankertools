@@ -33,7 +33,7 @@ const launchOptions = [
   {
     title: 'The Works (Advanced)',
     description: 'Full configuration options',
-    href: '/configurator',
+    href: '/the-works',
     icon: Settings,
     iconColor: 'bg-purple-500',
   },
