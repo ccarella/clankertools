@@ -28,7 +28,7 @@ describe('FarcasterShare', () => {
   };
 
   beforeEach(() => {
-    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: true });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: true, castContext: null });
     jest.clearAllMocks();
     // Ensure sdk is properly mocked
     if (sdk?.actions?.openUrl) {
@@ -66,7 +66,7 @@ describe('FarcasterShare', () => {
   });
 
   it('disables button when not authenticated', () => {
-    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false, castContext: null });
     
     render(<FarcasterShare {...defaultProps} />);
     
@@ -75,7 +75,7 @@ describe('FarcasterShare', () => {
   });
 
   it('shows tooltip when not authenticated', async () => {
-    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false, castContext: null });
     
     render(<FarcasterShare {...defaultProps} />);
     

@@ -23,6 +23,7 @@ describe('SignInButton', () => {
     signOut: mockSignOut,
     clearError: mockClearError,
     getQuickAuthToken: jest.fn(),
+    castContext: null,
   };
 
   beforeEach(() => {

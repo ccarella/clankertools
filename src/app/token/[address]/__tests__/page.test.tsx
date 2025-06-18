@@ -83,7 +83,7 @@ describe('TokenSuccessPage', () => {
     
     (useParams as jest.Mock).mockReturnValue({ address: '0x1234567890abcdef' });
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: true });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: true, castContext: null });
     
     // Reset SDK mock
     const sdk = jest.requireMock('@farcaster/frame-sdk').default;
@@ -166,7 +166,7 @@ describe('TokenSuccessPage', () => {
   });
 
   it('disables share button when not authenticated', async () => {
-    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false, castContext: null });
     // fetch mock is already set up in global mock
 
     render(<TokenSuccessPage />);

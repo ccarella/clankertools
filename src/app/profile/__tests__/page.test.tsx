@@ -41,6 +41,7 @@ describe('ProfilePage Security', () => {
       getQuickAuthToken: mockGetQuickAuthToken,
       error: null,
       clearError: jest.fn(),
+      castContext: null,
     });
 
     render(<ProfilePage />);
@@ -74,6 +75,7 @@ describe('ProfilePage Security', () => {
       getQuickAuthToken: mockGetQuickAuthToken,
       error: null,
       clearError: jest.fn(),
+      castContext: null,
     });
 
     render(<ProfilePage />);
@@ -99,6 +101,7 @@ describe('ProfilePage Security', () => {
       getQuickAuthToken: jest.fn(),
       error: null,
       clearError: jest.fn(),
+      castContext: null,
     });
 
     render(<ProfilePage />);
