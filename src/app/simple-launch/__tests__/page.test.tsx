@@ -7,6 +7,27 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('@/providers/WalletProvider', () => ({
+  useWallet: jest.fn(() => ({
+    isConnected: false,
+    address: null,
+  })),
+}));
+
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  useFarcasterAuth: jest.fn(() => ({
+    user: { fid: '12345', username: 'testuser' },
+    isAuthenticated: true,
+    isLoading: false,
+    error: null,
+    signIn: jest.fn(),
+    signOut: jest.fn(),
+    clearError: jest.fn(),
+    getQuickAuthToken: jest.fn(),
+    castContext: null,
+  })),
+}));
+
 // Mock fetch for API calls
 global.fetch = jest.fn();
 
