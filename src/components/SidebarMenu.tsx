@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
 import { Menu, X } from 'lucide-react'
+import { NavigationLink } from './NavigationLink'
 
 export default function SidebarMenu() {
   const [isOpen, setIsOpen] = useState(false)
@@ -38,34 +38,34 @@ export default function SidebarMenu() {
           </h2>
         </div>
         <div className="p-4 space-y-2">
-          <Link
+          <NavigationLink
             href="/"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={toggleMenu}
           >
             Home
-          </Link>
-          <Link
+          </NavigationLink>
+          <NavigationLink
             href="/configurator"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={toggleMenu}
           >
             Configurator
-          </Link>
-          <Link
+          </NavigationLink>
+          <NavigationLink
             href="/docs"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={toggleMenu}
           >
             Documentation
-          </Link>
-          <Link
+          </NavigationLink>
+          <NavigationLink
             href="/sdk-examples"
             className="block rounded-md px-4 py-2 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
             onClick={toggleMenu}
           >
             SDK Examples
-          </Link>
+          </NavigationLink>
         </div>
       </nav>
     </>
