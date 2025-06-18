@@ -221,7 +221,7 @@ export async function POST(request: NextRequest) {
           if (attempt === maxRetries) {
             throw new TokenDeploymentError(
               error.message,
-              errorDetails.code,
+              typeof errorDetails.code === 'string' ? errorDetails.code : undefined,
               error.name
             );
           }
