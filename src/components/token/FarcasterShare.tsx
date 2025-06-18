@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { Share2, Loader2 } from 'lucide-react';
-import { useFarcasterContext, useOpenComposer } from '@farcaster/frame-sdk';
+import sdk from '@farcaster/frame-sdk';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 import { cn } from '@/lib/utils';
 
 interface FarcasterShareProps {
@@ -22,8 +23,7 @@ export default function FarcasterShare({
   variant = 'default',
   channel,
 }: FarcasterShareProps) {
-  const { isAuthenticated } = useFarcasterContext();
-  const { openComposer } = useOpenComposer();
+  const { isAuthenticated } = useFarcasterAuth();
   const [loading, setLoading] = useState(false);
 
   async function handleShare() {
@@ -38,13 +38,19 @@ export default function FarcasterShare({
       // Frame URL for rich preview
       const frameUrl = `${window.location.origin}/api/frame/token/${tokenAddress}`;
       
-      const composerOptions = {
-        text: castText,
-        embeds: [frameUrl],
-        ...(channel && { channelKey: channel }),
-      };
-      
-      await openComposer(composerOptions);
+      // Try using castIntent if openComposer is not available
+      if (sdk.actions.openUrl) {
+        const text = encodeURIComponent(castText);
+        const embedsParam = encodeURIComponent(frameUrl);
+        const castUrl = `https://warpcast.com/~/compose?text=${text}&embeds[]=${embedsParam}${channel ? `&channelKey=${channel}` : ''}`;
+        await sdk.actions.openUrl(castUrl);
+      } else {
+        // Fallback to window.open
+        const text = encodeURIComponent(castText);
+        const embedsParam = encodeURIComponent(frameUrl);
+        const castUrl = `https://warpcast.com/~/compose?text=${text}&embeds[]=${embedsParam}${channel ? `&channelKey=${channel}` : ''}`;
+        window.open(castUrl, '_blank');
+      }
 
       // Track analytics if available
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

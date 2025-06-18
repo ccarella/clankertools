@@ -23,9 +23,9 @@ interface TokenData {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { address: string } }
+  { params }: { params: Promise<{ address: string }> }
 ) {
-  const { address } = params;
+  const { address } = await params;
   
   // Validate address format
   if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {

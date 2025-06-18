@@ -1,14 +1,22 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { useFarcasterContext, useOpenComposer } from '@farcaster/frame-sdk';
-import FarcasterShare from '../FarcasterShare';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 
 jest.mock('@farcaster/frame-sdk', () => ({
-  useFarcasterContext: jest.fn(),
-  useOpenComposer: jest.fn(),
+  default: {
+    actions: {
+      openUrl: jest.fn(),
+    },
+  },
 }));
 
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  useFarcasterAuth: jest.fn(),
+}));
+
+import FarcasterShare from '../FarcasterShare';
+import sdk from '@farcaster/frame-sdk';
+
 describe('FarcasterShare', () => {
-  const mockOpenComposer = jest.fn();
   const defaultProps = {
     tokenName: 'Test Token',
     tokenSymbol: 'TEST',
@@ -16,8 +24,7 @@ describe('FarcasterShare', () => {
   };
 
   beforeEach(() => {
-    (useFarcasterContext as jest.Mock).mockReturnValue({ isAuthenticated: true });
-    (useOpenComposer as jest.Mock).mockReturnValue({ openComposer: mockOpenComposer });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: true });
     jest.clearAllMocks();
   });
 
@@ -33,12 +40,9 @@ describe('FarcasterShare', () => {
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(mockOpenComposer).toHaveBeenCalledWith({
-      text: expect.stringContaining('🚀 Just launched Test Token ($TEST)'),
-      embeds: expect.arrayContaining([
-        expect.stringContaining('/api/frame/token/0x1234567890abcdef')
-      ]),
-    });
+    expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+      expect.stringContaining('https://warpcast.com/~/compose?text=')
+    );
   });
 
   it('includes custom message in cast', () => {
@@ -48,14 +52,13 @@ describe('FarcasterShare', () => {
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(mockOpenComposer).toHaveBeenCalledWith({
-      text: expect.stringContaining(customMessage),
-      embeds: expect.any(Array),
-    });
+    expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+      expect.stringContaining(encodeURIComponent(customMessage))
+    );
   });
 
   it('disables button when not authenticated', () => {
-    (useFarcasterContext as jest.Mock).mockReturnValue({ isAuthenticated: false });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false });
     
     render(<FarcasterShare {...defaultProps} />);
     
@@ -64,7 +67,7 @@ describe('FarcasterShare', () => {
   });
 
   it('shows tooltip when not authenticated', async () => {
-    (useFarcasterContext as jest.Mock).mockReturnValue({ isAuthenticated: false });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false });
     
     render(<FarcasterShare {...defaultProps} />);
     
@@ -78,7 +81,7 @@ describe('FarcasterShare', () => {
 
   it('handles share error gracefully', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-    mockOpenComposer.mockRejectedValueOnce(new Error('Failed to open composer'));
+    (sdk.actions.openUrl as jest.Mock).mockRejectedValueOnce(new Error('Failed to open URL'));
 
     render(<FarcasterShare {...defaultProps} />);
     
@@ -116,7 +119,7 @@ describe('FarcasterShare', () => {
 
   it('shows loading state while sharing', async () => {
     let resolveShare: () => void;
-    mockOpenComposer.mockImplementationOnce(() => 
+    (sdk.actions.openUrl as jest.Mock).mockImplementationOnce(() => 
       new Promise((resolve) => { resolveShare = resolve; })
     );
 
@@ -149,10 +152,8 @@ describe('FarcasterShare', () => {
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(mockOpenComposer).toHaveBeenCalledWith({
-      text: expect.any(String),
-      embeds: expect.any(Array),
-      channelKey: 'clanker',
-    });
+    expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+      expect.stringContaining('channelKey=clanker')
+    );
   });
 });

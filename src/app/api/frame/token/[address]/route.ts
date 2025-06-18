@@ -1,17 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getIpfsUrl } from '@/lib/ipfs';
 
-import { NextResponse as NR } from 'next/server';
-
 export async function GET(
   request: NextRequest,
-  { params }: { params: { address: string } }
+  { params }: { params: Promise<{ address: string }> }
 ) {
-  const { address } = params;
+  const { address } = await params;
   
   // Validate address format
   if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
-    return NR.json({ error: 'Invalid token address' }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid token address' }, { status: 400 });
   }
 
   try {
@@ -20,7 +18,7 @@ export async function GET(
     const tokenData = await tokenResponse.json();
 
     if (!tokenResponse.ok || !tokenData.success) {
-      return NR.json(
+      return NextResponse.json(
         { error: tokenData.error || 'Token not found' },
         { status: tokenResponse.status }
       );
@@ -75,7 +73,7 @@ export async function GET(
     });
   } catch (error) {
     console.error('Error generating frame metadata:', error);
-    return NR.json(
+    return NextResponse.json(
       { error: 'Failed to fetch token data' },
       { status: 500 }
     );

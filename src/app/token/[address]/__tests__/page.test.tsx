@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { useParams, useRouter } from 'next/navigation';
-import { useFarcasterContext, useOpenComposer } from '@farcaster/frame-sdk';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 import TokenSuccessPage from '../page';
 
 jest.mock('next/navigation', () => ({
@@ -8,9 +8,16 @@ jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  useFarcasterAuth: jest.fn(),
+}));
+
 jest.mock('@farcaster/frame-sdk', () => ({
-  useFarcasterContext: jest.fn(),
-  useOpenComposer: jest.fn(),
+  default: {
+    actions: {
+      openUrl: jest.fn(),
+    },
+  },
 }));
 
 jest.mock('@/lib/ipfs', () => ({
@@ -56,8 +63,6 @@ describe('TokenSuccessPage', () => {
     push: jest.fn(),
     back: jest.fn(),
   };
-
-  const mockOpenComposer = jest.fn();
   const mockTokenData = {
     name: 'Test Token',
     symbol: 'TEST',
@@ -75,8 +80,7 @@ describe('TokenSuccessPage', () => {
   beforeEach(() => {
     (useParams as jest.Mock).mockReturnValue({ address: '0x1234567890abcdef' });
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useFarcasterContext as jest.Mock).mockReturnValue({ isAuthenticated: true });
-    (useOpenComposer as jest.Mock).mockReturnValue({ openComposer: mockOpenComposer });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: true });
     
     jest.clearAllMocks();
   });
@@ -139,16 +143,14 @@ describe('TokenSuccessPage', () => {
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(mockOpenComposer).toHaveBeenCalledWith({
-      text: expect.stringContaining('Test Token'),
-      embeds: expect.arrayContaining([
-        expect.stringContaining('/api/frame/token/0x1234567890abcdef')
-      ]),
-    });
+    const sdk = jest.requireMock('@farcaster/frame-sdk').default;
+    expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+      expect.stringContaining('https://warpcast.com/~/compose?text=')
+    );
   });
 
   it('disables share button when not authenticated', async () => {
-    (useFarcasterContext as jest.Mock).mockReturnValue({ isAuthenticated: false });
+    (useFarcasterAuth as jest.Mock).mockReturnValue({ isAuthenticated: false });
     // fetch mock is already set up in global mock
 
     render(<TokenSuccessPage />);

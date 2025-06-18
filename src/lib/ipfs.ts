@@ -1,3 +1,21 @@
+export function getIpfsUrl(ipfsUri: string): string {
+  if (!ipfsUri) return '';
+  
+  // If it's already an HTTP URL, return as is
+  if (ipfsUri.startsWith('http://') || ipfsUri.startsWith('https://')) {
+    return ipfsUri;
+  }
+  
+  // Convert ipfs:// to gateway URL
+  if (ipfsUri.startsWith('ipfs://')) {
+    const hash = ipfsUri.replace('ipfs://', '');
+    return `https://gateway.pinata.cloud/ipfs/${hash}`;
+  }
+  
+  // If it's just a hash, prepend gateway URL
+  return `https://gateway.pinata.cloud/ipfs/${ipfsUri}`;
+}
+
 export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   // Validate environment variables
   const pinataJWT = process.env.PINATA_JWT;

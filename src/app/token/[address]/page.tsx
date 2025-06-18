@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, Copy, ExternalLink, TrendingUp, Users, Activity, Loader2 } from 'lucide-react';
-import { useFarcasterContext } from '@farcaster/frame-sdk';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 import FarcasterShare from '@/components/token/FarcasterShare';
 import { getIpfsUrl } from '@/lib/ipfs';
 import { cn } from '@/lib/utils';
@@ -25,7 +25,7 @@ interface TokenData {
 export default function TokenSuccessPage() {
   const params = useParams();
   const router = useRouter();
-  const { } = useFarcasterContext();
+  const { } = useFarcasterAuth();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

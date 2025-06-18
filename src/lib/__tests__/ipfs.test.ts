@@ -1,4 +1,4 @@
-import { uploadToIPFS } from '../ipfs';
+import { uploadToIPFS, getIpfsUrl } from '../ipfs';
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -121,5 +121,37 @@ describe('uploadToIPFS', () => {
     
     await expect(uploadToIPFS(invalidBlob)).rejects.toThrow('Invalid file type. Only images are allowed');
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe('getIpfsUrl', () => {
+  it('should return empty string for empty input', () => {
+    expect(getIpfsUrl('')).toBe('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(getIpfsUrl(null as any)).toBe('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    expect(getIpfsUrl(undefined as any)).toBe('');
+  });
+
+  it('should return HTTP URLs as is', () => {
+    const httpUrl = 'http://example.com/image.png';
+    const httpsUrl = 'https://example.com/image.png';
+    
+    expect(getIpfsUrl(httpUrl)).toBe(httpUrl);
+    expect(getIpfsUrl(httpsUrl)).toBe(httpsUrl);
+  });
+
+  it('should convert ipfs:// URLs to gateway URLs', () => {
+    const ipfsUrl = 'ipfs://QmTest123456789';
+    const expectedUrl = 'https://gateway.pinata.cloud/ipfs/QmTest123456789';
+    
+    expect(getIpfsUrl(ipfsUrl)).toBe(expectedUrl);
+  });
+
+  it('should handle raw IPFS hashes', () => {
+    const hash = 'QmTest123456789';
+    const expectedUrl = 'https://gateway.pinata.cloud/ipfs/QmTest123456789';
+    
+    expect(getIpfsUrl(hash)).toBe(expectedUrl);
   });
 });
