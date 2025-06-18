@@ -6,7 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint && tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:e2e": "echo 'E2E tests configured but Playwright not installed. Run: npx playwright install'",
