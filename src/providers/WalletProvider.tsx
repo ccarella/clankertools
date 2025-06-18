@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import sdk from '@farcaster/frame-sdk';
+import { BASE_NETWORKS } from '@/lib/network-config';
 
 interface WalletState {
   isConnected: boolean;
@@ -20,8 +21,8 @@ interface WalletContextType extends WalletState {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'wallet-state';
-const BASE_CHAIN_ID = 8453;
-const BASE_SEPOLIA_CHAIN_ID = 84532;
+const BASE_CHAIN_ID = BASE_NETWORKS.mainnet.chainId;
+const BASE_SEPOLIA_CHAIN_ID = BASE_NETWORKS.testnet.chainId;
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [walletState, setWalletState] = useState<WalletState>(() => {

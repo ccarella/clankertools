@@ -124,6 +124,8 @@ describe('POST /api/deploy/simple', () => {
       tokenAddress: mockTokenAddress,
       txHash: mockTxHash,
       imageUrl: mockImageUrl,
+      network: 'Base Sepolia',
+      chainId: 84532,
     });
 
     // Check CORS headers

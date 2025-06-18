@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BASE_NETWORKS } from '@/lib/network-config';
 
 interface BalanceResult {
   balance: string | null;
@@ -7,8 +8,8 @@ interface BalanceResult {
 }
 
 const RPC_URLS: Record<number, string> = {
-  8453: 'https://mainnet.base.org', // Base mainnet
-  84532: 'https://sepolia.base.org', // Base Sepolia
+  [BASE_NETWORKS.mainnet.chainId]: BASE_NETWORKS.mainnet.rpcUrl,
+  [BASE_NETWORKS.testnet.chainId]: BASE_NETWORKS.testnet.rpcUrl,
 };
 
 export function useWalletBalance(address: string | null, chainId: number | null): BalanceResult {

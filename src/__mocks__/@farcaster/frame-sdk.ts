@@ -10,6 +10,7 @@ const mockSdk = {
   actions: {
     ready: jest.fn().mockResolvedValue(undefined),
     signIn: jest.fn() as jest.MockedFunction<() => Promise<void>>,
+    openUrl: jest.fn().mockResolvedValue(undefined),
   },
   quickAuth: {
     token: null,
