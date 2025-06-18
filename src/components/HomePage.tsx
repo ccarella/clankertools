@@ -41,9 +41,9 @@ const launchOptions = [
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen pb-20">
-      <div className="flex-1 px-4 py-6">
-        <div className="space-y-3">
+    <div className="flex flex-col pb-16">
+      <div className="px-3 py-4">
+        <div className="space-y-2.5">
           {launchOptions.map((option) => (
             <LaunchOptionCard
               key={option.href}

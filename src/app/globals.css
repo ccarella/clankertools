@@ -104,3 +104,37 @@
 .safe-area-pt {
   padding-top: env(safe-area-inset-top);
 }
+
+/* Native app-like scrolling */
+.-webkit-overflow-scrolling-touch {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent text selection for UI elements */
+@layer utilities {
+  .select-none {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+/* Prevent overscroll bounce on body */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* Ensure full height on mobile browsers */
+html {
+  height: -webkit-fill-available;
+}
+
+body {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+/* Disable pull-to-refresh on mobile */
+body {
+  overscroll-behavior-y: contain;
+}
