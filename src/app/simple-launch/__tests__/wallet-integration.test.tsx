@@ -22,6 +22,8 @@ jest.mock('@/components/wallet/WalletButton', () => ({
   WalletButton: () => <button>Connect Wallet</button>,
 }));
 
+jest.mock('@/providers/HapticProvider');
+
 // Mock fetch
 global.fetch = jest.fn();
 

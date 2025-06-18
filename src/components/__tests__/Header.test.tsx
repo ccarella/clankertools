@@ -29,6 +29,8 @@ jest.mock('@farcaster/frame-sdk', () => ({
   },
 }))
 
+jest.mock('@/providers/HapticProvider')
+
 describe('Header', () => {
   beforeEach(() => {
     jest.clearAllMocks()

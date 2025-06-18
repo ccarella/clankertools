@@ -6,6 +6,7 @@ import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 
 // Mock the auth hook
 jest.mock('@/components/providers/FarcasterAuthProvider');
+jest.mock('@/providers/HapticProvider');
 
 const mockUseFarcasterAuth = useFarcasterAuth as jest.MockedFunction<typeof useFarcasterAuth>;
 

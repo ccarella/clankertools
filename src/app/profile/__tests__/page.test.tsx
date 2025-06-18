@@ -4,6 +4,7 @@ import ProfilePage from '../page';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 
 jest.mock('@/components/providers/FarcasterAuthProvider');
+jest.mock('@/providers/HapticProvider');
 jest.mock('@/components/auth', () => ({
   AuthStatus: () => <div>Auth Status</div>,
 }));
