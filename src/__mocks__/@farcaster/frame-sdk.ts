@@ -10,7 +10,11 @@ const mockSdk = {
   actions: {
     ready: jest.fn().mockResolvedValue(undefined),
     signIn: jest.fn() as jest.MockedFunction<() => Promise<void>>,
+    signOut: jest.fn().mockResolvedValue(undefined),
     openUrl: jest.fn().mockResolvedValue(undefined),
+    close: jest.fn().mockResolvedValue(undefined),
+    composeCast: jest.fn().mockResolvedValue(undefined),
+    addMiniApp: jest.fn().mockResolvedValue(undefined),
   },
   quickAuth: {
     token: null,
@@ -53,7 +57,11 @@ export const mockSDK = mockSdk;
 export const resetSDKMocks = () => {
   mockSdk.actions.ready.mockClear();
   mockSdk.actions.signIn.mockClear();
+  mockSdk.actions.signOut.mockClear();
   mockSdk.actions.openUrl.mockClear();
+  mockSdk.actions.close.mockClear();
+  mockSdk.actions.composeCast.mockClear();
+  mockSdk.actions.addMiniApp.mockClear();
   mockSdk.quickAuth.getToken.mockClear();
   mockSdk.quickAuth.fetch.mockClear();
   mockSdk.wallet.getEthereumProvider.mockClear();

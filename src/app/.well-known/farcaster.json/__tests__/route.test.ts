@@ -21,13 +21,14 @@ describe('GET /.well-known/farcaster.json', () => {
     
     expect(data).toHaveProperty('version')
     expect(data).toHaveProperty('name')
-    expect(data).toHaveProperty('short_name')
-    expect(data).toHaveProperty('launch_url')
-    expect(data).toHaveProperty('icons')
-    expect(data).toHaveProperty('start_url')
-    expect(data).toHaveProperty('display')
-    expect(data).toHaveProperty('theme_color')
-    expect(data).toHaveProperty('background_color')
+    expect(data).toHaveProperty('description')
+    expect(data).toHaveProperty('icon')
+    expect(data).toHaveProperty('splashScreenUrl')
+    expect(data).toHaveProperty('aboutUrl')
+    expect(data).toHaveProperty('miniAppUrl')
+    expect(data).toHaveProperty('notifications')
+    expect(data).toHaveProperty('homeUrl')
+    expect(data).toHaveProperty('metadata')
   })
 
   it('should have correct manifest structure', async () => {
@@ -37,14 +38,13 @@ describe('GET /.well-known/farcaster.json', () => {
     const response = await GET(mockRequest)
     const data = await response.json()
     
-    expect(data.version).toBe('1')
-    expect(data.name).toBe('Clanker Tools')
-    expect(data.short_name).toBe('Clanker')
-    expect(data.launch_url).toBe('/')
-    expect(data.start_url).toBe('/')
-    expect(data.display).toBe('standalone')
-    expect(data.theme_color).toBe('#40E0D0')
-    expect(data.background_color).toBe('#282A36')
+    expect(data.version).toBe('1.0.0')
+    expect(data.name).toBe('ClankerTools')
+    expect(data.description).toBe('Launch tokens on Clanker with ease')
+    expect(data.miniAppUrl).toMatch(/^https?:\/\//)
+    expect(data.homeUrl).toMatch(/^https?:\/\//)
+    expect(data.metadata.theme_color).toBe('#40E0D0')
+    expect(data.metadata.background_color).toBe('#282A36')
   })
 
   it('should have valid icon configuration', async () => {
@@ -54,14 +54,10 @@ describe('GET /.well-known/farcaster.json', () => {
     const response = await GET(mockRequest)
     const data = await response.json()
     
-    expect(Array.isArray(data.icons)).toBe(true)
-    expect(data.icons.length).toBeGreaterThan(0)
-    
-    data.icons.forEach((icon: { src: string; sizes: string; type: string }) => {
-      expect(icon).toHaveProperty('src')
-      expect(icon).toHaveProperty('sizes')
-      expect(icon).toHaveProperty('type')
-    })
+    expect(data.icon).toBeTruthy()
+    expect(data.icon).toMatch(/\.(svg|png|jpg|jpeg)$/i)
+    expect(data.splashScreenUrl).toBeTruthy()
+    expect(data.splashScreenUrl).toMatch(/\.(png|jpg|jpeg)$/i)
   })
 
   it('should have caching headers', async () => {
@@ -71,5 +67,6 @@ describe('GET /.well-known/farcaster.json', () => {
     const response = await GET(mockRequest)
     
     expect(response.headers.get('cache-control')).toBeTruthy()
+    expect(response.headers.get('access-control-allow-origin')).toBe('*')
   })
 })
