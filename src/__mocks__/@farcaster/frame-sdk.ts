@@ -17,14 +17,19 @@ const mockSdk = {
     getToken: jest.fn(),
     fetch: jest.fn(),
   } as unknown,
-  context: Promise.resolve({
-    user: null,
-    client: {
-      clientFid: 0,
-      frameActionBody: {},
-      added: false,
-    },
-  }),
+  context: {
+    then: jest.fn((callback) => {
+      callback({
+        user: null,
+        client: {
+          clientFid: 0,
+          frameActionBody: {},
+          added: false,
+        },
+      });
+      return Promise.resolve();
+    }),
+  },
   wallet: {
     ethProvider: mockProvider,
     getEthereumProvider: jest.fn().mockResolvedValue(mockProvider),
