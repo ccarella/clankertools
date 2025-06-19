@@ -74,7 +74,8 @@ describe('Mobile Layout Tests', () => {
         />
       );
 
-      const card = container.querySelector('.flex.items-center.p-3');
+      const card = container.querySelector('.flex.items-center.p-3\\.5');
+      expect(card).toBeTruthy();
       expect(card).toHaveClass('rounded-xl');
       
       // Ensure the card doesn't have fixed widths that could cause overflow

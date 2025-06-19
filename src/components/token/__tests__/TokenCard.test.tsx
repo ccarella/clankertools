@@ -8,7 +8,7 @@ jest.mock('@/components/profile', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ProfileBadge: ({ user, variant }: { user: any; variant: any }) => (
     <div data-testid="profile-badge" data-variant={variant}>
-      {user?.display_name}
+      {user?.displayName || user?.display_name}
     </div>
   )
 }))
@@ -31,16 +31,13 @@ const mockToken = {
 const mockCreator = {
   fid: 12345,
   username: 'testcreator',
-  display_name: 'Test Creator',
-  pfp_url: 'https://example.com/avatar.jpg',
-  bio: { text: 'Token creator' },
-  follower_count: 5000,
-  following_count: 250,
-  verified_addresses: {
-    eth_addresses: ['0x123...'],
-    sol_addresses: []
-  },
-  custody_address: '0xabc...'
+  displayName: 'Test Creator',
+  pfp: { url: 'https://example.com/avatar.jpg' },
+  profile: { bio: { text: 'Token creator' } },
+  followerCount: 5000,
+  followingCount: 250,
+  verifications: ['0x123...'],
+  custodyAddress: '0xabc...'
 }
 
 describe('TokenCard with Social Proof', () => {
@@ -51,8 +48,10 @@ describe('TokenCard with Social Proof', () => {
   it('renders token basic information', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -64,8 +63,10 @@ describe('TokenCard with Social Proof', () => {
   it('displays creator profile badge', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -77,8 +78,10 @@ describe('TokenCard with Social Proof', () => {
   it('shows creator follower count as social proof', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -89,8 +92,10 @@ describe('TokenCard with Social Proof', () => {
   it('displays market cap', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -101,8 +106,10 @@ describe('TokenCard with Social Proof', () => {
   it('shows holder count', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -114,8 +121,10 @@ describe('TokenCard with Social Proof', () => {
   it('displays 24h volume', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -126,8 +135,10 @@ describe('TokenCard with Social Proof', () => {
   it('shows positive price change', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -139,8 +150,10 @@ describe('TokenCard with Social Proof', () => {
   it('shows negative price change', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     const tokenWithNegativeChange = { ...mockToken, priceChange24h: -8.3 }
@@ -153,8 +166,10 @@ describe('TokenCard with Social Proof', () => {
   it('shows verification badge for verified creators', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -165,16 +180,15 @@ describe('TokenCard with Social Proof', () => {
   it('does not show verification badge for unverified creators', () => {
     const unverifiedCreator = {
       ...mockCreator,
-      verified_addresses: {
-        eth_addresses: [],
-        sol_addresses: []
-      }
+      verifications: []
     }
 
     mockUseNeynarUser.mockReturnValue({
       user: unverifiedCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -185,8 +199,10 @@ describe('TokenCard with Social Proof', () => {
   it('shows loading state for creator info', () => {
     mockUseNeynarUser.mockReturnValue({
       user: undefined,
+      addresses: undefined,
       loading: true,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -197,8 +213,10 @@ describe('TokenCard with Social Proof', () => {
   it('handles error state for creator info', () => {
     mockUseNeynarUser.mockReturnValue({
       user: undefined,
+      addresses: undefined,
       loading: false,
-      error: 'Failed to load creator'
+      error: 'Failed to load creator',
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -209,8 +227,10 @@ describe('TokenCard with Social Proof', () => {
   it('displays time since launch', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     jest.useFakeTimers()
@@ -226,8 +246,10 @@ describe('TokenCard with Social Proof', () => {
   it('renders token image', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} />)
@@ -240,8 +262,10 @@ describe('TokenCard with Social Proof', () => {
   it('handles compact variant', () => {
     mockUseNeynarUser.mockReturnValue({
       user: mockCreator,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<TokenCard token={mockToken} variant="compact" />)

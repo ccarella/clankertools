@@ -17,19 +17,7 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/test-path',
 }))
 
-jest.mock('@farcaster/frame-sdk', () => ({
-  __esModule: true,
-  default: {
-    actions: {
-      ready: jest.fn(),
-    },
-    back: {
-      enableWebNavigation: jest.fn(),
-      show: jest.fn(),
-      hide: jest.fn(),
-    },
-  },
-}))
+jest.mock('@farcaster/frame-sdk')
 
 describe('FarcasterProvider', () => {
   beforeEach(() => {

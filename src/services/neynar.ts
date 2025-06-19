@@ -32,16 +32,18 @@ export interface PaginationOptions {
 }
 
 export class NeynarService {
-  private apiKey: string;
+  private apiKey: string | undefined;
   private baseUrl = 'https://api.neynar.com/v2/farcaster';
 
   constructor() {
-    const apiKey = process.env.NEYNAR_API_KEY;
-    if (!apiKey) {
+    this.apiKey = process.env.NEYNAR_API_KEY;
+  }
+  
+  private getApiKey(): string {
+    if (!this.apiKey) {
       throw new Error('NEYNAR_API_KEY environment variable is not set');
     }
-    
-    this.apiKey = apiKey;
+    return this.apiKey;
   }
 
   private async fetchAPI(endpoint: string, options?: RequestInit) {
@@ -49,7 +51,7 @@ export class NeynarService {
       ...options,
       headers: {
         'accept': 'application/json',
-        'api_key': this.apiKey,
+        'api_key': this.getApiKey(),
         ...options?.headers,
       },
     });

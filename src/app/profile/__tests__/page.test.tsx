@@ -8,6 +8,13 @@ jest.mock('@/providers/HapticProvider');
 jest.mock('@/components/auth', () => ({
   AuthStatus: () => <div>Auth Status</div>,
 }));
+jest.mock('@/hooks/useNeynar', () => ({
+  useNeynarUser: jest.fn(() => ({
+    user: null,
+    loading: false,
+    error: null,
+  })),
+}));
 
 describe('ProfilePage Security', () => {
   const mockUseFarcasterAuth = useFarcasterAuth as jest.MockedFunction<typeof useFarcasterAuth>;

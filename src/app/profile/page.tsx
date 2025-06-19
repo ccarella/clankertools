@@ -10,6 +10,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
+// Force dynamic rendering to prevent build-time errors
+export const dynamic = 'force-dynamic';
+
 export default function ProfilePage() {
   const { user, isAuthenticated, isLoading, getQuickAuthToken } = useFarcasterAuth();
   const { user: neynarUser, loading: neynarLoading, error: neynarError } = useNeynarUser({ fid: user?.fid });

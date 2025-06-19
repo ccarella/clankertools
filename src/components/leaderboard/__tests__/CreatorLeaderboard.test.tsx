@@ -8,7 +8,7 @@ jest.mock('@/components/profile', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ProfileBadge: ({ user, variant }: { user: any; variant: any }) => (
     <div data-testid="profile-badge" data-variant={variant}>
-      {user?.display_name}
+      {user?.displayName}
     </div>
   )
 }))
