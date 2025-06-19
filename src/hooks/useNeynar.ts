@@ -4,7 +4,7 @@ import { NeynarService, NeynarUser, WalletAddress } from '@/services/neynar';
 let neynarServiceInstance: NeynarService | null = null;
 
 export function useNeynar() {
-  if (!neynarServiceInstance) {
+  if (!neynarServiceInstance && typeof window !== 'undefined') {
     neynarServiceInstance = new NeynarService();
   }
   return neynarServiceInstance;
@@ -35,6 +35,7 @@ export function useNeynarUser(options: UseNeynarUserOptions): UseNeynarUserResul
 
   const fetchUser = useCallback(async () => {
     if (!fid && !username) return;
+    if (!neynarService) return; // Skip if service not available (during SSR)
     
     setLoading(true);
     setError(undefined);
