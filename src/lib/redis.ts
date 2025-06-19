@@ -35,12 +35,19 @@ export async function storeUserToken(fid: string, token: UserToken): Promise<voi
   const client = getRedisClient()
   const key = `user:tokens:${fid}`
   
-  await client.zadd(key, {
-    score: new Date(token.createdAt).getTime(),
-    member: JSON.stringify(token)
-  })
+  // Get existing tokens
+  const existingTokens = await client.get<UserToken[]>(key) || []
   
-  await client.expire(key, 365 * 24 * 60 * 60)
+  // Check if token already exists
+  const exists = existingTokens.some(t => t.address.toLowerCase() === token.address.toLowerCase())
+  if (!exists) {
+    // Add new token to the beginning (newest first)
+    existingTokens.unshift(token)
+    
+    // Store updated array with expiration
+    await client.set(key, existingTokens)
+    await client.expire(key, 365 * 24 * 60 * 60)
+  }
 }
 
 export async function getUserTokens(
@@ -51,24 +58,22 @@ export async function getUserTokens(
   const client = getRedisClient()
   const key = `user:tokens:${fid}`
   
+  // Get all tokens
+  const allTokens = await client.get<UserToken[]>(key) || []
+  
+  // Sort by creation date (newest first)
+  const sortedTokens = allTokens.sort((a, b) => 
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  )
+  
+  // Apply pagination
   const start = cursor ? parseInt(cursor, 10) : 0
-  const end = start + limit - 1
+  const paginatedTokens = sortedTokens.slice(start, start + limit)
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const results = await (client as any).zrevrange(key, start, end + 1)
-  
-  const tokens = results.slice(0, limit).map((item: string) => {
-    try {
-      return JSON.parse(item) as UserToken
-    } catch {
-      return null
-    }
-  }).filter(Boolean) as UserToken[]
-  
-  const hasMore = results.length > limit
+  const hasMore = start + limit < sortedTokens.length
   const nextCursor = hasMore ? String(start + limit) : null
   
-  return { tokens, nextCursor }
+  return { tokens: paginatedTokens, nextCursor }
 }
 
 export async function updateUserTokenMetrics(
@@ -76,19 +81,20 @@ export async function updateUserTokenMetrics(
   tokenAddress: string,
   metrics: Partial<UserToken>
 ): Promise<void> {
-  const { tokens } = await getUserTokens(fid, undefined, 100)
-  const token = tokens.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase())
-  
-  if (!token) return
-  
-  const updatedToken = { ...token, ...metrics }
   const client = getRedisClient()
   const key = `user:tokens:${fid}`
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (client as any).zrem(key, JSON.stringify(token))
-  await client.zadd(key, {
-    score: new Date(token.createdAt).getTime(),
-    member: JSON.stringify(updatedToken)
-  })
+  // Get all tokens
+  const tokens = await client.get<UserToken[]>(key) || []
+  
+  // Find and update the token
+  const tokenIndex = tokens.findIndex(t => t.address.toLowerCase() === tokenAddress.toLowerCase())
+  if (tokenIndex === -1) return
+  
+  // Update the token
+  tokens[tokenIndex] = { ...tokens[tokenIndex], ...metrics }
+  
+  // Store updated array with expiration
+  await client.set(key, tokens)
+  await client.expire(key, 365 * 24 * 60 * 60)
 }
