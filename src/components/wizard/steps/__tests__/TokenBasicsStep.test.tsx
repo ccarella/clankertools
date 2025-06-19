@@ -124,7 +124,9 @@ describe('TokenBasicsStep', () => {
     render(<TokenBasicsStep {...defaultProps} data={data} />);
 
     const imagePreview = screen.getByAltText('Token preview');
-    expect(imagePreview).toHaveAttribute('src', '/test-image.png');
+    expect(imagePreview).toBeInTheDocument();
+    // Next.js Image component transforms the src, so check it contains the original URL
+    expect(imagePreview.getAttribute('src')).toContain('test-image.png');
   });
 
   it('disables inputs when not active', () => {
