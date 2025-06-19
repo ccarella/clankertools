@@ -38,8 +38,24 @@ export default function FarcasterShare({
       // Frame URL for rich preview
       const frameUrl = `${window.location.origin}/api/frame/token/${tokenAddress}`;
       
-      // Try using castIntent if openComposer is not available
-      if (sdk.actions.openUrl) {
+      // Use composeCast if available, otherwise fall back to openUrl
+      if (sdk.actions.composeCast) {
+        const composeParams: { text: string; channelKey?: string } = {
+          text: `${castText}\n\n${frameUrl}`,
+        };
+        
+        if (channel) {
+          composeParams.channelKey = channel;
+        }
+        
+        const result = await sdk.actions.composeCast(composeParams);
+        
+        // User cancelled the cast
+        if (result === null) {
+          setLoading(false);
+          return;
+        }
+      } else if (sdk.actions.openUrl) {
         const text = encodeURIComponent(castText);
         const embedsParam = encodeURIComponent(frameUrl);
         const castUrl = `https://warpcast.com/~/compose?text=${text}&embeds[]=${embedsParam}${channel ? `&channelKey=${channel}` : ''}`;
