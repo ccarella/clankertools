@@ -75,12 +75,15 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
     throw new Error(`IPFS upload failed: ${response.status} ${response.statusText}`);
   }
 
-  const data = await response.json();
-  console.log('[IPFS] Upload response:', data);
+  const responseData = await response.json();
+  console.log('[IPFS] Upload response:', responseData);
+  
+  // Handle both direct response and data-wrapped response
+  const data = responseData.data || responseData;
   
   if (!data.cid) {
-    console.error('[IPFS] Invalid response structure:', data);
-    throw new Error(`Invalid response from IPFS: ${JSON.stringify(data)}`);
+    console.error('[IPFS] Invalid response structure:', responseData);
+    throw new Error(`Invalid response from IPFS: ${JSON.stringify(responseData)}`);
   }
 
   return `ipfs://${data.cid}`;

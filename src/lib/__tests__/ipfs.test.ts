@@ -18,13 +18,15 @@ describe('uploadToIPFS', () => {
     const mockResponse = {
       ok: true,
       json: jest.fn().mockResolvedValue({
-        id: '349f1bb2-5d59-4cab-9966-e94c028a05b7',
-        name: 'clanker-token-123456789',
-        cid: mockCid,
-        size: 10,
-        number_of_files: 1,
-        mime_type: 'image/png',
-        group_id: null
+        data: {
+          id: '349f1bb2-5d59-4cab-9966-e94c028a05b7',
+          name: 'clanker-token-123456789',
+          cid: mockCid,
+          size: 10,
+          number_of_files: 1,
+          mime_type: 'image/png',
+          group_id: null
+        }
       }),
     };
     (fetch as jest.Mock).mockResolvedValue(mockResponse);
@@ -81,12 +83,14 @@ describe('uploadToIPFS', () => {
     const mockResponse = {
       ok: true,
       json: jest.fn().mockResolvedValue({
-        id: '349f1bb2',
-        cid: mockCid,
-        size: 10,
-        number_of_files: 1,
-        mime_type: 'image/png',
-        group_id: null
+        data: {
+          id: '349f1bb2',
+          cid: mockCid,
+          size: 10,
+          number_of_files: 1,
+          mime_type: 'image/png',
+          group_id: null
+        }
       }),
     };
     (fetch as jest.Mock).mockResolvedValue(mockResponse);
