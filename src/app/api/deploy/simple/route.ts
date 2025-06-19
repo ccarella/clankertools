@@ -285,11 +285,20 @@ export async function POST(request: NextRequest) {
             details: error.message,
             userMessage: 'The image upload service is temporarily down. Please try again in a few moments.'
           };
+        } else if (error.message.includes('Invalid response from IPFS')) {
+          errorMessage = 'Image upload service returned an unexpected response';
+          errorDetails = {
+            type: 'IPFS_RESPONSE_ERROR',
+            details: error.message,
+            userMessage: 'The image upload service returned an invalid response. This may be due to expired credentials or API changes.',
+            technical: error.message
+          };
         } else {
           errorDetails = {
             type: 'UNKNOWN_ERROR',
             details: error.message,
-            userMessage: 'An unexpected error occurred during image upload'
+            userMessage: 'An unexpected error occurred during image upload',
+            technical: error.message
           };
         }
       }
