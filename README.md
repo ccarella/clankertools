@@ -1,6 +1,6 @@
 # Clanker Tools
 
-![Test Coverage](https://img.shields.io/badge/coverage-92%25-brightgreen)
+![Test Coverage](https://img.shields.io/badge/coverage-92.1%25-brightgreen)
 ![TypeScript](https://img.shields.io/badge/TypeScript-Strict-blue)
 ![Next.js](https://img.shields.io/badge/Next.js-15.3.3-black)
 ![License](https://img.shields.io/badge/license-MIT-green)
