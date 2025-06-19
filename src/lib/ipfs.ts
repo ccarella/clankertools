@@ -51,13 +51,13 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   });
   formData.append('pinataMetadata', metadata);
 
-  // Pin to IPFS using Pinata with JWT authentication
-  console.log('[IPFS] Uploading file to Pinata...', {
+  // Pin to IPFS using Pinata v3 API with JWT authentication
+  console.log('[IPFS] Uploading file to Pinata v3...', {
     fileSize: imageBlob.size,
     fileType: imageBlob.type,
   });
   
-  const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
+  const response = await fetch('https://uploads.pinata.cloud/v3/files', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${pinataJWT}`,
@@ -76,11 +76,12 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   }
 
   const data = await response.json();
-  console.log('[IPFS] Upload successful:', { hash: data.Hash });
+  console.log('[IPFS] Upload response:', data);
   
-  if (!data.Hash) {
-    throw new Error('Invalid response from IPFS');
+  if (!data.cid) {
+    console.error('[IPFS] Invalid response structure:', data);
+    throw new Error(`Invalid response from IPFS: ${JSON.stringify(data)}`);
   }
 
-  return `ipfs://${data.Hash}`;
+  return `ipfs://${data.cid}`;
 }

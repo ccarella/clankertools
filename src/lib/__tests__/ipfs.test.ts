@@ -14,11 +14,17 @@ describe('uploadToIPFS', () => {
   });
 
   it('should upload image to IPFS successfully', async () => {
-    const mockHash = 'QmTest123456789';
+    const mockCid = 'bafybeihgxdzljxb26q6nf3r3eifqeedsvt2eubqtskghpme66cgjyw4fra';
     const mockResponse = {
       ok: true,
       json: jest.fn().mockResolvedValue({
-        Hash: mockHash,
+        id: '349f1bb2-5d59-4cab-9966-e94c028a05b7',
+        name: 'clanker-token-123456789',
+        cid: mockCid,
+        size: 10,
+        number_of_files: 1,
+        mime_type: 'image/png',
+        group_id: null
       }),
     };
     (fetch as jest.Mock).mockResolvedValue(mockResponse);
@@ -26,9 +32,9 @@ describe('uploadToIPFS', () => {
     const imageBlob = new Blob(['image data'], { type: 'image/png' });
     const result = await uploadToIPFS(imageBlob);
 
-    expect(result).toBe(`ipfs://${mockHash}`);
+    expect(result).toBe(`ipfs://${mockCid}`);
     expect(fetch).toHaveBeenCalledWith(
-      'https://api.pinata.cloud/pinning/pinFileToIPFS',
+      'https://uploads.pinata.cloud/v3/files',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
@@ -71,11 +77,16 @@ describe('uploadToIPFS', () => {
   });
 
   it('should add metadata to the upload', async () => {
-    const mockHash = 'QmTest123456789';
+    const mockCid = 'bafybeihgxdzljxb26q6nf3r3eifqeedsvt2eubqtskghpme66cgjyw4fra';
     const mockResponse = {
       ok: true,
       json: jest.fn().mockResolvedValue({
-        Hash: mockHash,
+        id: '349f1bb2',
+        cid: mockCid,
+        size: 10,
+        number_of_files: 1,
+        mime_type: 'image/png',
+        group_id: null
       }),
     };
     (fetch as jest.Mock).mockResolvedValue(mockResponse);
@@ -97,7 +108,7 @@ describe('uploadToIPFS', () => {
     const mockResponse = {
       ok: true,
       json: jest.fn().mockResolvedValue({
-        // Missing Hash field
+        // Missing cid field
         success: true,
       }),
     };
