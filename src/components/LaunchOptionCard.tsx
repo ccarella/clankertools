@@ -1,5 +1,9 @@
+'use client';
+
+import React from 'react';
 import Link from 'next/link';
 import { LucideIcon } from 'lucide-react';
+import { useHaptic } from '@/providers/HapticProvider';
 
 interface LaunchOptionCardProps {
   title: string;
@@ -14,11 +18,33 @@ export default function LaunchOptionCard({
   description, 
   href, 
   icon: Icon,
-  iconColor = 'bg-primary'
+  iconColor = 'bg-purple-500'
 }: LaunchOptionCardProps) {
+  const haptic = useHaptic();
+  const hasTriggeredRef = React.useRef(false);
+
+  const handleInteraction = () => {
+    // Prevent double triggering on devices that fire both touch and click
+    if (hasTriggeredRef.current) {
+      return;
+    }
+    hasTriggeredRef.current = true;
+    haptic.cardSelect();
+    
+    // Reset after a short delay
+    setTimeout(() => {
+      hasTriggeredRef.current = false;
+    }, 100);
+  };
+
   return (
-    <Link href={href} className="block">
-      <div className="flex items-center p-3 bg-background border border-border rounded-xl hover:bg-accent/5 active:bg-accent/10 transition-colors">
+    <Link 
+      href={href} 
+      className="block"
+      onClick={handleInteraction}
+      onTouchStart={handleInteraction}
+    >
+      <div className="flex items-center p-3.5 bg-background border border-border rounded-xl hover:bg-card-hover active:scale-[0.98] transition-all">
         <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${iconColor} mr-3 shrink-0`}>
           <Icon size={20} className="text-white" />
         </div>
