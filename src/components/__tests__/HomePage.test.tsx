@@ -1,17 +1,48 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { HapticProvider } from '@/providers/HapticProvider';
 import HomePage from '../HomePage';
 
 // Mock next/link
 jest.mock('next/link', () => {
-  const MockLink = ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
+  const MockLink = ({ children, href, ...props }: { children: React.ReactNode; href: string }) => (
+    <a href={href} {...props}>{children}</a>
   );
   MockLink.displayName = 'MockLink';
   return MockLink;
 });
 
+// Mock the haptic feedback service
+jest.mock('@/services/haptic-feedback', () => ({
+  HapticFeedbackService: {
+    getInstance: jest.fn(() => ({
+      cardSelect: jest.fn().mockResolvedValue(undefined),
+    })),
+  },
+  getHapticFeedbackService: jest.fn().mockResolvedValue({
+    cardSelect: jest.fn().mockResolvedValue(undefined),
+  }),
+}));
+
+// Mock the useHaptic hook
+const mockCardSelect = jest.fn();
+jest.mock('@/providers/HapticProvider', () => ({
+  ...jest.requireActual('@/providers/HapticProvider'),
+  useHaptic: () => ({
+    cardSelect: mockCardSelect,
+  }),
+}));
+
 describe('HomePage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const renderWithHaptic = (ui: React.ReactElement) => {
+    return render(
+      <HapticProvider>{ui}</HapticProvider>
+    );
+  };
   it('renders all launch option cards', () => {
     render(<HomePage />);
     
@@ -70,5 +101,44 @@ describe('HomePage', () => {
     // Check for proper bottom spacing for navigation
     const mainDiv = container.querySelector('.pb-16');
     expect(mainDiv).toBeInTheDocument();
+  });
+
+  describe('Haptic Feedback', () => {
+    it('triggers haptic feedback when clicking on template cards', () => {
+      renderWithHaptic(<HomePage />);
+      
+      const cards = screen.getAllByRole('link');
+      
+      // Click on Simple Launch card
+      fireEvent.click(cards[0]);
+      expect(mockCardSelect).toHaveBeenCalledTimes(1);
+      
+      // Click on The Works card
+      fireEvent.click(cards[4]);
+      expect(mockCardSelect).toHaveBeenCalledTimes(2);
+    });
+
+    it('triggers haptic feedback on touch for mobile users', () => {
+      renderWithHaptic(<HomePage />);
+      
+      const cards = screen.getAllByRole('link');
+      
+      // Touch Simple Launch card
+      fireEvent.touchStart(cards[0]);
+      expect(mockCardSelect).toHaveBeenCalledTimes(1);
+    });
+
+    it('triggers haptic feedback for all template options', () => {
+      renderWithHaptic(<HomePage />);
+      
+      const cards = screen.getAllByRole('link');
+      expect(cards).toHaveLength(5);
+      
+      // Test each card triggers haptic
+      cards.forEach((card, index) => {
+        fireEvent.click(card);
+        expect(mockCardSelect).toHaveBeenCalledTimes(index + 1);
+      });
+    });
   });
 });
