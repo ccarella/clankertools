@@ -324,6 +324,55 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate and format private key
+    let formattedPrivateKey: `0x${string}`;
+    try {
+      // privateKey is guaranteed to be defined here due to earlier check
+      // Remove any whitespace
+      const cleanKey = privateKey!.trim();
+      
+      // Check if it starts with 0x
+      if (cleanKey.startsWith('0x')) {
+        // Validate length (should be 66 characters: 0x + 64 hex chars)
+        if (cleanKey.length !== 66) {
+          throw new Error(`Invalid private key length: expected 66 characters, got ${cleanKey.length}`);
+        }
+        formattedPrivateKey = cleanKey as `0x${string}`;
+      } else {
+        // Add 0x prefix if missing
+        if (cleanKey.length !== 64) {
+          throw new Error(`Invalid private key length: expected 64 hex characters, got ${cleanKey.length}`);
+        }
+        formattedPrivateKey = `0x${cleanKey}`;
+      }
+      
+      // Validate hex format
+      if (!/^0x[a-fA-F0-9]{64}$/.test(formattedPrivateKey)) {
+        throw new Error('Private key must be a valid hexadecimal string');
+      }
+    } catch (error) {
+      console.error('Private key validation error:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Invalid private key configuration',
+          errorDetails: {
+            type: 'CONFIGURATION_ERROR',
+            details: error instanceof Error ? error.message : 'Invalid private key format',
+            userMessage: 'The server private key is not properly configured. Please contact support.',
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'private_key_validation',
+            keyLength: privateKey?.length || 0,
+            hasPrefix: privateKey?.startsWith('0x') || false,
+            requestContext,
+          }
+        },
+        { status: 500, headers: getSecurityHeaders(request) }
+      );
+    }
+
     // Get configurable pool values
     const initialMarketCap = process.env.INITIAL_MARKET_CAP || '0.1';
     const rawCreatorReward = parseInt(process.env.CREATOR_REWARD || '80', 10);
@@ -427,7 +476,33 @@ export async function POST(request: NextRequest) {
     }
 
     // Setup wallet and clients with the configured network
-    const account = privateKeyToAccount(privateKey as `0x${string}`);
+    let account;
+    try {
+      debugContext.step = 'account_creation';
+      account = privateKeyToAccount(formattedPrivateKey);
+    } catch (error) {
+      console.error('Failed to create account from private key:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: error instanceof Error ? error.message : 'Failed to create wallet account',
+          errorDetails: {
+            type: 'CONFIGURATION_ERROR',
+            details: error instanceof Error ? error.message : 'Invalid private key format',
+            userMessage: 'Failed to initialize deployment wallet. Please contact support.',
+            code: 'INVALID_PRIVATE_KEY',
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'account_creation',
+            error: error instanceof Error ? error.message : 'Unknown error',
+            requestContext,
+          }
+        },
+        { status: 500, headers: getSecurityHeaders(request) }
+      );
+    }
+    
     const chain = networkConfig.isMainnet ? base : baseSepolia;
     
     // Check for user's connected wallet if fid is provided
