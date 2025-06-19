@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "name": "ClankerTools",
+  "description": "Launch tokens on Clanker with ease",
+  "icon": "https://clankertools.com/icon.png",
+  "splashScreenUrl": "https://clankertools.com/splash.png",
+  "aboutUrl": "https://clankertools.com/about",
+  "miniAppUrl": "https://clankertools.com",
+  "notifications": {
+    "webhookUrl": "https://clankertools.com/api/webhook/farcaster"
+  }
+}

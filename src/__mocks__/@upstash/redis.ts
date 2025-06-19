@@ -31,4 +31,10 @@ export class Redis {
     // Note: key and seconds parameters are intentionally ignored in mock
     return 1;
   }
+
+  async del(key: string) {
+    const existed = this.data.has(key);
+    this.data.delete(key);
+    return existed ? 1 : 0;
+  }
 }
