@@ -5,6 +5,7 @@ jest.mock('@farcaster/frame-sdk', () => {
   const mockSdk = {
     actions: {
       openUrl: jest.fn(),
+      composeCast: jest.fn(),
     },
   };
   return {
@@ -34,6 +35,9 @@ describe('FarcasterShare', () => {
     if (sdk?.actions?.openUrl) {
       (sdk.actions.openUrl as jest.Mock).mockClear();
     }
+    if (sdk?.actions?.composeCast) {
+      (sdk.actions.composeCast as jest.Mock).mockClear();
+    }
   });
 
   it('renders share button', () => {
@@ -42,27 +46,73 @@ describe('FarcasterShare', () => {
     expect(screen.getByRole('button', { name: /share on farcaster/i })).toBeInTheDocument();
   });
 
-  it('opens composer with correct cast text', async () => {
+  it('opens composer with composeCast when available', async () => {
+    (sdk.actions.composeCast as jest.Mock).mockResolvedValue({ success: true });
+    
     render(<FarcasterShare {...defaultProps} />);
     
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(sdk.actions?.openUrl).toHaveBeenCalledWith(
-      expect.stringContaining('https://warpcast.com/~/compose?text=')
-    );
+    await waitFor(() => {
+      expect(sdk.actions.composeCast).toHaveBeenCalledWith({
+        text: expect.stringContaining('Just launched Test Token ($TEST)'),
+      });
+    });
   });
 
-  it('includes custom message in cast', () => {
+  it('falls back to openUrl when composeCast is not available', async () => {
+    // Remove composeCast from mock
+    const originalComposeCast = sdk.actions.composeCast;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (sdk.actions as any).composeCast;
+    
+    render(<FarcasterShare {...defaultProps} />);
+    
+    const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
+    fireEvent.click(shareButton);
+
+    await waitFor(() => {
+      expect(sdk.actions.openUrl).toHaveBeenCalledWith(
+        expect.stringContaining('https://warpcast.com/~/compose?text=')
+      );
+    });
+
+    // Restore composeCast
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (sdk.actions as any).composeCast = originalComposeCast;
+  });
+
+  it('includes custom message in cast', async () => {
     const customMessage = 'This is going to the moon!';
+    (sdk.actions.composeCast as jest.Mock).mockResolvedValue({ success: true });
+    
     render(<FarcasterShare {...defaultProps} message={customMessage} />);
     
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(sdk.actions?.openUrl).toHaveBeenCalledWith(
-      expect.stringContaining(encodeURIComponent(customMessage))
-    );
+    await waitFor(() => {
+      expect(sdk.actions.composeCast).toHaveBeenCalledWith({
+        text: expect.stringContaining(customMessage),
+      });
+    });
+  });
+
+  it('includes channel in composeCast when provided', async () => {
+    (sdk.actions.composeCast as jest.Mock).mockResolvedValue({ success: true });
+    
+    render(<FarcasterShare {...defaultProps} channel="clanker" />);
+    
+    const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
+    fireEvent.click(shareButton);
+
+    await waitFor(() => {
+      expect(sdk.actions.composeCast).toHaveBeenCalledWith({
+        text: expect.stringContaining('Just launched Test Token ($TEST)'),
+        channelKey: 'clanker',
+      });
+    });
   });
 
   it('disables button when not authenticated', () => {
@@ -89,7 +139,7 @@ describe('FarcasterShare', () => {
 
   it('handles share error gracefully', async () => {
     const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation();
-    (sdk.actions.openUrl as jest.Mock).mockRejectedValueOnce(new Error('Failed to open URL'));
+    (sdk.actions.composeCast as jest.Mock).mockRejectedValueOnce(new Error('Failed to compose'));
 
     render(<FarcasterShare {...defaultProps} />);
     
@@ -110,6 +160,7 @@ describe('FarcasterShare', () => {
     const trackEvent = jest.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).gtag = trackEvent;
+    (sdk.actions.composeCast as jest.Mock).mockResolvedValue({ success: true });
 
     render(<FarcasterShare {...defaultProps} />);
     
@@ -127,8 +178,8 @@ describe('FarcasterShare', () => {
 
   it('shows loading state while sharing', async () => {
     let resolveShare: () => void;
-    const mockOpenUrl = sdk.actions?.openUrl as jest.Mock;
-    mockOpenUrl?.mockImplementationOnce(() => 
+    const mockComposeCast = sdk.actions?.composeCast as jest.Mock;
+    mockComposeCast?.mockImplementationOnce(() => 
       new Promise<void>((resolve) => { resolveShare = resolve; })
     );
 
@@ -155,14 +206,34 @@ describe('FarcasterShare', () => {
     expect(screen.queryByText(/share on farcaster/i)).not.toBeInTheDocument();
   });
 
-  it('handles channel parameter', () => {
-    render(<FarcasterShare {...defaultProps} channel="clanker" />);
+  it('handles user cancellation of composeCast', async () => {
+    (sdk.actions.composeCast as jest.Mock).mockResolvedValue(null);
+    
+    render(<FarcasterShare {...defaultProps} />);
     
     const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
     fireEvent.click(shareButton);
 
-    expect(sdk.actions?.openUrl).toHaveBeenCalledWith(
-      expect.stringContaining('channelKey=clanker')
-    );
+    await waitFor(() => {
+      expect(sdk.actions.composeCast).toHaveBeenCalled();
+    });
+
+    // Should not throw error and button should be enabled again
+    expect(shareButton).toBeEnabled();
+  });
+
+  it('includes frame URL in cast text when using composeCast', async () => {
+    (sdk.actions.composeCast as jest.Mock).mockResolvedValue({ success: true });
+    
+    render(<FarcasterShare {...defaultProps} />);
+    
+    const shareButton = screen.getByRole('button', { name: /share on farcaster/i });
+    fireEvent.click(shareButton);
+
+    await waitFor(() => {
+      expect(sdk.actions.composeCast).toHaveBeenCalledWith({
+        text: expect.stringContaining(`${window.location.origin}/api/frame/token/${defaultProps.tokenAddress}`),
+      });
+    });
   });
 });

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, Copy, ExternalLink, TrendingUp, Users, Activity, Loader2 } from 'lucide-react';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
-import FarcasterShare from '@/components/token/FarcasterShare';
+import ShareTemplateSelector from '@/components/token/ShareTemplateSelector';
 import { getIpfsUrl } from '@/lib/ipfs';
 import { cn } from '@/lib/utils';
 
@@ -254,10 +254,13 @@ export default function TokenSuccessPage() {
 
         {/* Right Column - Actions */}
         <div className="lg:w-80 space-y-4">
-          <FarcasterShare
+          <ShareTemplateSelector
             tokenName={tokenData.name}
             tokenSymbol={tokenData.symbol}
             tokenAddress={tokenAddress}
+            marketCap={tokenData.marketCap ? `$${(parseFloat(tokenData.marketCap) / 1000000).toFixed(2)}M` : undefined}
+            holders={tokenData.holders}
+            volume24h={tokenData.volume24h ? `$${(parseFloat(tokenData.volume24h) / 1000).toFixed(1)}K` : undefined}
           />
           
           <a

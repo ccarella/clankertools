@@ -17,6 +17,7 @@ jest.mock('@farcaster/frame-sdk', () => ({
   default: {
     actions: {
       openUrl: jest.fn(),
+      composeCast: jest.fn(),
     },
   },
 }));
@@ -88,6 +89,7 @@ describe('TokenSuccessPage', () => {
     // Reset SDK mock
     const sdk = jest.requireMock('@farcaster/frame-sdk').default;
     sdk.actions.openUrl.mockClear();
+    sdk.actions.composeCast.mockClear();
     
     // Mock window.location.origin using delete and reassign
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
