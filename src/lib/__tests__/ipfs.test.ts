@@ -53,6 +53,7 @@ describe('uploadToIPFS', () => {
       ok: false,
       status: 500,
       statusText: 'Internal Server Error',
+      text: jest.fn().mockResolvedValue('Server error details'),
     };
     (fetch as jest.Mock).mockResolvedValue(mockResponse);
 

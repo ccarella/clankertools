@@ -240,8 +240,23 @@ export async function POST(request: NextRequest) {
       imageUrl = await uploadToIPFS(imageFile);
     } catch (error) {
       console.error('IPFS upload error:', error);
+      
+      // Provide more specific error messages
+      let errorMessage = 'Failed to upload image';
+      if (error instanceof Error) {
+        if (error.message.includes('IPFS credentials not configured')) {
+          errorMessage = 'Image upload service not configured. Please contact support.';
+        } else if (error.message.includes('File size exceeds')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('Invalid file type')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('IPFS upload failed')) {
+          errorMessage = 'Image upload service temporarily unavailable. Please try again.';
+        }
+      }
+      
       return NextResponse.json(
-        { success: false, error: 'Failed to upload image' },
+        { success: false, error: errorMessage },
         { status: 500, headers: getSecurityHeaders(request) }
       );
     }

@@ -21,6 +21,7 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   const pinataJWT = process.env.PINATA_JWT;
 
   if (!pinataJWT) {
+    console.error('[IPFS] Missing PINATA_JWT environment variable');
     throw new Error('IPFS credentials not configured');
   }
 
@@ -51,6 +52,11 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   formData.append('pinataMetadata', metadata);
 
   // Pin to IPFS using Pinata with JWT authentication
+  console.log('[IPFS] Uploading file to Pinata...', {
+    fileSize: imageBlob.size,
+    fileType: imageBlob.type,
+  });
+  
   const response = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
     method: 'POST',
     headers: {
@@ -60,10 +66,17 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   });
 
   if (!response.ok) {
+    const errorText = await response.text();
+    console.error('[IPFS] Upload failed:', {
+      status: response.status,
+      statusText: response.statusText,
+      error: errorText,
+    });
     throw new Error(`IPFS upload failed: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
+  console.log('[IPFS] Upload successful:', { hash: data.Hash });
   
   if (!data.Hash) {
     throw new Error('Invalid response from IPFS');

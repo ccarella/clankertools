@@ -215,7 +215,7 @@ describe('POST /api/deploy/simple', () => {
   });
 
   it('should handle IPFS upload failure', async () => {
-    mockUploadToIPFS.mockRejectedValue(new Error('IPFS upload failed'));
+    mockUploadToIPFS.mockRejectedValue(new Error('IPFS upload failed: 500 Internal Server Error'));
 
     const formData = new FormData();
     formData.append('name', 'Test Token');
@@ -235,10 +235,8 @@ describe('POST /api/deploy/simple', () => {
     const data = await response.json();
 
     expect(response.status).toBe(500);
-    expect(data).toEqual({
-      success: false,
-      error: 'Failed to upload image',
-    });
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('Image upload service temporarily unavailable. Please try again.');
 
     expect(mockDeployToken).not.toHaveBeenCalled();
   });
