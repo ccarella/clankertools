@@ -4,18 +4,8 @@ import { NeynarService, NeynarUser, WalletAddress } from '@/services/neynar';
 let neynarServiceInstance: NeynarService | null = null;
 
 export function useNeynar() {
-  // Only create the service instance if we're in the browser
-  if (typeof window === 'undefined') {
-    return null;
-  }
-  
   if (!neynarServiceInstance) {
-    try {
-      neynarServiceInstance = new NeynarService();
-    } catch (error) {
-      console.error('Failed to initialize NeynarService:', error);
-      return null;
-    }
+    neynarServiceInstance = new NeynarService();
   }
   return neynarServiceInstance;
 }
@@ -45,7 +35,6 @@ export function useNeynarUser(options: UseNeynarUserOptions): UseNeynarUserResul
 
   const fetchUser = useCallback(async () => {
     if (!fid && !username) return;
-    if (!neynarService) return; // Skip if service is not available
     
     setLoading(true);
     setError(undefined);
