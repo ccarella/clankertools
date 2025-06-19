@@ -571,6 +571,11 @@ export default function SimpleLaunchPage() {
                       {renderValue(errorDetails.userMessage)}
                     </div>
                   ) : null}
+                  {'code' in errorDetails && errorDetails.code ? (
+                    <div className="text-xs">
+                      <span className="font-medium">Error Code:</span> {renderValue(errorDetails.code)}
+                    </div>
+                  ) : null}
                   {'details' in errorDetails && errorDetails.details ? (
                     <div className="text-xs text-muted-foreground mt-2">
                       <span className="font-medium">Technical:</span> {renderValue(errorDetails.details)}
@@ -585,15 +590,82 @@ export default function SimpleLaunchPage() {
               <Card className="w-full p-4 mb-6 bg-muted/50">
                 <h3 className="font-semibold mb-2 text-sm">Debug Information</h3>
                 <div className="space-y-1 text-xs font-mono">
-                  <div>Has File: {'hasFile' in debugInfo && debugInfo.hasFile ? "Yes" : "No"}</div>
-                  {'fileSize' in debugInfo && debugInfo.fileSize !== undefined ? (
-                    <div>File Size: {(Number(debugInfo.fileSize) / 1024).toFixed(2)} KB</div>
+                  {'step' in debugInfo && debugInfo.step ? (
+                    <div>Failed Step: {renderValue(debugInfo.step)}</div>
                   ) : null}
-                  {'fileType' in debugInfo && debugInfo.fileType ? (
-                    <div>File Type: {renderValue(debugInfo.fileType)}</div>
+                  {'network' in debugInfo && debugInfo.network ? (
+                    <div>Network: {renderValue(debugInfo.network)}</div>
+                  ) : null}
+                  {'attempt' in debugInfo && debugInfo.attempt ? (
+                    <div>Attempt: {renderValue(debugInfo.attempt)}/{renderValue(debugInfo.maxRetries || 3)}</div>
+                  ) : null}
+                  {'requestId' in debugInfo && debugInfo.requestId ? (
+                    <div>Request ID: {renderValue(debugInfo.requestId)}</div>
                   ) : null}
                   {'timestamp' in debugInfo && debugInfo.timestamp ? (
                     <div>Time: {new Date(String(debugInfo.timestamp)).toLocaleTimeString()}</div>
+                  ) : null}
+                  
+                  {/* Request Context */}
+                  {'requestContext' in debugInfo && debugInfo.requestContext && typeof debugInfo.requestContext === 'object' ? (
+                    <>
+                      <div className="mt-2 font-semibold">Request Context:</div>
+                      <div className="ml-2">
+                        {'hasImage' in debugInfo.requestContext && (
+                          <div>Has Image: {debugInfo.requestContext.hasImage ? "Yes" : "No"}</div>
+                        )}
+                        {'imageSize' in debugInfo.requestContext && debugInfo.requestContext.imageSize !== undefined ? (
+                          <div>Image Size: {(Number(debugInfo.requestContext.imageSize) / 1024).toFixed(2)} KB</div>
+                        ) : null}
+                        {'imageType' in debugInfo.requestContext && debugInfo.requestContext.imageType ? (
+                          <div>Image Type: {renderValue(debugInfo.requestContext.imageType)}</div>
+                        ) : null}
+                        {'fid' in debugInfo.requestContext && debugInfo.requestContext.fid ? (
+                          <div>FID: {renderValue(debugInfo.requestContext.fid)}</div>
+                        ) : null}
+                        {'hasCastContext' in debugInfo.requestContext && (
+                          <div>Cast Context: {debugInfo.requestContext.hasCastContext ? "Yes" : "No"}</div>
+                        )}
+                      </div>
+                    </>
+                  ) : null}
+                  
+                  {/* Validation Errors */}
+                  {'validationErrors' in debugInfo && Array.isArray(debugInfo.validationErrors) && debugInfo.validationErrors.length > 0 ? (
+                    <>
+                      <div className="mt-2 font-semibold">Missing Fields:</div>
+                      <div className="ml-2 text-destructive">
+                        {debugInfo.validationErrors.join(', ')}
+                      </div>
+                    </>
+                  ) : null}
+                  
+                  {/* Missing Config */}
+                  {'missingConfig' in debugInfo && Array.isArray(debugInfo.missingConfig) && debugInfo.missingConfig.length > 0 ? (
+                    <>
+                      <div className="mt-2 font-semibold">Missing Configuration:</div>
+                      <div className="ml-2 text-destructive">
+                        {debugInfo.missingConfig.join(', ')}
+                      </div>
+                    </>
+                  ) : null}
+                  
+                  {/* Deployment Params */}
+                  {'deploymentParams' in debugInfo && debugInfo.deploymentParams && typeof debugInfo.deploymentParams === 'object' ? (
+                    <>
+                      <div className="mt-2 font-semibold">Deployment Parameters:</div>
+                      <div className="ml-2">
+                        {'name' in debugInfo.deploymentParams && (
+                          <div>Name: {renderValue(debugInfo.deploymentParams.name)}</div>
+                        )}
+                        {'symbol' in debugInfo.deploymentParams && (
+                          <div>Symbol: {renderValue(debugInfo.deploymentParams.symbol)}</div>
+                        )}
+                        {'chainId' in debugInfo.deploymentParams && (
+                          <div>Chain ID: {renderValue(debugInfo.deploymentParams.chainId)}</div>
+                        )}
+                      </div>
+                    </>
                   ) : null}
                 </div>
               </Card>

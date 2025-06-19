@@ -182,10 +182,11 @@ describe('POST /api/deploy/simple', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data).toEqual({
-      success: false,
-      error: 'Missing required fields: name, symbol, and image',
-    });
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('Missing required fields: symbol, image');
+    expect(data.errorDetails).toBeDefined();
+    expect(data.errorDetails.type).toBe('VALIDATION_ERROR');
+    expect(data.debugInfo).toBeDefined();
 
     expect(mockUploadToIPFS).not.toHaveBeenCalled();
     expect(mockDeployToken).not.toHaveBeenCalled();
@@ -323,10 +324,12 @@ describe('POST /api/deploy/simple', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data).toEqual({
-      success: false,
-      error: 'Token name must be 32 characters or less',
-    });
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('Token name must be 32 characters or less');
+    expect(data.errorDetails).toBeDefined();
+    expect(data.errorDetails.type).toBe('VALIDATION_ERROR');
+    expect(data.debugInfo).toBeDefined();
+    expect(data.debugInfo.nameLength).toBe(33);
   });
 
   it('should validate symbol length and format', async () => {
@@ -348,10 +351,12 @@ describe('POST /api/deploy/simple', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data).toEqual({
-      success: false,
-      error: 'Symbol must be between 3 and 8 characters',
-    });
+    expect(data.success).toBe(false);
+    expect(data.error).toBe('Symbol must be between 3 and 8 characters');
+    expect(data.errorDetails).toBeDefined();
+    expect(data.errorDetails.type).toBe('VALIDATION_ERROR');
+    expect(data.debugInfo).toBeDefined();
+    expect(data.debugInfo.symbolLength).toBe(13);
   });
 
   it('should handle non-POST requests', async () => {

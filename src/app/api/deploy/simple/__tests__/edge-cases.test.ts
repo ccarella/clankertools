@@ -143,8 +143,10 @@ describe('Edge Case Tests', () => {
       expect(response.status).toBe(500);
       expect(data.success).toBe(false);
       expect(data.error).toContain('Network request failed');
-      expect(data.errorCode).toBe('NETWORK_ERROR');
-      expect(data.errorType).toBe('NetworkError');
+      expect(data.errorDetails).toBeDefined();
+      expect(data.errorDetails.type).toBe('SDK_DEPLOYMENT_ERROR');
+      expect(data.errorDetails.code).toBe('NETWORK_ERROR');
+      expect(data.debugInfo).toBeDefined();
       
       // Should have attempted 3 times
       expect(mockDeployToken).toHaveBeenCalledTimes(3);
@@ -241,7 +243,7 @@ describe('Edge Case Tests', () => {
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
-      expect(data.error).toBe('Missing required fields: name, symbol, and image');
+      expect(data.error).toBe('Missing required fields: name');
     });
 
     it('should handle special characters in token name', async () => {
@@ -334,7 +336,9 @@ describe('Edge Case Tests', () => {
       expect(response.status).toBe(500);
       expect(data.success).toBe(false);
       expect(data.error).toContain('Token with this name already exists');
-      expect(data.errorCode).toBe('DUPLICATE_TOKEN');
+      expect(data.errorDetails).toBeDefined();
+      expect(data.errorDetails.type).toBe('SDK_DEPLOYMENT_ERROR');
+      expect(data.errorDetails.code).toBe('DUPLICATE_TOKEN');
     }, 10000);
   });
 
@@ -397,7 +401,9 @@ describe('Edge Case Tests', () => {
 
       expect(response.status).toBe(500);
       expect(data.success).toBe(false);
-      expect(data.error).toBe('An unexpected error occurred');
+      expect(data.error).toBe('SDK initialization timeout');
+      expect(data.errorDetails).toBeDefined();
+      expect(data.errorDetails.type).toBe('UNKNOWN_ERROR');
     });
   });
 
