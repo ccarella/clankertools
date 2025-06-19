@@ -4,7 +4,8 @@ import { NeynarService, NeynarUser, WalletAddress } from '@/services/neynar';
 let neynarServiceInstance: NeynarService | null = null;
 
 export function useNeynar() {
-  if (!neynarServiceInstance && typeof window !== 'undefined') {
+  // In test environment or client-side, create the service
+  if (!neynarServiceInstance && (typeof window !== 'undefined' || process.env.NODE_ENV === 'test')) {
     neynarServiceInstance = new NeynarService();
   }
   return neynarServiceInstance;
@@ -93,6 +94,7 @@ export function useNeynarFollowers(fid?: number, limit: number = 50): UseNeynarF
 
   const fetchFollowers = useCallback(async (isLoadMore = false) => {
     if (!fid) return;
+    if (!neynarService) return; // Skip if service not available
     
     if (isLoadMore) {
       setLoadingMore(true);
@@ -164,6 +166,7 @@ export function useNeynarFollowing(fid?: number, limit: number = 50): UseNeynarF
 
   const fetchFollowing = useCallback(async (isLoadMore = false) => {
     if (!fid) return;
+    if (!neynarService) return; // Skip if service not available
     
     if (isLoadMore) {
       setLoadingMore(true);

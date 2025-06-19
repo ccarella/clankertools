@@ -28,8 +28,8 @@ describe('useNeynar hooks', () => {
     it('should return a NeynarService instance', () => {
       const { result } = renderHook(() => useNeynar());
       expect(result.current).toBeDefined();
-      expect(result.current.getUserByFid).toBeDefined();
-      expect(result.current.getUserByUsername).toBeDefined();
+      expect(result.current!.getUserByFid).toBeDefined();
+      expect(result.current!.getUserByUsername).toBeDefined();
     });
 
     it('should return the same instance on re-renders', () => {
@@ -57,7 +57,7 @@ describe('useNeynar hooks', () => {
       // Mock the service method
       const { result } = renderHook(() => {
         const service = useNeynar();
-        service.getUserByFid = jest.fn().mockResolvedValue(mockUser);
+        service!.getUserByFid = jest.fn().mockResolvedValue(mockUser);
         return useNeynarUser({ fid: 3 });
       });
 
