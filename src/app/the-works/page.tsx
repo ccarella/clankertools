@@ -1,118 +1,166 @@
 "use client";
 
-import { ArrowLeft, CheckCircle, TrendingUp, Settings, Gift, Package, Shield, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { WizardContainer, WizardStep, WizardData } from "@/components/wizard";
+import { ReviewScreen } from "@/components/wizard/ReviewScreen";
+import { 
+  TokenBasicsStep, 
+  LiquidityStep, 
+  FeesStep, 
+  RewardsStep, 
+  ExtensionsStep, 
+  MevStep 
+} from "@/components/wizard/steps";
+import { toast } from "sonner";
 
-interface StepItem {
-  id: string;
-  title: string;
-  icon: React.ReactNode;
-  status: "complete" | "current" | "pending";
-}
-
-const steps: StepItem[] = [
+const wizardSteps: WizardStep[] = [
   {
     id: "token-basics",
     title: "Token Basics",
-    icon: <CheckCircle className="w-6 h-6" />,
-    status: "complete"
+    description: "Configure basic token parameters",
+    fields: ["name", "symbol", "description", "image"],
+    component: TokenBasicsStep,
+    validate: async (data) => {
+      const errors: string[] = [];
+      if (!data.name) errors.push("Token name is required");
+      if (!data.symbol) errors.push("Token symbol is required");
+      if (data.symbol && (data.symbol.length < 3 || data.symbol.length > 10)) {
+        errors.push("Symbol must be 3-10 characters");
+      }
+      return {
+        isValid: errors.length === 0,
+        errors,
+      };
+    },
   },
   {
-    id: "liquidity-curve",
-    title: "Liquidity Curve",
-    icon: <TrendingUp className="w-6 h-6" />,
-    status: "current"
+    id: "liquidity",
+    title: "Liquidity Settings",
+    description: "Configure liquidity parameters",
+    fields: ["liquidityAmount", "liquidityCurve", "lpTokenSymbol", "maxSlippage"],
+    component: LiquidityStep,
+    validate: async (data) => {
+      const errors: string[] = [];
+      if (!data.liquidityAmount) errors.push("Liquidity amount is required");
+      if (data.liquidityAmount && parseFloat(data.liquidityAmount) < 0.01) {
+        errors.push("Minimum liquidity is 0.01 ETH");
+      }
+      return {
+        isValid: errors.length === 0,
+        errors,
+      };
+    },
   },
   {
-    id: "fee-settings",
-    title: "Fee Settings",
-    icon: <Settings className="w-6 h-6" />,
-    status: "pending"
+    id: "fees",
+    title: "Fee Configuration",
+    description: "Set up fee structure",
+    fields: ["swapFee", "protocolFee", "dynamicFees", "minFee", "maxFee"],
+    component: FeesStep,
+    validate: async (data) => {
+      const errors: string[] = [];
+      if (data.dynamicFees && (!data.minFee || !data.maxFee)) {
+        errors.push("Min and max fees are required when dynamic fees are enabled");
+      }
+      if (data.minFee && data.maxFee && data.minFee >= data.maxFee) {
+        errors.push("Minimum fee must be less than maximum fee");
+      }
+      return {
+        isValid: errors.length === 0,
+        errors,
+      };
+    },
   },
   {
-    id: "rewards-splits",
+    id: "rewards",
     title: "Rewards & Splits",
-    icon: <Gift className="w-6 h-6" />,
-    status: "pending"
+    description: "Configure creator rewards and revenue splits",
+    fields: ["creatorRewardsEnabled", "creatorAddress", "creatorPercentage", "rewardSplits"],
+    component: RewardsStep,
+    validate: async (data) => {
+      const errors: string[] = [];
+      if (data.creatorRewardsEnabled && !data.creatorAddress) {
+        errors.push("Creator wallet address is required");
+      }
+      if (data.rewardSplits) {
+        const totalPercentage = (data.rewardSplits || []).reduce((sum: number, split: { percentage: number }) => 
+          sum + split.percentage, 0
+        );
+        if (totalPercentage > 100) {
+          errors.push("Total split percentage cannot exceed 100%");
+        }
+      }
+      return {
+        isValid: errors.length === 0,
+        errors,
+      };
+    },
   },
   {
     id: "extensions",
     title: "Extensions",
-    icon: <Package className="w-6 h-6" />,
-    status: "pending"
+    description: "Add optional features",
+    fields: ["extensions"],
+    component: ExtensionsStep,
   },
   {
     id: "mev",
-    title: "MEV",
-    icon: <Shield className="w-6 h-6" />,
-    status: "pending"
-  }
+    title: "MEV Protection",
+    description: "Configure MEV protection settings",
+    fields: ["mevProtectionEnabled", "mevStrategy", "privateLaunch"],
+    component: MevStep,
+  },
 ];
 
 export default function TheWorksPage() {
   const router = useRouter();
+  const [isReviewing, setIsReviewing] = useState(false);
+
+  const handleComplete = async (data: WizardData) => {
+    setIsReviewing(true);
+    
+    try {
+      console.log("Deploying token with data:", data);
+      
+      // TODO: Implement actual deployment
+      // const response = await fetch('/api/deploy/advanced', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(data),
+      // });
+      
+      // Simulate deployment
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      toast.success("Token deployed successfully!");
+      router.push('/'); // Or redirect to token detail page
+    } catch (error) {
+      console.error("Error deploying token:", error);
+      toast.error("Failed to deploy token. Please try again.");
+    } finally {
+      setIsReviewing(false);
+    }
+  };
+
+  const ReviewComponent = ({ data, onEdit }: { data: WizardData; onEdit: (stepIndex: number) => void }) => (
+    <ReviewScreen 
+      data={data} 
+      onEdit={onEdit} 
+      onDeploy={() => handleComplete(data)}
+      isDeploying={isReviewing}
+    />
+  );
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="flex items-center p-4 border-b border-border">
-        <button
-          onClick={() => router.back()}
-          className="p-2 -ml-2 hover:bg-accent rounded-lg"
-        >
-          <ArrowLeft className="w-6 h-6 text-primary" />
-        </button>
-      </div>
-
-      {/* Content */}
-      <div className="p-6">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-foreground mb-2">The Works</h1>
-          <p className="text-muted-foreground">1/6</p>
-        </div>
-
-        {/* Steps List */}
-        <div className="space-y-4 mb-8">
-          {steps.map((step) => (
-            <Card key={step.id} className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div 
-                    className={`p-2 rounded-full ${
-                      step.status === "complete" 
-                        ? "bg-primary text-primary-foreground" 
-                        : step.status === "current"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {step.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-foreground">{step.title}</h3>
-                    {step.status === "complete" && (
-                      <p className="text-sm text-primary">complete</p>
-                    )}
-                  </div>
-                </div>
-                {step.status !== "complete" && (
-                  <ChevronRight className="w-5 h-5 text-muted-foreground" />
-                )}
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Bottom Button */}
-        <Button 
-          className="w-full h-12 text-lg font-medium bg-primary hover:bg-primary/90"
-          size="lg"
-        >
-          Review & Deploy
-        </Button>
-      </div>
+      <WizardContainer
+        steps={wizardSteps}
+        onComplete={handleComplete}
+        persistKey="advanced-token-config"
+        className="pb-20"
+        reviewComponent={ReviewComponent}
+      />
     </div>
   );
 }
