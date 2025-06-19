@@ -143,6 +143,7 @@ export class NeynarService {
       const data = await this.fetchAPI(`/followers?${params}`);
 
       return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         users: (data.users || []).map((user: any) => this.mapUser(user)),
         nextCursor: data.next?.cursor || null
       };
@@ -165,6 +166,7 @@ export class NeynarService {
       const data = await this.fetchAPI(`/following?${params}`);
 
       return {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         users: (data.users || []).map((user: any) => this.mapUser(user)),
         nextCursor: data.next?.cursor || null
       };
@@ -177,6 +179,7 @@ export class NeynarService {
     try {
       const data = await this.fetchAPI(`/user/${targetFid}/followers/relevant?viewer_fid=${viewerFid}`);
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return (data.users || []).map((user: any) => this.mapUser(user));
     } catch (error) {
       throw new Error(`Failed to fetch relevant followers: ${error}`);
