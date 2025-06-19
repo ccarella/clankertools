@@ -133,6 +133,7 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -199,6 +200,7 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const data = await response.json();
 
       expect(response.status).toBe(200);
@@ -277,6 +279,7 @@ describe('Deploy Simple Route - Cast Context Integration', () => {
       }) as any;
 
       const response = await POST(request);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const data = await response.json();
 
       expect(response.status).toBe(200);
