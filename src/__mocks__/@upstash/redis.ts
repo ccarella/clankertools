@@ -37,4 +37,38 @@ export class Redis {
     this.data.delete(key);
     return existed ? 1 : 0;
   }
+
+  async zadd(key: string, options: { score: number; member: string } | Array<{ score: number; member: string }>) {
+    const items = Array.isArray(options) ? options : [options];
+    let added = 0;
+    
+    const existing = this.data.get(key) || [];
+    for (const item of items) {
+      const index = existing.findIndex((e: any) => e.member === item.member);
+      if (index === -1) {
+        existing.push(item);
+        added++;
+      } else {
+        existing[index] = item;
+      }
+    }
+    
+    existing.sort((a: any, b: any) => a.score - b.score);
+    this.data.set(key, existing);
+    return added;
+  }
+
+  async zrevrange(key: string, start: number, stop: number) {
+    const items = this.data.get(key) || [];
+    const sorted = [...items].sort((a: any, b: any) => b.score - a.score);
+    return sorted.slice(start, stop + 1).map((item: any) => item.member);
+  }
+
+  async zrem(key: string, member: string) {
+    const items = this.data.get(key) || [];
+    const initialLength = items.length;
+    const filtered = items.filter((item: any) => item.member !== member);
+    this.data.set(key, filtered);
+    return initialLength - filtered.length;
+  }
 }
