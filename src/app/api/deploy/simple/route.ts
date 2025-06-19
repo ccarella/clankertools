@@ -134,6 +134,17 @@ export async function POST(request: NextRequest) {
     const fid = formData.get('fid') as string;
     const castContextString = formData.get('castContext') as string;
     
+    // Log form data for debugging (especially useful in Mini Apps)
+    console.log('[Deploy] Form data received:', {
+      name: rawName || 'missing',
+      symbol: rawSymbol || 'missing', 
+      hasImage: !!imageFile,
+      imageType: imageFile?.type || 'no image',
+      imageSize: imageFile?.size || 0,
+      fid: fid || 'not authenticated',
+      hasCastContext: !!castContextString
+    });
+    
     // Sanitize inputs
     const name = rawName ? sanitizeInput(rawName) : '';
     const symbol = rawSymbol ? sanitizeInput(rawSymbol) : '';
@@ -243,20 +254,58 @@ export async function POST(request: NextRequest) {
       
       // Provide more specific error messages
       let errorMessage = 'Failed to upload image';
+      let errorDetails: Record<string, unknown> = {};
+      
       if (error instanceof Error) {
         if (error.message.includes('IPFS credentials not configured')) {
           errorMessage = 'Image upload service not configured. Please contact support.';
+          errorDetails = {
+            type: 'CONFIGURATION_ERROR',
+            details: 'PINATA_JWT environment variable is missing',
+            userMessage: 'The image upload service is not properly configured. Please notify the app developer.'
+          };
         } else if (error.message.includes('File size exceeds')) {
           errorMessage = error.message;
+          errorDetails = {
+            type: 'FILE_SIZE_ERROR',
+            details: 'Image file is larger than 10MB',
+            userMessage: 'Please use a smaller image file (max 10MB)'
+          };
         } else if (error.message.includes('Invalid file type')) {
           errorMessage = error.message;
+          errorDetails = {
+            type: 'FILE_TYPE_ERROR',
+            details: 'File type not supported',
+            userMessage: 'Please use PNG, JPEG, GIF, or WebP image formats'
+          };
         } else if (error.message.includes('IPFS upload failed')) {
           errorMessage = 'Image upload service temporarily unavailable. Please try again.';
+          errorDetails = {
+            type: 'UPLOAD_ERROR',
+            details: error.message,
+            userMessage: 'The image upload service is temporarily down. Please try again in a few moments.'
+          };
+        } else {
+          errorDetails = {
+            type: 'UNKNOWN_ERROR',
+            details: error.message,
+            userMessage: 'An unexpected error occurred during image upload'
+          };
         }
       }
       
       return NextResponse.json(
-        { success: false, error: errorMessage },
+        { 
+          success: false, 
+          error: errorMessage,
+          errorDetails,
+          debug: {
+            hasFile: !!imageFile,
+            fileSize: imageFile?.size,
+            fileType: imageFile?.type,
+            timestamp: new Date().toISOString()
+          }
+        },
         { status: 500, headers: getSecurityHeaders(request) }
       );
     }
