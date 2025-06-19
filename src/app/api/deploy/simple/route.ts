@@ -8,6 +8,7 @@ import { trackTransaction } from '@/lib/transaction-tracker';
 import { getNetworkConfig } from '@/lib/network-config';
 import { Redis } from '@upstash/redis';
 import { CastContext, TokenCastRelationship } from '@/lib/types/cast-context';
+import { storeUserToken } from '@/lib/redis';
 
 export const runtime = 'edge';
 
@@ -445,6 +446,21 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error('Failed to store cast context:', error);
         // Don't fail the request if storing context fails
+      }
+    }
+
+    // Store token in user's token list
+    if (fid && tokenAddress) {
+      try {
+        await storeUserToken(fid, {
+          address: tokenAddress,
+          name,
+          symbol,
+          createdAt: new Date().toISOString(),
+        });
+      } catch (error) {
+        console.error('Failed to store user token:', error);
+        // Don't fail the request if storing fails
       }
     }
 
