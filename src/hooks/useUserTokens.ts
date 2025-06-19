@@ -27,10 +27,11 @@ export function useUserTokens(
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [cursor, setCursor] = useState<string | null>(null)
+  const [, setCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
   const isMountedRef = useRef(true)
+  const cursorRef = useRef<string | null>(null)
 
   const fetchTokens = useCallback(
     async (isLoadMore = false, isRefresh = false) => {
@@ -49,8 +50,8 @@ export function useUserTokens(
         setError(null)
 
         const params = new URLSearchParams({ limit: limit.toString() })
-        if (isLoadMore && cursor) {
-          params.append('cursor', cursor)
+        if (isLoadMore && cursorRef.current) {
+          params.append('cursor', cursorRef.current)
         }
 
         const response = await fetch(`/api/user/tokens?${params}`, {
@@ -72,7 +73,7 @@ export function useUserTokens(
           setTokens(prev => {
             const combined = [...prev, ...data.tokens]
             const uniqueTokens = Array.from(
-              new Map(combined.map(token => [token.address, token])).values()
+              new Map(combined.map(token => [token.address.toLowerCase(), token])).values()
             )
             return uniqueTokens
           })
@@ -81,6 +82,7 @@ export function useUserTokens(
         }
 
         setCursor(data.nextCursor)
+        cursorRef.current = data.nextCursor
         setHasMore(!!data.nextCursor)
       } catch (err) {
         console.error('Error fetching user tokens:', err)
@@ -94,7 +96,7 @@ export function useUserTokens(
         }
       }
     },
-    [userId, cursor, limit]
+    [userId, limit]
   )
 
   const loadMore = useCallback(async () => {
@@ -104,6 +106,7 @@ export function useUserTokens(
 
   const refresh = useCallback(async () => {
     setCursor(null)
+    cursorRef.current = null
     await fetchTokens(false, true)
   }, [fetchTokens])
 
