@@ -112,6 +112,17 @@ export async function OPTIONS(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  // Initialize debug context
+  const debugContext = {
+    timestamp: new Date().toISOString(),
+    step: 'initialization',
+    network: process.env.NEXT_PUBLIC_NETWORK || 'unknown',
+    requestId: crypto.randomUUID?.() || Date.now().toString(),
+  };
+  
+  // Initialize request context at top level
+  let requestContext: Record<string, unknown> = {};
+
   try {
     // Handle OPTIONS for CORS
     if (request.method === 'OPTIONS') {
@@ -127,6 +138,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Parse form data
+    debugContext.step = 'parsing_form_data';
     const formData = await request.formData();
     const rawName = formData.get('name') as string;
     const rawSymbol = formData.get('symbol') as string;
@@ -134,25 +146,59 @@ export async function POST(request: NextRequest) {
     const fid = formData.get('fid') as string;
     const castContextString = formData.get('castContext') as string;
     
-    // Log form data for debugging (especially useful in Mini Apps)
-    console.log('[Deploy] Form data received:', {
+    // Enhanced debug logging for form data
+    const formDebugInfo = {
       name: rawName || 'missing',
       symbol: rawSymbol || 'missing', 
       hasImage: !!imageFile,
       imageType: imageFile?.type || 'no image',
       imageSize: imageFile?.size || 0,
       fid: fid || 'not authenticated',
-      hasCastContext: !!castContextString
-    });
+      hasCastContext: !!castContextString,
+      timestamp: debugContext.timestamp,
+      requestId: debugContext.requestId,
+    };
+    
+    console.log('[Deploy] Form data received:', formDebugInfo);
+    
+    // Store request context for debug info
+    requestContext = {
+      fid,
+      hasCastContext: !!castContextString,
+      hasImage: !!imageFile,
+      imageSize: imageFile?.size || 0,
+      imageType: imageFile?.type || null,
+    };
     
     // Sanitize inputs
     const name = rawName ? sanitizeInput(rawName) : '';
     const symbol = rawSymbol ? sanitizeInput(rawSymbol) : '';
 
     // Validate required fields
-    if (!name || !symbol || !imageFile) {
+    debugContext.step = 'validation';
+    const validationErrors = [];
+    if (!name) validationErrors.push('name');
+    if (!symbol) validationErrors.push('symbol');
+    if (!imageFile) validationErrors.push('image');
+    
+    if (validationErrors.length > 0) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: name, symbol, and image' },
+        { 
+          success: false, 
+          error: `Missing required fields: ${validationErrors.join(', ')}`,
+          errorDetails: {
+            type: 'VALIDATION_ERROR',
+            details: 'Required fields are missing',
+            userMessage: 'Please fill in all required fields',
+            missingFields: validationErrors,
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'validation',
+            validationErrors,
+            requestContext,
+          }
+        },
         { status: 400, headers: getSecurityHeaders(request) }
       );
     }
@@ -161,7 +207,22 @@ export async function POST(request: NextRequest) {
     const imageValidation = validateImageFile(imageFile);
     if (!imageValidation.valid) {
       return NextResponse.json(
-        { success: false, error: imageValidation.error },
+        { 
+          success: false, 
+          error: imageValidation.error,
+          errorDetails: {
+            type: 'VALIDATION_ERROR',
+            details: imageValidation.error,
+            userMessage: imageValidation.error,
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'image_validation',
+            fileSize: imageFile.size,
+            fileType: imageFile.type,
+            requestContext,
+          }
+        },
         { status: 400, headers: getSecurityHeaders(request) }
       );
     }
@@ -169,14 +230,42 @@ export async function POST(request: NextRequest) {
     // Validate field constraints
     if (name.length > 32) {
       return NextResponse.json(
-        { success: false, error: 'Token name must be 32 characters or less' },
+        { 
+          success: false, 
+          error: 'Token name must be 32 characters or less',
+          errorDetails: {
+            type: 'VALIDATION_ERROR',
+            details: `Name length: ${name.length} characters (max: 32)`,
+            userMessage: 'Token name is too long. Please use 32 characters or less.',
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'name_validation',
+            nameLength: name.length,
+            requestContext,
+          }
+        },
         { status: 400, headers: getSecurityHeaders(request) }
       );
     }
 
     if (symbol.length < 3 || symbol.length > 8) {
       return NextResponse.json(
-        { success: false, error: 'Symbol must be between 3 and 8 characters' },
+        { 
+          success: false, 
+          error: 'Symbol must be between 3 and 8 characters',
+          errorDetails: {
+            type: 'VALIDATION_ERROR',
+            details: `Symbol length: ${symbol.length} characters (min: 3, max: 8)`,
+            userMessage: 'Token symbol must be between 3 and 8 characters.',
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'symbol_validation',
+            symbolLength: symbol.length,
+            requestContext,
+          }
+        },
         { status: 400, headers: getSecurityHeaders(request) }
       );
     }
@@ -203,14 +292,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Check environment variables
+    debugContext.step = 'configuration';
     const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
     const interfaceAdmin = process.env.INTERFACE_ADMIN;
     const interfaceRewardRecipient = process.env.INTERFACE_REWARD_RECIPIENT;
 
-    if (!privateKey || !interfaceAdmin || !interfaceRewardRecipient) {
-      console.error('Missing required environment variables');
+    const missingConfig = [];
+    if (!privateKey) missingConfig.push('DEPLOYER_PRIVATE_KEY');
+    if (!interfaceAdmin) missingConfig.push('INTERFACE_ADMIN');
+    if (!interfaceRewardRecipient) missingConfig.push('INTERFACE_REWARD_RECIPIENT');
+
+    if (missingConfig.length > 0) {
+      console.error('Missing required environment variables:', missingConfig);
       return NextResponse.json(
-        { success: false, error: 'Server configuration error' },
+        { 
+          success: false, 
+          error: 'Server configuration error',
+          errorDetails: {
+            type: 'CONFIGURATION_ERROR',
+            details: 'Required environment variables are not configured',
+            userMessage: 'The server is not properly configured. Please contact support.',
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'configuration',
+            missingConfig,
+            requestContext,
+          }
+        },
         { status: 500, headers: getSecurityHeaders(request) }
       );
     }
@@ -369,8 +478,12 @@ export async function POST(request: NextRequest) {
     let txHash: string | undefined;
     const maxRetries = 3;
 
+    debugContext.step = 'token_deployment';
+    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        console.log(`[Deploy] Attempting token deployment (attempt ${attempt}/${maxRetries})`);
+        
         // Deploy the token
         const deploymentResult = await clanker.deployToken({
           name,
@@ -443,26 +556,49 @@ export async function POST(request: NextRequest) {
         
         // Preserve SDK error details
         if (error instanceof Error) {
-          const errorDetails: Record<string, unknown> = {
+          const errorInfo: Record<string, unknown> = {
             message: error.message,
             name: error.name,
+            attempt,
+            maxRetries,
           };
           
           // Check for common error properties
-          if ('code' in error) errorDetails.code = (error as Record<string, unknown>).code;
-          if ('cause' in error) errorDetails.cause = error.cause;
+          if ('code' in error) errorInfo.code = (error as Record<string, unknown>).code;
+          if ('cause' in error) errorInfo.cause = error.cause;
+          if ('data' in error) errorInfo.data = (error as Record<string, unknown>).data;
+          if ('details' in error) errorInfo.details = (error as Record<string, unknown>).details;
           
-          // If this is the last attempt, throw with details
+          // Log detailed error info
+          console.error('[Deploy] Error details:', errorInfo);
+          
+          // If this is the last attempt, throw with enhanced details
           if (attempt === maxRetries) {
-            throw new TokenDeploymentError(
+            const enhancedError = new TokenDeploymentError(
               error.message,
-              typeof errorDetails.code === 'string' ? errorDetails.code : undefined,
+              typeof errorInfo.code === 'string' ? errorInfo.code : undefined,
               error.name
             );
+            // Attach additional context
+            (enhancedError as unknown as Record<string, unknown>).debugInfo = {
+              ...debugContext,
+              attempt,
+              maxRetries,
+              errorInfo,
+              deploymentParams: {
+                name,
+                symbol,
+                hasImage: !!imageUrl,
+                network: networkConfig.name,
+                chainId: networkConfig.chainId,
+              },
+            };
+            throw enhancedError;
           }
         }
         
         if (attempt < maxRetries) {
+          console.log(`[Deploy] Waiting before retry attempt ${attempt + 1}...`);
           // Wait before retrying (exponential backoff)
           await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 1000));
         }
@@ -471,7 +607,22 @@ export async function POST(request: NextRequest) {
 
     if (!tokenAddress) {
       return NextResponse.json(
-        { success: false, error: `Token deployment failed after ${maxRetries} attempts` },
+        { 
+          success: false, 
+          error: `Token deployment failed after ${maxRetries} attempts`,
+          errorDetails: {
+            type: 'DEPLOYMENT_TIMEOUT',
+            details: 'Token deployment did not complete successfully after multiple attempts',
+            userMessage: 'Token deployment timed out. Please try again later.',
+          },
+          debugInfo: {
+            ...debugContext,
+            step: 'token_deployment',
+            attempts: maxRetries,
+            timestamp: new Date().toISOString(),
+            requestContext,
+          }
+        },
         { status: 500, headers: getSecurityHeaders(request) }
       );
     }
@@ -546,25 +697,60 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Unexpected error:', error);
     
+    // Extract error details
+    let errorMessage = 'An unexpected error occurred';
+    let errorDetails: Record<string, unknown> = {
+      type: 'UNKNOWN_ERROR',
+      details: 'An unexpected error occurred during deployment',
+      userMessage: 'Something went wrong. Please try again.',
+    };
+    const statusCode = 500;
+    
     // Handle TokenDeploymentError with detailed info
     if (error instanceof TokenDeploymentError) {
-      const errorResponse: Record<string, unknown> = {
-        success: false,
-        error: `Token deployment failed: ${error.message}`,
+      errorMessage = `Token deployment failed: ${error.message}`;
+      errorDetails = {
+        type: 'SDK_DEPLOYMENT_ERROR',
+        code: error.code,
+        details: error.message,
+        userMessage: 'Token deployment failed. This could be due to network issues, insufficient funds, or contract errors.',
       };
       
-      if (error.code) errorResponse.errorCode = error.code;
-      if (error.type) errorResponse.errorType = error.type;
+      // Add debug info if available
+      if ((error as unknown as Record<string, unknown>).debugInfo) {
+        debugContext.step = ((error as unknown as Record<string, unknown>).debugInfo as Record<string, unknown>).step as string || 'token_deployment';
+        Object.assign(debugContext, (error as unknown as Record<string, unknown>).debugInfo);
+      }
+    } else if (error instanceof Error) {
+      errorMessage = error.message;
       
-      return NextResponse.json(
-        errorResponse,
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
+      // Determine error type based on message content
+      if (error.message.includes('IPFS')) {
+        errorDetails.type = 'IPFS_UPLOAD_ERROR';
+        errorDetails.userMessage = 'Failed to upload image. Please try again.';
+      } else if (error.message.includes('network') || error.message.includes('RPC')) {
+        errorDetails.type = 'NETWORK_ERROR';
+        errorDetails.userMessage = 'Network connection issue. Please check your connection and try again.';
+      } else if (error.message.includes('insufficient') || error.message.includes('balance')) {
+        errorDetails.type = 'INSUFFICIENT_FUNDS';
+        errorDetails.userMessage = 'Insufficient funds for deployment. Please ensure the deployer wallet has enough balance.';
+      }
+      
+      errorDetails.details = error.message;
     }
     
     return NextResponse.json(
-      { success: false, error: 'An unexpected error occurred' },
-      { status: 500, headers: getSecurityHeaders(request) }
+      { 
+        success: false, 
+        error: errorMessage,
+        errorDetails,
+        debugInfo: {
+          ...debugContext,
+          timestamp: new Date().toISOString(),
+          requestContext,
+        }
+      },
+      { status: statusCode, headers: getSecurityHeaders(request) }
     );
   }
 }

@@ -241,7 +241,7 @@ describe('Edge Case Tests', () => {
 
       expect(response.status).toBe(400);
       expect(data.success).toBe(false);
-      expect(data.error).toBe('Missing required fields: name, symbol, and image');
+      expect(data.error).toBe('Missing required fields: name');
     });
 
     it('should handle special characters in token name', async () => {
