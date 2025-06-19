@@ -14,6 +14,7 @@ const customJestConfig = {
     '^@farcaster/frame-sdk$': '<rootDir>/src/__mocks__/@farcaster/frame-sdk.ts',
     '^@upstash/redis$': '<rootDir>/src/__mocks__/@upstash/redis.ts',
     '^clanker-sdk$': '<rootDir>/src/__mocks__/clanker-sdk.ts',
+    '^@neynar/nodejs-sdk$': '<rootDir>/src/__mocks__/@neynar/nodejs-sdk.ts',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(@farcaster/frame-sdk|@upstash/redis|uncrypto|clanker-sdk|zod|viem|abitype)/)'
