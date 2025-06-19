@@ -101,20 +101,19 @@ describe('HapticProvider', () => {
     // Suppress console.error for this test
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     
-    let error: Error | null = null;
+    let errorMessage = '';
     const ThrowingComponent = () => {
       try {
         useHaptic();
       } catch (e) {
-        error = e as Error;
+        errorMessage = (e as Error).message;
       }
       return null;
     };
 
     render(<ThrowingComponent />);
     
-    expect(error).toBeTruthy();
-    expect(error?.message).toBe('useHaptic must be used within a HapticProvider');
+    expect(errorMessage).toBe('useHaptic must be used within a HapticProvider');
     
     consoleSpy.mockRestore();
   });

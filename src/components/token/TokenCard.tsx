@@ -30,7 +30,7 @@ interface TokenCardProps {
 }
 
 export function TokenCard({ token, variant = 'default', className }: TokenCardProps) {
-  const { user: creator, loading: creatorLoading, error: creatorError } = useNeynarUser(token.creatorFid)
+  const { user: creator, loading: creatorLoading, error: creatorError } = useNeynarUser({ fid: token.creatorFid })
 
   const formatValue = (value: number): string => {
     if (value >= 1000000) {

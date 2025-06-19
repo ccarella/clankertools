@@ -54,8 +54,10 @@ describe('Enhanced ProfilePage', () => {
 
     mockUseNeynarUser.mockReturnValue({
       user: mockNeynarUser,
+      addresses: undefined,
       loading: false,
-      error: null
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<ProfilePage />)
@@ -80,8 +82,10 @@ describe('Enhanced ProfilePage', () => {
 
     mockUseNeynarUser.mockReturnValue({
       user: undefined,
+      addresses: undefined,
       loading: true,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<ProfilePage />)
@@ -104,8 +108,10 @@ describe('Enhanced ProfilePage', () => {
 
     mockUseNeynarUser.mockReturnValue({
       user: mockNeynarUser,
+      addresses: undefined,
       loading: false,
-      error: null
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<ProfilePage />)
@@ -131,8 +137,10 @@ describe('Enhanced ProfilePage', () => {
 
     mockUseNeynarUser.mockReturnValue({
       user: mockNeynarUser,
+      addresses: undefined,
       loading: false,
-      error: null
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<ProfilePage />)
@@ -160,8 +168,10 @@ describe('Enhanced ProfilePage', () => {
 
     mockUseNeynarUser.mockReturnValue({
       user: mockNeynarUser,
+      addresses: undefined,
       loading: false,
-      error: null
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<ProfilePage />)
@@ -187,8 +197,10 @@ describe('Enhanced ProfilePage', () => {
 
     mockUseNeynarUser.mockReturnValue({
       user: undefined,
+      addresses: undefined,
       loading: false,
-      error: 'Failed to fetch extended profile'
+      error: 'Failed to fetch extended profile',
+      refetch: jest.fn()
     })
 
     render(<ProfilePage />)
@@ -211,8 +223,10 @@ describe('Enhanced ProfilePage', () => {
 
     mockUseNeynarUser.mockReturnValue({
       user: undefined,
+      addresses: undefined,
       loading: false,
-      error: undefined
+      error: undefined,
+      refetch: jest.fn()
     })
 
     render(<ProfilePage />)
