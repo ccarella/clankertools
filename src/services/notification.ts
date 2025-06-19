@@ -53,7 +53,7 @@ export class NotificationService {
       await this.redis.set(
         `notification:token:${fid}`,
         JSON.stringify(tokenData),
-        { ex: 60 * 60 * 24 * 90 } // 90 days
+        { ex: 60 * 60 * 24 * 90 } // 90 days initial TTL, refreshed on each successful notification
       );
     } catch {
       throw new Error('Failed to save notification token');
@@ -108,6 +108,10 @@ export class NotificationService {
 
     // Set rate limit
     await this.redis.set(rateLimitKey, '1', { ex: 30 });
+    
+    // Refresh token expiration on successful notification
+    // This ensures active users continue receiving notifications beyond the initial 90-day TTL
+    await this.redis.expire(`notification:token:${fid}`, 60 * 60 * 24 * 90);
   }
 
   async sendBatchNotifications(notifications: BatchNotificationItem[]): Promise<BatchNotificationResult[]> {

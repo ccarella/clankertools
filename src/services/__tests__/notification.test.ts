@@ -125,6 +125,7 @@ describe('NotificationService', () => {
         return Promise.resolve(null);
       });
       jest.spyOn(redisInstance, 'set').mockResolvedValue('OK' as any);
+      jest.spyOn(redisInstance, 'expire').mockResolvedValue(1 as any);
       
       (global.fetch as jest.Mock).mockResolvedValueOnce({
         ok: true,
@@ -147,6 +148,12 @@ describe('NotificationService', () => {
         `notification:ratelimit:${fid}`,
         '1',
         { ex: 30 }
+      );
+      
+      // Check that token expiration was refreshed
+      expect(redisInstance.expire).toHaveBeenCalledWith(
+        `notification:token:${fid}`,
+        60 * 60 * 24 * 90
       );
     });
 
@@ -248,6 +255,7 @@ describe('NotificationService', () => {
         return Promise.resolve(null);
       });
       jest.spyOn(redisInstance, 'set').mockResolvedValueOnce('OK' as any);
+      jest.spyOn(redisInstance, 'expire').mockResolvedValue(1 as any);
       
       global.fetch = jest.fn().mockResolvedValueOnce({
         ok: true,
@@ -260,6 +268,12 @@ describe('NotificationService', () => {
         `notification:ratelimit:${fid}`,
         '1',
         { ex: 30 }
+      );
+      
+      // Verify token expiration was refreshed
+      expect(redisInstance.expire).toHaveBeenCalledWith(
+        `notification:token:${fid}`,
+        60 * 60 * 24 * 90
       );
     });
   });
@@ -335,6 +349,7 @@ describe('NotificationService', () => {
         return Promise.resolve(null);
       });
       jest.spyOn(redisInstance, 'set').mockResolvedValue('OK' as any);
+      jest.spyOn(redisInstance, 'expire').mockResolvedValue(1 as any);
 
       global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
 
@@ -359,6 +374,7 @@ describe('NotificationService', () => {
         return Promise.resolve(null);
       });
       jest.spyOn(redisInstance, 'set').mockResolvedValue('OK' as any);
+      jest.spyOn(redisInstance, 'expire').mockResolvedValue(1 as any);
 
       global.fetch = jest.fn().mockResolvedValue({ ok: true, status: 200 });
 
