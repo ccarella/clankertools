@@ -1,0 +1,38 @@
+# Test workflow to validate CI configuration
+name: CI Config Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-trufflehog-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test TruffleHog configuration for push events
+      run: |
+        echo "Testing TruffleHog would run with:"
+        echo "Event: push"
+        echo "Base: ${{ github.event.before || 'N/A' }}"
+        echo "Head: ${{ github.event.after || 'N/A' }}"
+        
+        # Verify that base and head are different for push events
+        if [ "${{ github.event_name }}" == "push" ]; then
+          if [ "${{ github.event.before }}" == "${{ github.event.after }}" ]; then
+            echo "::error::Base and Head are the same for push event"
+            exit 1
+          fi
+        fi
+        
+  test-trufflehog-pr:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Test TruffleHog configuration for PR events
+      run: |
+        echo "Testing TruffleHog would run with:"
+        echo "Event: pull_request"
+        echo "Base: ${{ github.event.pull_request.base.sha || 'N/A' }}"
+        echo "Head: ${{ github.event.pull_request.head.sha || 'N/A' }}"

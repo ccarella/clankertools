@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { CreatorStats } from '@/hooks/useCreatorLeaderboard'
 
 // Mock data for now - in production this would fetch from a database or aggregation service
@@ -35,7 +35,7 @@ const mockLeaderboard: CreatorStats[] = [
   }
 ]
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // In production, this would:
     // 1. Query a database for tokens grouped by creator FID
