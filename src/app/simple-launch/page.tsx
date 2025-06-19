@@ -25,6 +25,17 @@ function truncateAddress(address: string): string {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
+function renderValue(value: unknown): React.ReactNode {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string' || typeof value === 'number') {
+    return value;
+  }
+  if (typeof value === 'boolean') {
+    return value.toString();
+  }
+  return String(value);
+}
+
 export default function SimpleLaunchPage() {
   const router = useRouter();
   const { isConnected, address } = useWallet();
@@ -32,10 +43,13 @@ export default function SimpleLaunchPage() {
   const [viewState, setViewState] = useState<ViewState>("form");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [deploymentError, setDeploymentError] = useState<string>("");
+  const [errorDetails, setErrorDetails] = useState<Record<string, unknown> | null>(null);
+  const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   const [, setTokenAddress] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [cameraSupported, setCameraSupported] = useState(false);
   const [enableCreatorRewards, setEnableCreatorRewards] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
 
   const {
     register,
@@ -148,6 +162,13 @@ export default function SimpleLaunchPage() {
         const result = await response.json();
 
         if (!response.ok || !result.success) {
+          // Store detailed error information
+          if (result.errorDetails) {
+            setErrorDetails(result.errorDetails);
+          }
+          if (result.debug) {
+            setDebugInfo(result.debug);
+          }
           throw new Error(result.error || "Deployment failed");
         }
 
@@ -177,6 +198,8 @@ export default function SimpleLaunchPage() {
   const handleTryAgain = () => {
     setViewState("review");
     setDeploymentError("");
+    setErrorDetails(null);
+    setDebugInfo(null);
   };
 
   // Auto-uppercase symbol
@@ -381,6 +404,34 @@ export default function SimpleLaunchPage() {
               >
                 Launch Token
               </Button>
+              
+              {/* Debug Toggle (Mini App Helper) */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full mt-2 text-xs text-muted-foreground"
+                onClick={() => setShowDebug(!showDebug)}
+              >
+                {showDebug ? "Hide" : "Show"} Debug Info
+              </Button>
+              
+              {/* Debug Information */}
+              {showDebug && (
+                <Card className="mt-4 p-3 bg-muted/50 text-xs">
+                  <h4 className="font-semibold mb-2">Debug Info</h4>
+                  <div className="space-y-1 font-mono">
+                    <div>Name: {watch("name") || "empty"}</div>
+                    <div>Symbol: {watch("symbol") || "empty"}</div>
+                    <div>Image: {watch("image") ? `${(watch("image")!.size / 1024).toFixed(2)} KB` : "not selected"}</div>
+                    <div>Image Type: {watch("image")?.type || "none"}</div>
+                    <div>FID: {user?.fid || "not authenticated"}</div>
+                    <div>Cast Context: {castContext ? "present" : "none"}</div>
+                    <div>Wallet: {isConnected ? truncateAddress(address!) : "not connected"}</div>
+                    <div>Creator Rewards: {enableCreatorRewards ? "enabled" : "disabled"}</div>
+                  </div>
+                </Card>
+              )}
             </div>
           </>
         )}
@@ -494,7 +545,7 @@ export default function SimpleLaunchPage() {
         )}
 
         {viewState === "error" && (
-          <div className="flex flex-col items-center justify-center py-20">
+          <div className="flex flex-col items-center justify-center py-20 max-w-2xl mx-auto">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center mb-6">
               <span className="text-2xl">⚠️</span>
             </div>
@@ -504,13 +555,72 @@ export default function SimpleLaunchPage() {
             <p className="text-muted-foreground text-center mb-6">
               {deploymentError}
             </p>
-            <Button
-              type="button"
-              onClick={handleTryAgain}
-              className="w-full max-w-xs"
-            >
-              Try Again
-            </Button>
+            
+            {/* Detailed Error Information */}
+            {errorDetails && (
+              <Card className="w-full p-4 mb-6 bg-destructive/5 border-destructive/20">
+                <h3 className="font-semibold mb-2 text-sm">Error Details</h3>
+                <div className="space-y-2 text-sm">
+                  {'type' in errorDetails && errorDetails.type ? (
+                    <div>
+                      <span className="font-medium">Type:</span> {renderValue(errorDetails.type)}
+                    </div>
+                  ) : null}
+                  {'userMessage' in errorDetails && errorDetails.userMessage ? (
+                    <div className="text-destructive">
+                      {renderValue(errorDetails.userMessage)}
+                    </div>
+                  ) : null}
+                  {'details' in errorDetails && errorDetails.details ? (
+                    <div className="text-xs text-muted-foreground mt-2">
+                      <span className="font-medium">Technical:</span> {renderValue(errorDetails.details)}
+                    </div>
+                  ) : null}
+                </div>
+              </Card>
+            )}
+            
+            {/* Debug Information */}
+            {debugInfo && (
+              <Card className="w-full p-4 mb-6 bg-muted/50">
+                <h3 className="font-semibold mb-2 text-sm">Debug Information</h3>
+                <div className="space-y-1 text-xs font-mono">
+                  <div>Has File: {'hasFile' in debugInfo && debugInfo.hasFile ? "Yes" : "No"}</div>
+                  {'fileSize' in debugInfo && debugInfo.fileSize !== undefined ? (
+                    <div>File Size: {(Number(debugInfo.fileSize) / 1024).toFixed(2)} KB</div>
+                  ) : null}
+                  {'fileType' in debugInfo && debugInfo.fileType ? (
+                    <div>File Type: {renderValue(debugInfo.fileType)}</div>
+                  ) : null}
+                  {'timestamp' in debugInfo && debugInfo.timestamp ? (
+                    <div>Time: {new Date(String(debugInfo.timestamp)).toLocaleTimeString()}</div>
+                  ) : null}
+                </div>
+              </Card>
+            )}
+            
+            <div className="flex flex-col space-y-2 w-full max-w-xs">
+              <Button
+                type="button"
+                onClick={handleTryAgain}
+                className="w-full"
+              >
+                Try Again
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setViewState("form");
+                  setDeploymentError("");
+                  setErrorDetails(null);
+                  setDebugInfo(null);
+                }}
+                className="w-full"
+              >
+                Start Over
+              </Button>
+            </div>
           </div>
         )}
       </form>
