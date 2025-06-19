@@ -289,16 +289,14 @@ export async function POST(request: NextRequest) {
           errorMessage = 'Image upload service returned an unexpected response';
           errorDetails = {
             type: 'IPFS_RESPONSE_ERROR',
-            details: error.message,
-            userMessage: 'The image upload service returned an invalid response. This may be due to expired credentials or API changes.',
-            technical: error.message
+            details: 'Invalid response structure from IPFS service',
+            userMessage: 'The image upload service returned an invalid response. This may be due to expired credentials or API changes.'
           };
         } else {
           errorDetails = {
             type: 'UNKNOWN_ERROR',
-            details: error.message,
-            userMessage: 'An unexpected error occurred during image upload',
-            technical: error.message
+            details: 'Image upload failed',
+            userMessage: 'An unexpected error occurred during image upload'
           };
         }
       }
