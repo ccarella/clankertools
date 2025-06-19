@@ -18,7 +18,7 @@ interface HapticContextValue {
   cardSelect: () => Promise<void>;
 }
 
-const HapticContext = createContext<HapticContextValue | null>(null);
+const HapticContext = createContext<HapticContextValue | undefined>(undefined);
 
 // Default no-op implementation for loading state
 const defaultHapticService: HapticContextValue = {
@@ -67,7 +67,7 @@ export function HapticProvider({ children }: { children: React.ReactNode }) {
 
 export function useHaptic() {
   const context = useContext(HapticContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useHaptic must be used within a HapticProvider');
   }
   return context;

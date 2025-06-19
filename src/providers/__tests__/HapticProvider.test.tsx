@@ -3,6 +3,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { HapticProvider, useHaptic } from '../HapticProvider';
 import { getHapticFeedbackService } from '@/services/haptic-feedback';
 
+// Don't use the automatic mock for HapticProvider in this test
+jest.unmock('@/providers/HapticProvider');
 jest.mock('@/services/haptic-feedback');
 
 const TestComponent = () => {
@@ -81,6 +83,9 @@ describe('HapticProvider', () => {
   });
 
   it('should handle loading state gracefully', () => {
+    // Mock the service to not resolve immediately
+    (getHapticFeedbackService as jest.Mock).mockImplementation(() => new Promise(() => {}));
+    
     render(
       <HapticProvider>
         <TestComponent />
@@ -96,12 +101,20 @@ describe('HapticProvider', () => {
     // Suppress console.error for this test
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
     
+    let error: Error | null = null;
     const ThrowingComponent = () => {
-      useHaptic();
+      try {
+        useHaptic();
+      } catch (e) {
+        error = e as Error;
+      }
       return null;
     };
 
-    expect(() => render(<ThrowingComponent />)).toThrow('useHaptic must be used within a HapticProvider');
+    render(<ThrowingComponent />);
+    
+    expect(error).toBeTruthy();
+    expect(error?.message).toBe('useHaptic must be used within a HapticProvider');
     
     consoleSpy.mockRestore();
   });

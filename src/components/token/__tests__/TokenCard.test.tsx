@@ -8,7 +8,7 @@ jest.mock('@/components/profile', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ProfileBadge: ({ user, variant }: { user: any; variant: any }) => (
     <div data-testid="profile-badge" data-variant={variant}>
-      {user?.display_name}
+      {user?.displayName || user?.display_name}
     </div>
   )
 }))
@@ -31,16 +31,13 @@ const mockToken = {
 const mockCreator = {
   fid: 12345,
   username: 'testcreator',
-  display_name: 'Test Creator',
-  pfp_url: 'https://example.com/avatar.jpg',
-  bio: { text: 'Token creator' },
-  follower_count: 5000,
-  following_count: 250,
-  verified_addresses: {
-    eth_addresses: ['0x123...'],
-    sol_addresses: []
-  },
-  custody_address: '0xabc...'
+  displayName: 'Test Creator',
+  pfp: { url: 'https://example.com/avatar.jpg' },
+  profile: { bio: { text: 'Token creator' } },
+  followerCount: 5000,
+  followingCount: 250,
+  verifications: ['0x123...'],
+  custodyAddress: '0xabc...'
 }
 
 describe('TokenCard with Social Proof', () => {
@@ -165,10 +162,7 @@ describe('TokenCard with Social Proof', () => {
   it('does not show verification badge for unverified creators', () => {
     const unverifiedCreator = {
       ...mockCreator,
-      verified_addresses: {
-        eth_addresses: [],
-        sol_addresses: []
-      }
+      verifications: []
     }
 
     mockUseNeynarUser.mockReturnValue({

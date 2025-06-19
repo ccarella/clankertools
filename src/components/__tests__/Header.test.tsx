@@ -18,16 +18,7 @@ jest.mock('next/navigation', () => ({
   usePathname: () => '/test-path',
 }))
 
-jest.mock('@farcaster/frame-sdk', () => ({
-  __esModule: true,
-  default: {
-    back: {
-      enableWebNavigation: jest.fn(),
-      show: jest.fn(),
-      hide: jest.fn(),
-    },
-  },
-}))
+jest.mock('@farcaster/frame-sdk')
 
 jest.mock('@/providers/HapticProvider')
 

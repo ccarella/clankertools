@@ -41,6 +41,11 @@ const mockSdk = {
     notificationOccurred: jest.fn().mockResolvedValue(undefined),
     selectionChanged: jest.fn().mockResolvedValue(undefined),
   },
+  back: {
+    enableWebNavigation: jest.fn(),
+    show: jest.fn(),
+    hide: jest.fn(),
+  },
 } as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 export const mockSDK = mockSdk;
@@ -57,6 +62,9 @@ export const resetSDKMocks = () => {
   mockSdk.haptics.impactOccurred.mockClear();
   mockSdk.haptics.notificationOccurred.mockClear();
   mockSdk.haptics.selectionChanged.mockClear();
+  mockSdk.back.enableWebNavigation.mockClear();
+  mockSdk.back.show.mockClear();
+  mockSdk.back.hide.mockClear();
   mockProvider.request.mockClear();
 };
 
