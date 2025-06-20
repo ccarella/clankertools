@@ -22,6 +22,14 @@ const mockSdk = {
     fetch: jest.fn(),
   } as unknown,
   context: {
+    get: jest.fn().mockResolvedValue({
+      user: null,
+      client: {
+        clientFid: 0,
+        frameActionBody: {},
+        added: false,
+      },
+    }),
     then: jest.fn((callback) => {
       callback({
         user: null,
