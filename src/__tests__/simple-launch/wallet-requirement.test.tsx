@@ -55,6 +55,15 @@ jest.mock('@/providers/HapticProvider', () => ({
   HapticProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
+// Mock useWalletBalance hook
+jest.mock('@/hooks/useWalletBalance', () => ({
+  useWalletBalance: () => ({
+    balance: null,
+    isLoading: false,
+    error: null,
+  }),
+}));
+
 // Mock Next.js navigation
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(() => ({
@@ -97,7 +106,7 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       if (url.includes('/api/config/wallet-requirement')) {
         return Promise.resolve({
           ok: true,
-          json: () => Promise.resolve({ required: true })
+          json: () => Promise.resolve({ requireWallet: true })
         });
       }
       return Promise.reject(new Error('Unexpected URL'));
@@ -108,13 +117,20 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
     jest.clearAllMocks();
   });
 
-  const renderComponent = () => {
-    return render(
+  const renderComponent = async () => {
+    const result = render(
       <>
         <SimpleLaunchPage />
         <Toaster />
       </>
     );
+    
+    // Wait for initial async operations to complete
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledWith('/api/config/wallet-requirement');
+    });
+    
+    return result;
   };
 
   it('should show wallet requirement message when wallet is required', async () => {
@@ -129,7 +145,7 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       disconnect: jest.fn()
     });
 
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('*Wallet required')).toBeInTheDocument();
@@ -148,7 +164,7 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       disconnect: jest.fn()
     });
 
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       const launchButton = screen.getByRole('button', { name: /launch token/i });
@@ -168,7 +184,7 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       disconnect: jest.fn()
     });
 
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('Connect wallet to continue')).toBeInTheDocument();
@@ -188,7 +204,7 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       disconnect: jest.fn()
     });
 
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       const creatorRewardsCheckbox = screen.getByRole('checkbox', { 
@@ -201,8 +217,6 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
   });
 
   it('should update UI when wallet is connected after initial render', async () => {
-    const { rerender } = renderComponent();
-    
     // Initially not connected
     mockUseWallet.mockReturnValue({
       isConnected: false,
@@ -214,6 +228,8 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       connect: jest.fn(),
       disconnect: jest.fn()
     });
+
+    const { rerender } = await renderComponent();
 
     await waitFor(() => {
       const launchButton = screen.getByRole('button', { name: /launch token/i });
@@ -250,11 +266,15 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
     mockUseWallet.mockReturnValue({
       isConnected: false,
       address: null,
+      balance: null,
+      chainId: null,
+      isLoading: false,
+      error: null,
       connect: mockConnect,
       disconnect: jest.fn()
     });
 
-    renderComponent();
+    await renderComponent();
 
     await waitFor(() => {
       const connectButton = screen.getByRole('button', { name: /connect wallet/i });
@@ -286,7 +306,7 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       disconnect: jest.fn()
     });
 
-    renderComponent();
+    await renderComponent();
 
     // Should fall back to not requiring wallet on error
     await waitFor(() => {

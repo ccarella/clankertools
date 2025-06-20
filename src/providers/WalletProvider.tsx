@@ -82,6 +82,15 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
   const connect = useCallback(async () => {
     setWalletState(prev => ({ ...prev, isLoading: true, error: null }));
 
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      setWalletState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: 'Connection timeout. Please try again.',
+      }));
+    }, 30000); // 30 second timeout
+
     try {
       // Get Ethereum provider from Farcaster SDK
       const provider = await sdk.wallet.getEthereumProvider();
@@ -107,13 +116,11 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
       
       // Validate network
       if (chainId !== BASE_CHAIN_ID && chainId !== BASE_SEPOLIA_CHAIN_ID) {
-        setWalletState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: 'Please switch to Base network',
-        }));
-        return;
+        throw new Error('Please switch to Base network');
       }
+
+      // Clear timeout on success
+      clearTimeout(timeoutId);
 
       setWalletState({
         isConnected: true,
@@ -124,7 +131,23 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
         error: null,
       });
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to connect wallet';
+      // Clear timeout on error
+      clearTimeout(timeoutId);
+      
+      // Handle user rejection specifically
+      let errorMessage = 'Failed to connect wallet';
+      if (error instanceof Error) {
+        // Common user rejection messages
+        if (error.message.includes('User rejected') || 
+            error.message.includes('User denied') ||
+            error.message.includes('canceled') ||
+            error.message.includes('cancelled')) {
+          errorMessage = 'Connection cancelled';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setWalletState(prev => ({
         ...prev,
         isLoading: false,

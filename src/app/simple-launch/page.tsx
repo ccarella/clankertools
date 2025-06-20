@@ -39,7 +39,7 @@ function renderValue(value: unknown): React.ReactNode {
 
 export default function SimpleLaunchPage() {
   const router = useRouter();
-  const { isConnected, address, connect, isLoading } = useWallet();
+  const { isConnected, address, connect, isLoading, error: walletError } = useWallet();
   const { user, castContext } = useFarcasterAuth();
   const [viewState, setViewState] = useState<ViewState>("form");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -574,16 +574,23 @@ export default function SimpleLaunchPage() {
 
             <div className="space-y-3">
               {!isConnected ? (
-                <Button
-                  type="button"
-                  onClick={connect}
-                  disabled={isLoading}
-                  className="w-full h-12 text-lg font-medium bg-primary hover:bg-primary/90"
-                  size="lg"
-                >
-                  <Wallet className="w-4 h-4 mr-2" />
-                  {isLoading ? 'Connecting...' : 'Connect Wallet'}
-                </Button>
+                <>
+                  <Button
+                    type="button"
+                    onClick={connect}
+                    disabled={isLoading}
+                    className="w-full h-12 text-lg font-medium bg-primary hover:bg-primary/90"
+                    size="lg"
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    {isLoading ? 'Connecting...' : 'Connect Wallet'}
+                  </Button>
+                  {walletError && !isLoading && (
+                    <p className="text-sm text-destructive text-center">
+                      {walletError}
+                    </p>
+                  )}
+                </>
               ) : (
                 <Button
                   type="submit"

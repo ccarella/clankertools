@@ -109,7 +109,7 @@ describe('WalletProvider', () => {
 
     await waitFor(() => {
       expect(screen.getByTestId('wallet-status')).toHaveTextContent('Not Connected');
-      expect(screen.getByTestId('wallet-error')).toHaveTextContent(errorMessage);
+      expect(screen.getByTestId('wallet-error')).toHaveTextContent('Connection cancelled');
     });
   });
 
@@ -231,7 +231,9 @@ describe('WalletProvider', () => {
     });
 
     await waitFor(() => {
+      expect(screen.getByTestId('wallet-status')).toHaveTextContent('Not Connected');
       expect(screen.getByTestId('wallet-error')).toHaveTextContent('Please switch to Base network');
+      expect(screen.getByTestId('wallet-loading')).toHaveTextContent('Not Loading');
     });
   });
 
