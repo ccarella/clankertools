@@ -94,6 +94,7 @@ describe('SimpleLaunchPage - Form Submission', () => {
       balance: null,
       isLoading: false,
       error: null,
+      networkName: 'Base',
     });
 
     // Mock Farcaster auth - authenticated user
@@ -381,6 +382,7 @@ describe('SimpleLaunchPage - Form Submission', () => {
       balance: null,
       isLoading: false,
       error: null,
+      networkName: null,
     });
 
     // Mock wallet not required

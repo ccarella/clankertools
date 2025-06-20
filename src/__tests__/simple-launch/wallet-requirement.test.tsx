@@ -142,7 +142,8 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isLoading: false,
       error: null,
       connect: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: null,
     });
 
     await renderComponent();
@@ -161,7 +162,8 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isLoading: false,
       error: null,
       connect: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: null,
     });
 
     await renderComponent();
@@ -181,7 +183,8 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isLoading: false,
       error: null,
       connect: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: null,
     });
 
     await renderComponent();
@@ -197,11 +200,12 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isConnected: true,
       address: '0x1234567890123456789012345678901234567890',
       balance: null,
-      chainId: null,
+      chainId: 8453,
       isLoading: false,
       error: null,
       connect: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: 'Base',
     });
 
     await renderComponent();
@@ -226,7 +230,8 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isLoading: false,
       error: null,
       connect: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: null,
     });
 
     const { rerender } = await renderComponent();
@@ -241,11 +246,12 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isConnected: true,
       address: '0x1234567890123456789012345678901234567890',
       balance: null,
-      chainId: null,
+      chainId: 8453,
       isLoading: false,
       error: null,
       connect: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: 'Base',
     });
 
     rerender(
@@ -271,7 +277,8 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isLoading: false,
       error: null,
       connect: mockConnect,
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: null,
     });
 
     await renderComponent();
@@ -299,11 +306,12 @@ describe('SimpleLaunchPage - Wallet Requirement', () => {
       isConnected: true,
       address: '0x1234567890123456789012345678901234567890',
       balance: null,
-      chainId: null,
+      chainId: 8453,
       isLoading: false,
       error: null,
       connect: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
+      networkName: 'Base',
     });
 
     await renderComponent();

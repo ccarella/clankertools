@@ -50,6 +50,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: null,
     });
 
     render(
@@ -71,6 +72,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: null,
     });
 
     render(
@@ -97,6 +99,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: 'Base',
     });
 
     render(
@@ -118,6 +121,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: 'Base',
     });
 
     // Mock balance for this test
@@ -147,6 +151,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: null,
     });
 
     render(
@@ -170,6 +175,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: 'Base',
     });
 
     render(
@@ -207,6 +213,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: 'Base',
     });
 
     render(
@@ -236,6 +243,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: 'Base',
     });
 
     render(
@@ -265,6 +273,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: 'Base',
     });
 
     render(
@@ -286,6 +295,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: null,
     });
 
     render(
@@ -307,6 +317,7 @@ describe('WalletButton', () => {
       error: null,
       connect: mockConnect,
       disconnect: mockDisconnect,
+      networkName: 'Base',
     });
 
     // Mock zero balance

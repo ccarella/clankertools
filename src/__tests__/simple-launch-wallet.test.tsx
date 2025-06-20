@@ -56,6 +56,7 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
       error: null,
       connect: jest.fn(),
       disconnect: jest.fn(),
+      networkName: null,
     });
 
     // Mock Farcaster SDK context
@@ -121,6 +122,7 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
       error: null,
       connect: jest.fn(),
       disconnect: jest.fn(),
+      networkName: 'Base',
     });
 
     render(<SimpleLaunchPage />);
@@ -149,6 +151,7 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
       error: null,
       connect: mockConnect,
       disconnect: jest.fn(),
+      networkName: null,
     });
 
     render(<SimpleLaunchPage />);
@@ -209,6 +212,7 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
       error: null,
       connect: jest.fn(),
       disconnect: jest.fn(),
+      networkName: 'Base',
     });
 
     // Mock successful deployment

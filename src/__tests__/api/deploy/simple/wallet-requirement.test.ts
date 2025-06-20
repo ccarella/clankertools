@@ -24,7 +24,7 @@ jest.mock('viem', () => ({
   createPublicClient: jest.fn(() => ({
     waitForTransactionReceipt: jest.fn().mockResolvedValue({
       status: 'success',
-      blockNumber: 12345n,
+      blockNumber: BigInt(12345),
       blockHash: '0xblockhash',
       transactionHash: '0xabc1234567890123456789012345678901234567890123456789012345678901',
     }),
@@ -141,7 +141,7 @@ describe('POST /api/deploy/simple - Wallet Requirement', () => {
         stream: () => new ReadableStream(),
         text: () => Promise.resolve('test')
       },
-      ...body
+      ...(body || {})
     };
     
     return new MockNextRequest('http://localhost:3000/api/deploy/simple', {
@@ -150,7 +150,7 @@ describe('POST /api/deploy/simple - Wallet Requirement', () => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(formData),
-    }) as Parameters<typeof POST>[0];
+    }) as unknown as Parameters<typeof POST>[0];
   };
 
   it('should reject deployment when wallet is required but not connected', async () => {
