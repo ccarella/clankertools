@@ -34,7 +34,7 @@ export async function uploadToIPFS(imageBlob: Blob): Promise<string> {
   // Validate file type
   const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
   if (!allowedTypes.includes(imageBlob.type)) {
-    throw new Error('Invalid file type. Only images are allowed');
+    throw new Error(`Invalid file type. Only images are allowed (PNG, JPEG, GIF, WebP). Received: ${imageBlob.type || 'unknown'}`);
   }
 
   // Create form data

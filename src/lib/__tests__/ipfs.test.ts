@@ -135,7 +135,7 @@ describe('uploadToIPFS', () => {
   it('should validate file type', async () => {
     const invalidBlob = new Blob(['data'], { type: 'text/plain' });
     
-    await expect(uploadToIPFS(invalidBlob)).rejects.toThrow('Invalid file type. Only images are allowed');
+    await expect(uploadToIPFS(invalidBlob)).rejects.toThrow('Invalid file type. Only images are allowed (PNG, JPEG, GIF, WebP). Received: text/plain');
     expect(fetch).not.toHaveBeenCalled();
   });
 });

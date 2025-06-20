@@ -117,7 +117,28 @@ export async function POST(request: NextRequest) {
         throw new Error('Invalid image format. Expected base64 data URL.');
       }
 
-      imageUrl = await uploadToIPFS(imageFile);
+      // Extract MIME type and base64 data
+      const matches = imageFile.match(/^data:(image\/[a-zA-Z]+);base64,(.+)$/);
+      if (!matches) {
+        throw new Error('Invalid base64 data URL format');
+      }
+
+      const mimeType = matches[1];
+      const base64Data = matches[2];
+
+      // Convert base64 to binary
+      const binaryData = atob(base64Data);
+      const arrayBuffer = new ArrayBuffer(binaryData.length);
+      const uint8Array = new Uint8Array(arrayBuffer);
+      
+      for (let i = 0; i < binaryData.length; i++) {
+        uint8Array[i] = binaryData.charCodeAt(i);
+      }
+
+      // Create Blob from binary data
+      const imageBlob = new Blob([uint8Array], { type: mimeType });
+
+      imageUrl = await uploadToIPFS(imageBlob);
       
       if (!imageUrl) {
         throw new Error('Failed to get IPFS URL');
