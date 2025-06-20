@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { uploadToIPFS } from '@/lib/ipfs';
 import { getNetworkConfig } from '@/lib/network-config';
-import { CastContext } from '@/lib/types/cast-context';
-import { storeUserToken } from '@/lib/redis';
 
 export const runtime = 'edge';
 
@@ -36,7 +34,13 @@ export async function POST(request: NextRequest) {
     headers: Object.fromEntries(request.headers.entries()),
   };
 
-  const debugContext = {
+  const debugContext: {
+    timestamp: string;
+    network: string;
+    hasDeployerKey: boolean;
+    keyLength: number;
+    step?: string;
+  } = {
     timestamp: requestContext.timestamp,
     network: process.env.NEXT_PUBLIC_NETWORK || 'base-sepolia',
     hasDeployerKey: !!process.env.DEPLOYER_PRIVATE_KEY,
@@ -52,7 +56,6 @@ export async function POST(request: NextRequest) {
       description = '', 
       userFid,
       walletAddress,
-      castContext,
     } = body;
 
     // Validate required fields
@@ -98,7 +101,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    debugContext['step'] = 'ipfs_upload';
+    debugContext.step = 'ipfs_upload';
 
     // Upload image to IPFS
     let imageUrl: string;
@@ -135,7 +138,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    debugContext['step'] = 'network_config';
+    debugContext.step = 'network_config';
 
     // Get network configuration
     const networkConfig = getNetworkConfig();
@@ -150,7 +153,7 @@ export async function POST(request: NextRequest) {
       ? 80 
       : rawCreatorReward;
 
-    debugContext['step'] = 'prepare_response';
+    debugContext.step = 'prepare_response';
 
     // Prepare deployment data for client-side
     const deploymentData = {
@@ -164,19 +167,8 @@ export async function POST(request: NextRequest) {
     };
 
     // Store deployment preparation data if we have cast context
-    if (castContext) {
-      try {
-        const castData = castContext as CastContext;
-        await storeUserToken(userFid, walletAddress, {
-          ...castData,
-          deploymentData,
-          preparedAt: Date.now(),
-        });
-      } catch (error) {
-        console.error('Failed to store cast context:', error);
-        // Non-critical error, continue with deployment
-      }
-    }
+    // Note: storeUserToken expects a UserToken object, not deployment data
+    // This would need to be updated after deployment completes with actual token data
 
     return NextResponse.json(
       { 
