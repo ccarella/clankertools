@@ -5,6 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { SaveMiniAppButton } from '@/components/SaveMiniAppButton';
+import { WalletSettings } from './wallet-settings';
 
 export default function Settings() {
   const haptic = useHaptic();
@@ -15,6 +16,8 @@ export default function Settings() {
         <h1 className="text-2xl font-bold mb-6">Settings</h1>
         
         <div className="space-y-6">
+          <WalletSettings />
+          
           <Card>
             <CardHeader>
               <CardTitle>User Preferences</CardTitle>
