@@ -14,7 +14,7 @@ export const runtime = 'edge';
 
 // Interface for wallet data
 interface WalletData {
-  walletAddress: string;
+  address: string;
   enableCreatorRewards: boolean;
   connectedAt: number;
 }
@@ -174,6 +174,33 @@ export async function POST(request: NextRequest) {
     const name = rawName ? sanitizeInput(rawName) : '';
     const symbol = rawSymbol ? sanitizeInput(rawSymbol) : '';
 
+    // Check wallet requirement
+    const requireWallet = process.env.REQUIRE_WALLET_FOR_SIMPLE_LAUNCH === 'true';
+    
+    if (requireWallet) {
+      // FID is required when wallet requirement is enabled
+      if (!fid) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: 'Farcaster authentication required',
+            errorDetails: {
+              type: 'FID_REQUIRED',
+              message: 'Please sign in with Farcaster to deploy tokens',
+            },
+            debugInfo: {
+              ...debugContext,
+              step: 'wallet_requirement_check',
+              requireWallet: true,
+              hasFid: false,
+              requestContext,
+            }
+          },
+          { status: 400, headers: getSecurityHeaders(request) }
+        );
+      }
+    }
+    
     // Validate required fields
     debugContext.step = 'validation';
     const validationErrors = [];
@@ -514,18 +541,89 @@ export async function POST(request: NextRequest) {
         const redisClient = getRedisClient();
         if (redisClient) {
           const walletData = await redisClient.get<WalletData>(`wallet:${fid}`);
+          
+          // If wallet is required, check that wallet is connected
+          if (requireWallet) {
+            if (!walletData) {
+              return NextResponse.json(
+                { 
+                  success: false, 
+                  error: 'Wallet connection required for deployment',
+                  errorDetails: {
+                    type: 'WALLET_REQUIREMENT_ERROR',
+                    details: 'No wallet connected to your account',
+                    userMessage: 'Please connect your wallet before deploying',
+                  },
+                  debugInfo: {
+                    ...debugContext,
+                    step: 'wallet_connection_check',
+                    requireWallet: true,
+                    hasWallet: false,
+                    fid,
+                    requestContext,
+                  }
+                },
+                { status: 400, headers: getSecurityHeaders(request) }
+              );
+            }
+            
+            if (!walletData.enableCreatorRewards) {
+              return NextResponse.json(
+                { 
+                  success: false, 
+                  error: 'Creator rewards must be enabled when wallet is required',
+                  errorDetails: {
+                    type: 'WALLET_REQUIREMENT_ERROR',
+                    details: 'Creator rewards disabled on connected wallet',
+                    userMessage: 'Please enable creator rewards for your wallet',
+                  },
+                  debugInfo: {
+                    ...debugContext,
+                    step: 'creator_rewards_check',
+                    requireWallet: true,
+                    hasWallet: true,
+                    creatorRewardsEnabled: false,
+                    fid,
+                    requestContext,
+                  }
+                },
+                { status: 400, headers: getSecurityHeaders(request) }
+              );
+            }
+          }
+          
           if (walletData && walletData.enableCreatorRewards) {
             // Validate wallet address format
             const walletAddressRegex = /^0x[a-fA-F0-9]{40}$/;
-            if (walletAddressRegex.test(walletData.walletAddress)) {
-              creatorAdmin = walletData.walletAddress as `0x${string}`;
-              creatorRewardRecipient = walletData.walletAddress as `0x${string}`;
+            if (walletAddressRegex.test(walletData.address)) {
+              creatorAdmin = walletData.address as `0x${string}`;
+              creatorRewardRecipient = walletData.address as `0x${string}`;
             }
           }
         }
       } catch (error) {
         console.error('Error fetching wallet data:', error);
-        // Continue with deployer address if Redis lookup fails
+        if (requireWallet) {
+          return NextResponse.json(
+            { 
+              success: false, 
+              error: 'Failed to verify wallet connection',
+              errorDetails: {
+                type: 'WALLET_CHECK_ERROR',
+                message: 'Unable to verify wallet connection status',
+              },
+              debugInfo: {
+                ...debugContext,
+                step: 'wallet_verification_error',
+                requireWallet: true,
+                error: error instanceof Error ? error.message : 'Unknown error',
+                requestContext,
+              }
+            },
+            { status: 500, headers: getSecurityHeaders(request) }
+          );
+        }
+        // Continue with deployer address if Redis lookup fails and wallet not required
       }
     }
     

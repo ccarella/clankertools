@@ -43,9 +43,17 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (fetch as jest.Mock).mockResolvedValue({
-      ok: true,
-      json: async () => ({ success: true }),
+    (fetch as jest.Mock).mockImplementation((url) => {
+      if (url === '/api/config/wallet-requirement') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ required: false }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
     });
   });
 
@@ -164,7 +172,7 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
 
     // Wait for API calls to be made
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledTimes(2); // connectWallet and deploy
+      expect(fetch).toHaveBeenCalledTimes(3); // wallet-requirement, connectWallet and deploy
     });
 
     // Verify wallet connection API was called

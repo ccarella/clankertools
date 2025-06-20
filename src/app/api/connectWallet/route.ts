@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Redis } from '@upstash/redis';
 
 interface WalletData {
-  walletAddress: string;
+  address: string;
   enableCreatorRewards: boolean;
   connectedAt: number;
 }
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     // Store wallet data in Redis
     const redisClient = getRedisClient();
     const walletData: WalletData = {
-      walletAddress,
+      address: walletAddress,
       enableCreatorRewards,
       connectedAt: Date.now(),
     };

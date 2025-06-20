@@ -88,6 +88,20 @@ describe('SimpleLaunchPage', () => {
   beforeEach(() => {
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
     jest.clearAllMocks();
+    
+    // Default mock for wallet requirement API
+    (fetch as jest.Mock).mockImplementation((url) => {
+      if (url === '/api/config/wallet-requirement') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ required: false }),
+        });
+      }
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({ success: true }),
+      });
+    });
   });
 
   it('renders all form fields', () => {

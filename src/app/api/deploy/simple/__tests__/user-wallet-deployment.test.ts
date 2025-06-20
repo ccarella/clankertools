@@ -223,7 +223,7 @@ describe('POST /api/deploy/simple - User Wallet Deployment', () => {
     
     // Mock wallet data with enableCreatorRewards = false
     mockRedis.get.mockResolvedValueOnce({
-      walletAddress: userWalletAddress,
+      address: userWalletAddress,
       enableCreatorRewards: false,
       connectedAt: Date.now(),
     });
