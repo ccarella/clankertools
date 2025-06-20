@@ -3,14 +3,14 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { WalletSettings } from '../wallet-settings';
 import { useWallet } from '@/providers/WalletProvider';
-import { useFarcaster } from '@/components/providers/FarcasterProvider';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 
 jest.mock('@/providers/WalletProvider', () => ({
   useWallet: jest.fn(),
 }));
 
-jest.mock('@/components/providers/FarcasterProvider', () => ({
-  useFarcaster: jest.fn(),
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  useFarcasterAuth: jest.fn(),
 }));
 jest.mock('lucide-react', () => ({
   Wallet: () => <div>Wallet Icon</div>,
@@ -22,7 +22,7 @@ jest.mock('lucide-react', () => ({
 }));
 
 const mockUseWallet = jest.mocked(useWallet);
-const mockUseFarcaster = jest.mocked(useFarcaster);
+const mockUseFarcasterAuth = jest.mocked(useFarcasterAuth);
 
 describe('WalletSettings', () => {
   const mockConnect = jest.fn();
@@ -30,10 +30,10 @@ describe('WalletSettings', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseFarcaster.mockReturnValue({
+    mockUseFarcasterAuth.mockReturnValue({
       user: { fid: 12345, username: 'testuser' },
       isAuthenticated: true,
-    } as ReturnType<typeof useFarcaster>);
+    } as ReturnType<typeof useFarcasterAuth>);
   });
 
   it('renders wallet section with connect button when not connected', () => {

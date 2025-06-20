@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useWallet } from '@/providers/WalletProvider';
-import { useFarcaster } from '@/components/providers/FarcasterProvider';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -18,7 +18,7 @@ import {
 
 export function WalletSettings() {
   const { address, isConnected, isLoading, connect, disconnect, balance, networkName, error: walletError } = useWallet();
-  const { user } = useFarcaster();
+  const { user } = useFarcasterAuth();
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
