@@ -8,10 +8,14 @@ import { createPublicClient, createWalletClient } from 'viem';
 // Mock dependencies
 jest.mock('@/providers/WalletProvider');
 jest.mock('viem');
+
+// Create mock Clanker instance
+const mockClankerInstance = {
+  deployToken: jest.fn(),
+};
+
 jest.mock('clanker-sdk', () => ({
-  Clanker: jest.fn().mockImplementation(() => ({
-    deployToken: jest.fn(),
-  })),
+  Clanker: jest.fn(() => mockClankerInstance),
 }));
 
 const mockUseWallet = useWallet as jest.MockedFunction<typeof useWallet>;
@@ -32,16 +36,19 @@ describe('ClientDeployment', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockClankerInstance.deployToken.mockClear();
     
     // Default wallet state - connected
     mockUseWallet.mockReturnValue({
       isConnected: true,
-      address: '0x1234567890123456789012345678901234567890' as `0x${string}`,
+      address: '0x1234567890123456789012345678901234567890',
       chainId: 8453, // Base mainnet
       connect: jest.fn(),
       disconnect: jest.fn(),
-      isConnecting: false,
+      isLoading: false,
       error: null,
+      balance: null,
+      networkName: 'Base',
     });
 
     // Mock Farcaster SDK wallet provider
@@ -76,8 +83,10 @@ describe('ClientDeployment', () => {
       chainId: null,
       connect: jest.fn(),
       disconnect: jest.fn(),
-      isConnecting: false,
+      isLoading: false,
       error: null,
+      balance: null,
+      networkName: null,
     });
 
     render(
@@ -92,16 +101,11 @@ describe('ClientDeployment', () => {
   });
 
   it('should handle successful deployment', async () => {
-    const { Clanker } = await import('clanker-sdk');
-    const mockDeployToken = jest.fn().mockResolvedValue({
+    mockClankerInstance.deployToken.mockResolvedValue({
       tokenAddress: '0xabcd',
       transactionHash: '0x1234',
       poolAddress: '0xpool',
     });
-    
-    Clanker.mockImplementation(() => ({
-      deployToken: mockDeployToken,
-    }));
 
     render(
       <ClientDeployment
@@ -115,19 +119,21 @@ describe('ClientDeployment', () => {
     fireEvent.click(deployButton);
 
     await waitFor(() => {
-      expect(mockDeployToken).toHaveBeenCalledWith({
+      expect(mockClankerInstance.deployToken).toHaveBeenCalledWith({
         name: 'Test Token',
         symbol: 'TEST',
-        imageUrl: 'https://example.com/image.png',
-        description: 'Test token description',
-        fundingSourceId: 0,
-        creatorShareId: 0,
+        image: 'https://example.com/image.png',
+        pool: {
+          quoteToken: '0x4200000000000000000000000000000000000006',
+          initialMarketCap: '0.1',
+        },
         rewardsConfig: {
+          creatorReward: 80,
           creatorAdmin: '0x1234567890123456789012345678901234567890',
           creatorRewardRecipient: '0x1234567890123456789012345678901234567890',
-          creatorPercentage: 80,
-        },
-        marketCapLiquidity: '0.1',
+          interfaceAdmin: '0x1234567890123456789012345678901234567890',
+          interfaceRewardRecipient: '0x1234567890123456789012345678901234567890',
+        }
       });
     });
 
@@ -141,13 +147,8 @@ describe('ClientDeployment', () => {
   });
 
   it('should handle deployment errors', async () => {
-    const { Clanker } = await import('clanker-sdk');
     const mockError = new Error('Deployment failed');
-    const mockDeployToken = jest.fn().mockRejectedValue(mockError);
-    
-    Clanker.mockImplementation(() => ({
-      deployToken: mockDeployToken,
-    }));
+    mockClankerInstance.deployToken.mockRejectedValue(mockError);
 
     render(
       <ClientDeployment
@@ -166,14 +167,9 @@ describe('ClientDeployment', () => {
   });
 
   it('should show loading state during deployment', async () => {
-    const { Clanker } = await import('clanker-sdk');
-    const mockDeployToken = jest.fn().mockImplementation(() => 
+    mockClankerInstance.deployToken.mockImplementation(() => 
       new Promise(resolve => setTimeout(resolve, 100))
     );
-    
-    Clanker.mockImplementation(() => ({
-      deployToken: mockDeployToken,
-    }));
 
     render(
       <ClientDeployment

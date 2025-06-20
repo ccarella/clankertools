@@ -90,6 +90,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
         error: null,
         connect: jest.fn(),
         disconnect: jest.fn(),
+        networkName: null,
       });
     });
 
@@ -138,6 +139,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
         error: null,
         connect: mockConnect,
         disconnect: jest.fn(),
+        networkName: null,
       });
 
       render(<SimpleLaunchPage />);
@@ -186,6 +188,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
         error: null,
         connect: jest.fn(),
         disconnect: jest.fn(),
+        networkName: 'Base',
       });
     });
 
@@ -264,6 +267,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
           error: null,
           connect: mockConnect,
           disconnect: jest.fn(),
+          networkName: 'Base',
         });
       });
 
@@ -277,6 +281,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
         error: null,
         connect: mockConnect,
         disconnect: jest.fn(),
+        networkName: null,
       });
 
       const { rerender } = render(<SimpleLaunchPage />);
@@ -332,6 +337,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
         disconnect: jest.fn(),
         isLoading: false,
         error: null,
+        networkName: 'Base',
       });
 
       // Mock successful prepare API response
