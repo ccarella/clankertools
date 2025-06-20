@@ -61,6 +61,7 @@ export default function SimpleLaunchPage() {
     creatorReward: number;
     deployerAddress: string;
   } | null>(null);
+  const [targetChainId, setTargetChainId] = useState<number | undefined>(undefined);
   const [showClientDeployment, setShowClientDeployment] = useState(false);
 
   const {
@@ -219,6 +220,7 @@ export default function SimpleLaunchPage() {
 
         // Set deployment data and show client deployment component
         setDeploymentData(result.deploymentData);
+        setTargetChainId(result.chainId);
         setShowClientDeployment(true);
       } catch (error) {
         console.error("Deployment preparation error:", error);
@@ -638,6 +640,7 @@ export default function SimpleLaunchPage() {
                     tokenData={deploymentData}
                     onSuccess={handleDeploymentSuccess}
                     onError={handleDeploymentError}
+                    targetChainId={targetChainId}
                   />
                 )}
               </div>

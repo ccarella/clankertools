@@ -8,6 +8,7 @@ import { base, baseSepolia } from 'viem/chains';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
+import { getClientNetworkConfig } from '@/lib/client-network-config';
 
 interface TokenData {
   name: string;
@@ -31,7 +32,8 @@ export function ClientDeployment({ tokenData, onSuccess, onError, targetChainId 
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const expectedChainId = targetChainId || (process.env.NEXT_PUBLIC_NETWORK === 'base' ? 8453 : 84532);
+  const networkConfig = getClientNetworkConfig();
+  const expectedChainId = targetChainId || networkConfig.chainId;
   const isCorrectChain = chainId === expectedChainId;
 
   const handleDeploy = async () => {

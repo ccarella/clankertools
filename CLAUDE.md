@@ -146,7 +146,8 @@ UPSTASH_REDIS_TOKEN=
 IPFS_GATEWAY_URL=
 
 # Network configuration
-NEXT_PUBLIC_NETWORK=base-sepolia  # or 'base' for mainnet
+BASE_NETWORK=testnet  # 'testnet' for Base Sepolia or 'mainnet' for Base
+NEXT_PUBLIC_BASE_NETWORK=testnet  # Must match BASE_NETWORK
 ```
 
 ## Common Tasks
