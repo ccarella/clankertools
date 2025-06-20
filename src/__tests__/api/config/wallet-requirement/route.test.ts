@@ -3,25 +3,6 @@
  */
 import { GET } from '@/app/api/config/wallet-requirement/route';
 
-// Mock NextRequest class
-class MockNextRequest {
-  method: string;
-  body: unknown;
-  headers: Headers;
-  url: string;
-  
-  constructor(url: string, init?: RequestInit) {
-    this.url = url;
-    this.method = init?.method || 'GET';
-    this.body = init?.body;
-    this.headers = new Headers(init?.headers as HeadersInit);
-  }
-  
-  async json() {
-    return JSON.parse(this.body as string);
-  }
-}
-
 describe('GET /api/config/wallet-requirement', () => {
   const originalEnv = process.env;
 
