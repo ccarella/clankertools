@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ArrowLeft, Plus, Camera, Upload, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +50,7 @@ export default function SimpleLaunchPage() {
   const [cameraSupported, setCameraSupported] = useState(false);
   const [enableCreatorRewards, setEnableCreatorRewards] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
+  const [requireWallet, setRequireWallet] = useState(false);
 
   const {
     register,
@@ -74,6 +75,23 @@ export default function SimpleLaunchPage() {
         .catch(() => setCameraSupported(false));
     }
   });
+
+  // Fetch wallet requirement config
+  useEffect(() => {
+    fetch('/api/config/wallet-requirement')
+      .then(res => res.json())
+      .then(data => {
+        setRequireWallet(data.required);
+        if (data.required) {
+          setEnableCreatorRewards(true);
+        }
+      })
+      .catch(err => {
+        console.error('Failed to fetch wallet requirement config:', err);
+        // Default to not required on error
+        setRequireWallet(false);
+      });
+  }, []);
 
   const handleImageUpload = (file: File) => {
     setValue("image", file);
@@ -357,14 +375,27 @@ export default function SimpleLaunchPage() {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-foreground">
                     Creator Rewards Wallet
+                    {requireWallet && !isConnected && (
+                      <span className="text-destructive ml-2">*Wallet required</span>
+                    )}
                   </label>
                   <p className="text-sm text-muted-foreground">
-                    Connect your wallet to receive 80% of the platform fees
+                    {requireWallet
+                      ? "Connect your wallet to receive creator rewards"
+                      : "Connect your wallet to receive 80% of the platform fees"
+                    }
                   </p>
                 </div>
                 
                 {!isConnected ? (
-                  <WalletButton />
+                  <>
+                    <WalletButton />
+                    {requireWallet && (
+                      <p className="text-sm text-destructive text-center">
+                        Connect wallet to continue
+                      </p>
+                    )}
+                  </>
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center justify-between p-3 bg-muted/20 rounded-lg">
@@ -377,6 +408,7 @@ export default function SimpleLaunchPage() {
                         id="creator-rewards"
                         checked={enableCreatorRewards}
                         onCheckedChange={(checked) => setEnableCreatorRewards(!!checked)}
+                        disabled={requireWallet}
                       />
                       <label
                         htmlFor="creator-rewards"
@@ -401,6 +433,7 @@ export default function SimpleLaunchPage() {
                 type="submit"
                 className="w-full h-12 text-lg font-medium bg-primary hover:bg-primary/90"
                 size="lg"
+                disabled={requireWallet && !isConnected}
               >
                 Launch Token
               </Button>

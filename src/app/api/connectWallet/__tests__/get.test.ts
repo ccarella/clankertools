@@ -46,7 +46,7 @@ describe('GET /api/connectWallet', () => {
     const request = new MockNextRequest('http://localhost:3000/api/connectWallet?fid=12345');
 
     const mockWalletData = {
-      walletAddress: '0x1234567890123456789012345678901234567890',
+      address: '0x1234567890123456789012345678901234567890',
       enableCreatorRewards: true,
       connectedAt: Date.now(),
     };

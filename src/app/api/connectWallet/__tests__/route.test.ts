@@ -77,7 +77,7 @@ describe('POST /api/connectWallet', () => {
     expect(mockRedis.set).toHaveBeenCalledWith(
       'wallet:12345',
       expect.objectContaining({
-        walletAddress: '0x1234567890123456789012345678901234567890',
+        address: '0x1234567890123456789012345678901234567890',
         enableCreatorRewards: true,
         connectedAt: expect.any(Number),
       })
