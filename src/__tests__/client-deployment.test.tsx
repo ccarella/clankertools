@@ -195,8 +195,10 @@ describe('ClientDeployment', () => {
       chainId: 84532, // Base Sepolia
       connect: jest.fn(),
       disconnect: jest.fn(),
-      isConnecting: false,
+      isLoading: false,
       error: null,
+      balance: null,
+      networkName: 'Base Sepolia',
     });
 
     render(
@@ -230,8 +232,10 @@ describe('ClientDeployment', () => {
             chainId: 8453, // Switched to Base mainnet
             connect: jest.fn(),
             disconnect: jest.fn(),
-            isConnecting: false,
+            isLoading: false,
             error: null,
+            balance: null,
+            networkName: 'Base',
           });
           return Promise.resolve();
         }
@@ -248,8 +252,10 @@ describe('ClientDeployment', () => {
       chainId: 1, // Ethereum mainnet (wrong chain)
       connect: jest.fn(),
       disconnect: jest.fn(),
-      isConnecting: false,
+      isLoading: false,
       error: null,
+      balance: null,
+      networkName: null,
     });
 
     render(

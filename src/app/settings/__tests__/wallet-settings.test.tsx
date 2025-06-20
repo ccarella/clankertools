@@ -45,6 +45,8 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: null,
       networkName: null,
+      chainId: null,
+      error: null,
     });
 
     render(<WalletSettings />);
@@ -64,6 +66,8 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: '1.23',
       networkName: 'Base',
+      chainId: 8453,
+      error: null,
     });
 
     render(<WalletSettings />);
@@ -86,6 +90,8 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: null,
       networkName: null,
+      chainId: null,
+      error: null,
     });
 
     render(<WalletSettings />);
@@ -104,6 +110,8 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: null,
       networkName: null,
+      chainId: null,
+      error: null,
     });
 
     render(<WalletSettings />);
@@ -125,6 +133,8 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: '1.23',
       networkName: 'Base',
+      chainId: 8453,
+      error: null,
     });
 
     render(<WalletSettings />);
@@ -153,6 +163,8 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: '1.23',
       networkName: 'Base',
+      chainId: 8453,
+      error: null,
     });
 
     render(<WalletSettings />);
@@ -174,8 +186,9 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: null,
       networkName: null,
+      chainId: null,
       error: 'Connection failed',
-    } as ReturnType<typeof useWallet> & { error: string });
+    } as any);
 
     render(<WalletSettings />);
 
@@ -194,6 +207,8 @@ describe('WalletSettings', () => {
       disconnect: mockDisconnect,
       balance: '1.23',
       networkName: 'Base',
+      chainId: 8453,
+      error: null,
     });
 
     render(<WalletSettings />);

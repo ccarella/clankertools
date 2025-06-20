@@ -256,7 +256,8 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
 
   describe('Review Page - Dynamic Wallet Connection', () => {
     it('should update button from "Connect Wallet" to "Confirm & Launch" after successful connection', async () => {
-      const mockConnect = jest.fn(() => {
+      const mockConnect = jest.fn().mockResolvedValue(undefined);
+      mockConnect.mockImplementation(() => {
         // Re-render with connected state
         mockUseWallet.mockReturnValue({
           isConnected: true,
@@ -265,10 +266,11 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
           chainId: 8453,
           isLoading: false,
           error: null,
-          connect: mockConnect,
+          connect: jest.fn().mockResolvedValue(undefined),
           disconnect: jest.fn(),
           networkName: 'Base',
         });
+        return Promise.resolve();
       });
 
       // Start with disconnected wallet
@@ -332,6 +334,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
       mockUseWallet.mockReturnValue({
         isConnected: true,
         address: '0x1234567890123456789012345678901234567890' as `0x${string}`,
+        balance: null,
         chainId: 8453,
         connect: jest.fn(),
         disconnect: jest.fn(),

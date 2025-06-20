@@ -9,22 +9,22 @@ import { NextRequest } from 'next/server';
 jest.mock('@/lib/ipfs');
 
 // Mock NextRequest
-class MockNextRequest implements Partial<NextRequest> {
+class MockNextRequest {
   method: string;
   headers: Headers;
-  private body: unknown;
+  private _body: unknown;
   
   constructor(url: string, init: RequestInit) {
     this.method = init.method || 'GET';
     this.headers = new Headers(init.headers as HeadersInit);
-    this.body = init.body;
+    this._body = init.body;
   }
   
   async json() {
-    if (typeof this.body === 'string') {
-      return JSON.parse(this.body);
+    if (typeof this._body === 'string') {
+      return JSON.parse(this._body);
     }
-    return this.body;
+    return this._body;
   }
 }
 
