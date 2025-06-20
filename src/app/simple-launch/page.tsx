@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Plus, Camera, Upload, Check } from "lucide-react";
+import { ArrowLeft, Plus, Camera, Upload, Check, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -39,7 +39,7 @@ function renderValue(value: unknown): React.ReactNode {
 
 export default function SimpleLaunchPage() {
   const router = useRouter();
-  const { isConnected, address } = useWallet();
+  const { isConnected, address, connect, isLoading } = useWallet();
   const { user, castContext } = useFarcasterAuth();
   const [viewState, setViewState] = useState<ViewState>("form");
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -573,13 +573,26 @@ export default function SimpleLaunchPage() {
             </Card>
 
             <div className="space-y-3">
-              <Button
-                type="submit"
-                className="w-full h-12 text-lg font-medium bg-primary hover:bg-primary/90"
-                size="lg"
-              >
-                Confirm & Launch
-              </Button>
+              {!isConnected ? (
+                <Button
+                  type="button"
+                  onClick={connect}
+                  disabled={isLoading}
+                  className="w-full h-12 text-lg font-medium bg-primary hover:bg-primary/90"
+                  size="lg"
+                >
+                  <Wallet className="w-4 h-4 mr-2" />
+                  {isLoading ? 'Connecting...' : 'Connect Wallet'}
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-lg font-medium bg-primary hover:bg-primary/90"
+                  size="lg"
+                >
+                  Confirm & Launch
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
