@@ -16,6 +16,7 @@ interface WalletState {
 interface WalletContextType extends WalletState {
   connect: () => Promise<void>;
   disconnect: () => void;
+  networkName: string | null;
 }
 
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
@@ -23,6 +24,11 @@ const WalletContext = createContext<WalletContextType | undefined>(undefined);
 const STORAGE_KEY = 'wallet-state';
 const BASE_CHAIN_ID = BASE_NETWORKS.mainnet.chainId;
 const BASE_SEPOLIA_CHAIN_ID = BASE_NETWORKS.testnet.chainId;
+
+const NETWORK_NAMES: Record<number, string> = {
+  8453: 'Base',
+  84532: 'Base Sepolia',
+};
 
 export function WalletProvider({ children }: { children: React.ReactNode }) {
   const [walletState, setWalletState] = useState<WalletState>(() => {
@@ -171,6 +177,7 @@ export function WalletProvider({ children }: { children: React.ReactNode }) {
     ...walletState,
     connect,
     disconnect,
+    networkName: walletState.chainId ? NETWORK_NAMES[walletState.chainId] || null : null,
   };
 
   return (
