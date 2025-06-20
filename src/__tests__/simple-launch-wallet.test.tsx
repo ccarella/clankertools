@@ -9,7 +9,11 @@ import { mockSDK as sdk } from '@/__mocks__/@farcaster/frame-sdk';
 jest.mock('next/navigation');
 jest.mock('@/providers/WalletProvider');
 jest.mock('@/providers/HapticProvider', () => ({
-  useHaptic: () => ({ triggerHaptic: jest.fn() }),
+  useHaptic: () => ({ 
+    triggerHaptic: jest.fn(),
+    isEnabled: jest.fn(() => false),
+    buttonPress: jest.fn(),
+  }),
 }));
 jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
   useFarcasterAuth: jest.fn(() => ({
@@ -46,11 +50,12 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
     mockUseWallet.mockReturnValue({
       isConnected: false,
       address: null,
+      balance: null,
       chainId: null,
+      isLoading: false,
+      error: null,
       connect: jest.fn(),
       disconnect: jest.fn(),
-      isConnecting: false,
-      error: null,
     });
 
     // Mock Farcaster SDK context
@@ -93,8 +98,8 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
     render(<SimpleLaunchPage />);
 
     // Fill out the form
-    const nameInput = screen.getByPlaceholderText(/moonshot/i);
-    const symbolInput = screen.getByPlaceholderText(/moon/i);
+    const nameInput = screen.getByPlaceholderText(/my token/i);
+    const symbolInput = screen.getByPlaceholderText(/myt/i);
     
     fireEvent.change(nameInput, { target: { value: 'Test Token' } });
     fireEvent.change(symbolInput, { target: { value: 'TEST' } });
@@ -110,18 +115,19 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
     mockUseWallet.mockReturnValue({
       isConnected: true,
       address: '0x1234567890123456789012345678901234567890' as `0x${string}`,
+      balance: null,
       chainId: 8453, // Base mainnet
+      isLoading: false,
+      error: null,
       connect: jest.fn(),
       disconnect: jest.fn(),
-      isConnecting: false,
-      error: null,
     });
 
     render(<SimpleLaunchPage />);
 
     // Fill out the form
-    const nameInput = screen.getByPlaceholderText(/moonshot/i);
-    const symbolInput = screen.getByPlaceholderText(/moon/i);
+    const nameInput = screen.getByPlaceholderText(/my token/i);
+    const symbolInput = screen.getByPlaceholderText(/myt/i);
     
     fireEvent.change(nameInput, { target: { value: 'Test Token' } });
     fireEvent.change(symbolInput, { target: { value: 'TEST' } });
@@ -137,11 +143,12 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
     mockUseWallet.mockReturnValue({
       isConnected: false,
       address: null,
+      balance: null,
       chainId: null,
+      isLoading: false,
+      error: null,
       connect: mockConnect,
       disconnect: jest.fn(),
-      isConnecting: false,
-      error: null,
     });
 
     render(<SimpleLaunchPage />);
@@ -172,8 +179,8 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
     render(<SimpleLaunchPage />);
 
     // Fill out the form
-    const nameInput = screen.getByPlaceholderText(/moonshot/i);
-    const symbolInput = screen.getByPlaceholderText(/moon/i);
+    const nameInput = screen.getByPlaceholderText(/my token/i);
+    const symbolInput = screen.getByPlaceholderText(/myt/i);
     
     fireEvent.change(nameInput, { target: { value: 'Test Token' } });
     fireEvent.change(symbolInput, { target: { value: 'TEST' } });
@@ -183,8 +190,10 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
       expect(launchButton).not.toBeDisabled();
     });
 
-    // Should not show wallet connection section
-    expect(screen.queryByText(/connect.*wallet/i)).not.toBeInTheDocument();
+    // Should show wallet connection section but not require it
+    expect(screen.getByText(/Creator Rewards Wallet/i)).toBeInTheDocument();
+    // Should not show "Wallet required" text
+    expect(screen.queryByText(/\*Wallet required/i)).not.toBeInTheDocument();
   });
 
   it('should include wallet address in deployment request when connected', async () => {
@@ -194,11 +203,12 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
     mockUseWallet.mockReturnValue({
       isConnected: true,
       address: walletAddress as `0x${string}`,
+      balance: null,
       chainId: 8453,
+      isLoading: false,
+      error: null,
       connect: jest.fn(),
       disconnect: jest.fn(),
-      isConnecting: false,
-      error: null,
     });
 
     // Mock successful deployment
@@ -228,22 +238,37 @@ describe('SimpleLaunchPage - Wallet Connection', () => {
     render(<SimpleLaunchPage />);
 
     // Fill out the form
-    const nameInput = screen.getByPlaceholderText(/moonshot/i);
-    const symbolInput = screen.getByPlaceholderText(/moon/i);
+    const nameInput = screen.getByPlaceholderText(/my token/i);
+    const symbolInput = screen.getByPlaceholderText(/myt/i);
+    const fileInput = screen.getByTestId('file-input');
     
     fireEvent.change(nameInput, { target: { value: 'Test Token' } });
     fireEvent.change(symbolInput, { target: { value: 'TEST' } });
 
-    // Submit form
-    await waitFor(() => {
-      const launchButton = screen.getByRole('button', { name: /launch token/i });
-      fireEvent.click(launchButton);
+    // Mock file upload
+    const file = new File(['test'], 'test.png', { type: 'image/png' });
+    Object.defineProperty(fileInput, 'files', {
+      value: [file],
+      writable: false,
     });
+    fireEvent.change(fileInput);
+
+    // Submit form to go to review page
+    const launchButton = screen.getByRole('button', { name: /launch token/i });
+    fireEvent.click(launchButton);
+
+    // Wait for review page and click Confirm & Launch
+    await waitFor(() => {
+      expect(screen.getByText('Review Your Token')).toBeInTheDocument();
+    });
+
+    const confirmButton = screen.getByRole('button', { name: /confirm & launch/i });
+    fireEvent.click(confirmButton);
 
     // Check that deployment was called with wallet address
     await waitFor(() => {
       const deployCall = (global.fetch as jest.Mock).mock.calls.find(
-        call => call[0].includes('/api/deploy/simple')
+        call => call[0].includes('/api/deploy/simple/prepare')
       );
       expect(deployCall).toBeDefined();
       
