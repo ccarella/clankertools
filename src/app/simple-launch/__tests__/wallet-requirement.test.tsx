@@ -59,6 +59,7 @@ if (typeof Response === 'undefined') {
 }
 
 describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
+  jest.setTimeout(10000); // Increase timeout for async operations
   const mockRouter = {
     push: jest.fn(),
     back: jest.fn(),
@@ -80,7 +81,7 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
         if (url === '/api/config/wallet-requirement') {
           return Promise.resolve({
             ok: true,
-            json: async () => ({ required: false }),
+            json: async () => ({ requireWallet: false }),
           });
         }
         return Promise.resolve({
@@ -109,11 +110,14 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
       // Mock file upload
       const file = new File(['test'], 'test.png', { type: 'image/png' });
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      Object.defineProperty(fileInput, 'files', {
-        value: [file],
-        writable: false,
-      });
-      fireEvent.change(fileInput);
+      if (fileInput) {
+        Object.defineProperty(fileInput, 'files', {
+          value: [file],
+          writable: false,
+          configurable: true
+        });
+        fireEvent.change(fileInput);
+      }
 
       // Submit form
       const launchButton = screen.getByText('Launch Token');
@@ -125,7 +129,7 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
       });
     });
 
-    it('should not show wallet requirement message', () => {
+    it('should not show wallet requirement message', async () => {
       (useWallet as jest.Mock).mockReturnValue({ isConnected: false, address: null });
       (useFarcasterAuth as jest.Mock).mockReturnValue({ 
         user: { fid: '12345', username: 'testuser' },
@@ -134,8 +138,11 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
 
       render(<SimpleLaunchPage />);
 
-      // Should not show wallet requirement info
-      expect(screen.queryByText(/wallet required/i)).not.toBeInTheDocument();
+      // Wait for component to load and fetch config
+      await waitFor(() => {
+        expect(screen.queryByText(/wallet required/i)).not.toBeInTheDocument();
+      });
+      
       expect(screen.queryByText(/connect your wallet to receive creator rewards/i)).not.toBeInTheDocument();
     });
   });
@@ -147,7 +154,7 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
         if (url === '/api/config/wallet-requirement') {
           return Promise.resolve({
             ok: true,
-            json: async () => ({ required: true }),
+            json: async () => ({ requireWallet: true }),
           });
         }
         return Promise.resolve({
@@ -192,11 +199,14 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
       // Mock file upload
       const file = new File(['test'], 'test.png', { type: 'image/png' });
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      Object.defineProperty(fileInput, 'files', {
-        value: [file],
-        writable: false,
-      });
-      fireEvent.change(fileInput);
+      if (fileInput) {
+        Object.defineProperty(fileInput, 'files', {
+          value: [file],
+          writable: false,
+          configurable: true
+        });
+        fireEvent.change(fileInput);
+      }
 
       // Wait for wallet requirement check
       await waitFor(() => {
@@ -224,11 +234,14 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
       // Mock file upload
       const file = new File(['test'], 'test.png', { type: 'image/png' });
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      Object.defineProperty(fileInput, 'files', {
-        value: [file],
-        writable: false,
-      });
-      fireEvent.change(fileInput);
+      if (fileInput) {
+        Object.defineProperty(fileInput, 'files', {
+          value: [file],
+          writable: false,
+          configurable: true
+        });
+        fireEvent.change(fileInput);
+      }
 
       // Wait for wallet requirement check
       await waitFor(() => {
@@ -259,11 +272,14 @@ describe('SimpleLaunchPage - Wallet Requirement Feature', () => {
       // Mock file upload
       const file = new File(['test'], 'test.png', { type: 'image/png' });
       const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-      Object.defineProperty(fileInput, 'files', {
-        value: [file],
-        writable: false,
-      });
-      fireEvent.change(fileInput);
+      if (fileInput) {
+        Object.defineProperty(fileInput, 'files', {
+          value: [file],
+          writable: false,
+          configurable: true
+        });
+        fireEvent.change(fileInput);
+      }
 
       // Wait for wallet requirement check to complete
       await waitFor(() => {

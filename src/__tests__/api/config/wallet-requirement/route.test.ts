@@ -23,7 +23,7 @@ describe('GET /api/config/wallet-requirement', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ required: true });
+    expect(data).toEqual({ requireWallet: true });
   });
 
   it('should default to not required when env var is not set', async () => {
@@ -34,7 +34,7 @@ describe('GET /api/config/wallet-requirement', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ required: false });
+    expect(data).toEqual({ requireWallet: false });
   });
 
   it('should handle false value in env var', async () => {
@@ -45,7 +45,7 @@ describe('GET /api/config/wallet-requirement', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ required: false });
+    expect(data).toEqual({ requireWallet: false });
   });
 
   it('should handle non-boolean string values', async () => {
@@ -56,7 +56,7 @@ describe('GET /api/config/wallet-requirement', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ required: false });
+    expect(data).toEqual({ requireWallet: false });
   });
 
   it('should include proper cache headers', async () => {

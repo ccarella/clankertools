@@ -21,7 +21,7 @@ describe('GET /api/config/wallet-requirement', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ required: true });
+    expect(data).toEqual({ requireWallet: true });
   });
 
   it('should return wallet not required when environment variable is false', async () => {
@@ -31,7 +31,7 @@ describe('GET /api/config/wallet-requirement', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ required: false });
+    expect(data).toEqual({ requireWallet: false });
   });
 
   it('should return wallet not required when environment variable is not set', async () => {
@@ -41,7 +41,7 @@ describe('GET /api/config/wallet-requirement', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
-    expect(data).toEqual({ required: false });
+    expect(data).toEqual({ requireWallet: false });
   });
 
   it('should return wallet not required for any non-true value', async () => {
@@ -50,16 +50,11 @@ describe('GET /api/config/wallet-requirement', () => {
     for (const value of testValues) {
       process.env.REQUIRE_WALLET_FOR_SIMPLE_LAUNCH = value;
 
-      const request = new MockNextRequest('http://localhost:3000/api/config/wallet-requirement', {
-        method: 'GET',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      }) as any;
-
-      const response = await GET(request);
+      const response = await GET();
       const data = await response.json();
 
       expect(response.status).toBe(200);
-      expect(data).toEqual({ required: value === 'true' });
+      expect(data).toEqual({ requireWallet: value === 'true' });
     }
   });
 
@@ -74,15 +69,7 @@ describe('GET /api/config/wallet-requirement', () => {
   it('should include CORS headers', async () => {
     process.env.REQUIRE_WALLET_FOR_SIMPLE_LAUNCH = 'true';
 
-    const request = new MockNextRequest('http://localhost:3000/api/config/wallet-requirement', {
-      method: 'GET',
-      headers: {
-        'Origin': 'http://localhost:3000',
-      },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    }) as any;
-
-    const response = await GET(request);
+    const response = await GET();
 
     expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
     expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, OPTIONS');
