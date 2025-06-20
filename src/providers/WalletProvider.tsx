@@ -13,7 +13,7 @@ interface WalletState {
   error: string | null;
 }
 
-interface WalletContextType extends WalletState {
+export interface WalletContextType extends WalletState {
   connect: () => Promise<void>;
   disconnect: () => void;
   networkName: string | null;

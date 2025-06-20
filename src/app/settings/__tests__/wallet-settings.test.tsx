@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { WalletSettings } from '../wallet-settings';
-import { useWallet } from '@/providers/WalletProvider';
+import { useWallet, type WalletContextType } from '@/providers/WalletProvider';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 
 jest.mock('@/providers/WalletProvider', () => ({
@@ -188,7 +188,7 @@ describe('WalletSettings', () => {
       networkName: null,
       chainId: null,
       error: 'Connection failed',
-    } as any);
+    } as WalletContextType & { error: string });
 
     render(<WalletSettings />);
 
