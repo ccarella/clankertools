@@ -253,9 +253,7 @@ describe('SimpleLaunchPage - Review Page Wallet Connection', () => {
 
   describe('Review Page - Dynamic Wallet Connection', () => {
     it('should update button from "Connect Wallet" to "Confirm & Launch" after successful connection', async () => {
-      let walletConnected = false;
       const mockConnect = jest.fn(() => {
-        walletConnected = true;
         // Re-render with connected state
         mockUseWallet.mockReturnValue({
           isConnected: true,
