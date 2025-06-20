@@ -1,6 +1,11 @@
 import '@testing-library/jest-dom'
 import React from 'react'
 
+// Add TextEncoder/TextDecoder for viem in tests
+import { TextEncoder, TextDecoder } from 'util'
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder
+
 // Mock HapticProvider globally
 jest.mock('@/providers/HapticProvider', () => ({
   HapticProvider: ({ children }) => children,

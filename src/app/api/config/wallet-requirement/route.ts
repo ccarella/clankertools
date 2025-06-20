@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  const required = process.env.REQUIRE_WALLET_FOR_SIMPLE_LAUNCH === 'true';
+  const requireWallet = process.env.REQUIRE_WALLET_FOR_SIMPLE_LAUNCH === 'true';
   
-  const response = NextResponse.json({ required });
+  const response = NextResponse.json({ requireWallet });
   
   // Add cache headers
   response.headers.set('Cache-Control', 'public, max-age=3600, s-maxage=3600');

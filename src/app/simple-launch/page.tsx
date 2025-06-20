@@ -12,6 +12,7 @@ import { useWallet } from "@/providers/WalletProvider";
 import { useFarcasterAuth } from "@/components/providers/FarcasterAuthProvider";
 import { WalletButton } from "@/components/wallet/WalletButton";
 import { CastContextDisplay } from "@/components/CastContextDisplay";
+import { ClientDeployment } from "@/components/deploy/ClientDeployment";
 
 type FormData = {
   name: string;
@@ -51,6 +52,16 @@ export default function SimpleLaunchPage() {
   const [enableCreatorRewards, setEnableCreatorRewards] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
   const [requireWallet, setRequireWallet] = useState(false);
+  const [deploymentData, setDeploymentData] = useState<{
+    name: string;
+    symbol: string;
+    imageUrl: string;
+    description?: string;
+    marketCap: string;
+    creatorReward: number;
+    deployerAddress: string;
+  } | null>(null);
+  const [showClientDeployment, setShowClientDeployment] = useState(false);
 
   const {
     register,
@@ -81,8 +92,8 @@ export default function SimpleLaunchPage() {
     fetch('/api/config/wallet-requirement')
       .then(res => res.json())
       .then(data => {
-        setRequireWallet(data.required);
-        if (data.required) {
+        setRequireWallet(data.requireWallet);
+        if (data.requireWallet) {
           setEnableCreatorRewards(true);
         }
       })
@@ -134,6 +145,11 @@ export default function SimpleLaunchPage() {
       setViewState("deploying");
       
       try {
+        // Ensure wallet is connected if required
+        if (requireWallet && !isConnected) {
+          throw new Error("Wallet connection required for deployment");
+        }
+
         // Store wallet connection data if user is connected
         if (user && isConnected && address) {
           try {
@@ -152,29 +168,32 @@ export default function SimpleLaunchPage() {
           }
         }
 
-        // Prepare form data for API
-        const formData = new FormData();
-        formData.append("name", data.name);
-        formData.append("symbol", data.symbol);
-        
+        // Convert image to base64 for API
+        let imageBase64 = "";
         if (data.image) {
-          formData.append("image", data.image);
-        }
-        
-        // Include fid if user is authenticated
-        if (user?.fid) {
-          formData.append("fid", user.fid.toString());
-        }
-        
-        // Include cast context if available
-        if (castContext) {
-          formData.append("castContext", JSON.stringify(castContext));
+          const reader = new FileReader();
+          imageBase64 = await new Promise((resolve) => {
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(data.image!);
+          });
         }
 
-        // Call deployment API
-        const response = await fetch("/api/deploy/simple", {
+        // Prepare deployment request
+        const deploymentRequest = {
+          tokenName: data.name,
+          tokenSymbol: data.symbol,
+          imageFile: imageBase64,
+          description: "",
+          userFid: user?.fid || 0,
+          walletAddress: address || "",
+          castContext: castContext || undefined,
+        };
+
+        // Call prepare API to get deployment data
+        const response = await fetch("/api/deploy/simple/prepare", {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(deploymentRequest),
         });
 
         const result = await response.json();
@@ -184,25 +203,39 @@ export default function SimpleLaunchPage() {
           if (result.errorDetails) {
             setErrorDetails(result.errorDetails);
           }
-          if (result.debug) {
-            setDebugInfo(result.debug);
+          if (result.debugInfo) {
+            setDebugInfo(result.debugInfo);
           }
-          throw new Error(result.error || "Deployment failed");
+          throw new Error(result.error || "Deployment preparation failed");
         }
 
-        setTokenAddress(result.tokenAddress);
-        setViewState("success");
-        
-        // Redirect to token page after a short delay
-        setTimeout(() => {
-          router.push(`/token/${result.tokenAddress}`);
-        }, 2000);
+        // Set deployment data and show client deployment component
+        setDeploymentData(result.deploymentData);
+        setShowClientDeployment(true);
       } catch (error) {
-        console.error("Deployment error:", error);
-        setDeploymentError(error instanceof Error ? error.message : "Deployment failed");
+        console.error("Deployment preparation error:", error);
+        setDeploymentError(error instanceof Error ? error.message : "Deployment preparation failed");
         setViewState("error");
       }
     }
+  };
+
+  const handleDeploymentSuccess = (result: { tokenAddress: string; transactionHash: string }) => {
+    setTokenAddress(result.tokenAddress);
+    setViewState("success");
+    setShowClientDeployment(false);
+    
+    // Redirect to token page after a short delay
+    setTimeout(() => {
+      router.push(`/token/${result.tokenAddress}`);
+    }, 2000);
+  };
+
+  const handleDeploymentError = (error: Error) => {
+    console.error("Deployment error:", error);
+    setDeploymentError(error.message);
+    setViewState("error");
+    setShowClientDeployment(false);
   };
 
   const handleBack = () => {
@@ -552,14 +585,34 @@ export default function SimpleLaunchPage() {
         )}
 
         {viewState === "deploying" && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6" />
-            <h2 className="text-xl font-semibold text-foreground mb-2">
-              Deploying Your Token
-            </h2>
-            <p className="text-muted-foreground text-center">
-              This may take a few moments...
-            </p>
+          <div className="space-y-6">
+            {!showClientDeployment ? (
+              <div className="flex flex-col items-center justify-center py-20">
+                <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mb-6" />
+                <h2 className="text-xl font-semibold text-foreground mb-2">
+                  Preparing Deployment
+                </h2>
+                <p className="text-muted-foreground text-center">
+                  Uploading image and preparing token data...
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <h2 className="text-xl font-semibold text-foreground text-center mb-4">
+                  Deploy Your Token
+                </h2>
+                <p className="text-muted-foreground text-center mb-6">
+                  Confirm the transaction in your wallet to deploy the token
+                </p>
+                {deploymentData && (
+                  <ClientDeployment
+                    tokenData={deploymentData}
+                    onSuccess={handleDeploymentSuccess}
+                    onError={handleDeploymentError}
+                  />
+                )}
+              </div>
+            )}
           </div>
         )}
 
