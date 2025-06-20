@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     } = body;
 
     // Validate required fields
-    if (!tokenName || !tokenSymbol || !imageFile || !userFid) {
+    if (!tokenName || !tokenSymbol || !imageFile || userFid === undefined || userFid === null) {
       return NextResponse.json(
         { 
           success: false, 
@@ -73,6 +73,13 @@ export async function POST(request: NextRequest) {
             ...debugContext,
             step: 'validation',
             receivedFields: Object.keys(body),
+            receivedValues: {
+              tokenName: !!tokenName,
+              tokenSymbol: !!tokenSymbol,
+              imageFile: !!imageFile,
+              userFid,
+              walletAddress: !!walletAddress,
+            },
             requestContext,
           }
         },

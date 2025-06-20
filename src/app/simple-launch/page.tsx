@@ -189,6 +189,14 @@ export default function SimpleLaunchPage() {
           castContext: castContext || undefined,
         };
 
+        // Debug logging
+        console.log('Deployment request:', {
+          ...deploymentRequest,
+          imageFile: deploymentRequest.imageFile ? `${deploymentRequest.imageFile.substring(0, 50)}...` : 'No image',
+          user,
+          address,
+        });
+
         // Call prepare API to get deployment data
         const response = await fetch("/api/deploy/simple/prepare", {
           method: "POST",
@@ -342,6 +350,7 @@ export default function SimpleLaunchPage() {
                 capture={cameraSupported ? "environment" : undefined}
                 className="hidden"
                 onChange={handleFileInputChange}
+                data-testid="file-input"
               />
               
               {!imagePreview ? (
