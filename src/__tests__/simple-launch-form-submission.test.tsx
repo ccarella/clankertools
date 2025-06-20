@@ -46,8 +46,12 @@ interface MockFileReader {
   result: string;
 }
 
+interface FileReaderMock extends jest.Mock {
+  mockInstance?: MockFileReader;
+}
+
 const mockFileReaderInstances: MockFileReader[] = [];
-global.FileReader = jest.fn().mockImplementation(() => {
+const FileReaderMock = jest.fn().mockImplementation(() => {
   const reader: MockFileReader = {
     readAsDataURL: jest.fn(function(this: MockFileReader) {
       // Simulate async read
@@ -62,9 +66,11 @@ global.FileReader = jest.fn().mockImplementation(() => {
   };
   mockFileReaderInstances.push(reader);
   // Store the instance for later access
-  (FileReader as jest.Mock).mockInstance = reader;
+  (FileReaderMock as FileReaderMock).mockInstance = reader;
   return reader;
-}) as unknown as typeof FileReader;
+}) as FileReaderMock;
+
+global.FileReader = FileReaderMock as unknown as typeof FileReader;
 
 describe('SimpleLaunchPage - Form Submission', () => {
   beforeEach(() => {
@@ -99,6 +105,13 @@ describe('SimpleLaunchPage - Form Submission', () => {
         pfpUrl: 'https://example.com/pfp.jpg',
       },
       castContext: null,
+      isAuthenticated: true,
+      isLoading: false,
+      error: null,
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      clearError: jest.fn(),
+      getQuickAuthToken: jest.fn(),
     });
 
     // Mock wallet requirement config
@@ -150,7 +163,7 @@ describe('SimpleLaunchPage - Form Submission', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
       
       // Trigger FileReader onloadend
-      const reader = (FileReader as jest.Mock).mockInstance;
+      const reader = (FileReaderMock as FileReaderMock).mockInstance;
       if (reader && reader.onloadend) {
         reader.onloadend();
       }
@@ -241,6 +254,13 @@ describe('SimpleLaunchPage - Form Submission', () => {
     mockUseFarcasterAuth.mockReturnValue({
       user: null,
       castContext: null,
+      isAuthenticated: false,
+      isLoading: false,
+      error: null,
+      signIn: jest.fn(),
+      signOut: jest.fn(),
+      clearError: jest.fn(),
+      getQuickAuthToken: jest.fn(),
     });
 
     // Mock successful API response
@@ -303,7 +323,7 @@ describe('SimpleLaunchPage - Form Submission', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
       
       // Trigger FileReader onloadend
-      const reader = (FileReader as jest.Mock).mockInstance;
+      const reader = (FileReaderMock as FileReaderMock).mockInstance;
       if (reader && reader.onloadend) {
         reader.onloadend();
       }
@@ -401,7 +421,7 @@ describe('SimpleLaunchPage - Form Submission', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
       
       // Trigger FileReader onloadend
-      const reader = (FileReader as jest.Mock).mockInstance;
+      const reader = (FileReaderMock as FileReaderMock).mockInstance;
       if (reader && reader.onloadend) {
         reader.onloadend();
       }
@@ -496,7 +516,7 @@ describe('SimpleLaunchPage - Form Submission', () => {
       await new Promise(resolve => setTimeout(resolve, 0));
       
       // Trigger FileReader onloadend
-      const reader = (FileReader as jest.Mock).mockInstance;
+      const reader = (FileReaderMock as FileReaderMock).mockInstance;
       if (reader && reader.onloadend) {
         reader.onloadend();
       }
