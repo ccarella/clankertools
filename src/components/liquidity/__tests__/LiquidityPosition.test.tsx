@@ -13,7 +13,16 @@ jest.mock('@/providers/HapticProvider', () => ({
 }));
 
 jest.mock('@/components/ui/slider', () => ({
-  Slider: ({ value, onValueChange, min, max, step, disabled, className, 'aria-label': ariaLabel }: any) => (
+  Slider: ({ value, onValueChange, min, max, step, disabled, className, 'aria-label': ariaLabel }: {
+    value?: number[];
+    onValueChange?: (value: number[]) => void;
+    min?: number;
+    max?: number;
+    step?: number;
+    disabled?: boolean;
+    className?: string;
+    'aria-label'?: string;
+  }) => (
     <input
       type="range"
       value={value?.[0] || 0}

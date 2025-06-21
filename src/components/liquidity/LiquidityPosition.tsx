@@ -23,7 +23,6 @@ const POSITION_COLORS = [
 export function LiquidityPosition({
   position,
   index,
-  totalPositions,
   onChange,
   onRemove,
   disabled = false,

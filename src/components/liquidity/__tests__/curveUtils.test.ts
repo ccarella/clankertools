@@ -197,7 +197,7 @@ describe('curveUtils', () => {
     });
 
     it('throws error for invalid preset', () => {
-      expect(() => generatePresetCurve('invalid' as any)).toThrow('Invalid preset: invalid');
+      expect(() => generatePresetCurve('invalid' as PresetType)).toThrow('Invalid preset: invalid');
     });
   });
 

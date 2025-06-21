@@ -48,7 +48,7 @@ describe('LiquidityCurveDesigner', () => {
   });
 
   it('adds a new position when add button is clicked', async () => {
-    const { rerender } = render(<LiquidityCurveDesigner {...defaultProps} />);
+    render(<LiquidityCurveDesigner {...defaultProps} />);
     
     const addButton = screen.getByText(/add position/i);
     fireEvent.click(addButton);
@@ -244,7 +244,7 @@ describe('LiquidityCurveDesigner', () => {
       { id: '1', rangeStart: 0, rangeEnd: 50, allocation: 100 },
     ];
 
-    const { rerender } = render(<LiquidityCurveDesigner {...defaultProps} value={positions} />);
+    render(<LiquidityCurveDesigner {...defaultProps} value={positions} />);
     
     const addButton = screen.getByText(/add position/i);
     fireEvent.click(addButton);
