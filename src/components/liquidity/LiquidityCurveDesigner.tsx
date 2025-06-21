@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Plus, Info, AlertCircle, TrendingUp } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { useHaptic } from '@/components/providers/HapticProvider';
+import { useHaptic } from '@/providers/HapticProvider';
 import { LiquidityPosition } from './LiquidityPosition';
 import { CurveVisualization } from './CurveVisualization';
 import { 

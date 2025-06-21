@@ -2,9 +2,9 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { LiquidityCurveDesigner } from '../LiquidityCurveDesigner';
-import { useHaptic } from '@/components/providers/HapticProvider';
+import { useHaptic } from '@/providers/HapticProvider';
 
-jest.mock('@/components/providers/HapticProvider', () => ({
+jest.mock('@/providers/HapticProvider', () => ({
   useHaptic: jest.fn().mockReturnValue({
     buttonPress: jest.fn(),
     toggleStateChange: jest.fn(),

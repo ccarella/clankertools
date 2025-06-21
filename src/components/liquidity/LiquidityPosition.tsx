@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { Trash2, AlertCircle } from 'lucide-react';
-import { useHaptic } from '@/components/providers/HapticProvider';
+import { useHaptic } from '@/providers/HapticProvider';
 import { LiquidityPositionProps } from './types';
 import { cn } from '@/lib/utils';
 
