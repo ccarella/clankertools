@@ -10,6 +10,12 @@ export interface WizardData {
   liquidityCurve?: string;
   lpTokenSymbol?: string;
   maxSlippage?: number;
+  liquidityPositions?: Array<{
+    id: string;
+    rangeStart: number;
+    rangeEnd: number;
+    allocation: number;
+  }>;
   
   // Fee Configuration
   swapFee?: number;

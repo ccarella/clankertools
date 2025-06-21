@@ -1,6 +1,6 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
@@ -9,12 +9,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WizardStepProps } from '../types';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Switch } from '@/components/ui/switch';
+import { LiquidityCurveDesigner } from '@/components/liquidity';
 
 const LIQUIDITY_CURVES = [
   { value: 'linear', label: 'Linear', description: 'Constant price curve' },
   { value: 'exponential', label: 'Exponential', description: 'Rapid price growth' },
   { value: 'logarithmic', label: 'Logarithmic', description: 'Gradual price growth' },
   { value: 'sigmoid', label: 'Sigmoid', description: 'S-shaped curve' },
+  { value: 'custom', label: 'Custom', description: 'Design your own curve' },
 ];
 
 export function LiquidityStep({ data, onChange, errors, isActive }: WizardStepProps) {
@@ -96,6 +99,31 @@ export function LiquidityStep({ data, onChange, errors, isActive }: WizardStepPr
           )}
         </div>
 
+        {data.liquidityCurve === 'custom' && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Label>Custom Liquidity Positions</Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="w-4 h-4 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>Design up to 7 liquidity positions with custom price ranges and allocations. This allows for advanced liquidity strategies.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <LiquidityCurveDesigner
+              value={data.liquidityPositions || []}
+              onChange={(positions) => onChange('liquidityPositions', positions)}
+              disabled={!isActive}
+              maxPositions={7}
+              showPresets={true}
+              showVisualization={true}
+              showPriceImpact={true}
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label htmlFor="lpTokenSymbol">LP Token Symbol</Label>
@@ -166,6 +194,12 @@ export function LiquidityStep({ data, onChange, errors, isActive }: WizardStepPr
               <span className="text-muted-foreground">Curve Type:</span>
               <span className="capitalize">{data.liquidityCurve || 'Linear'}</span>
             </div>
+            {data.liquidityCurve === 'custom' && data.liquidityPositions && data.liquidityPositions.length > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Custom Positions:</span>
+                <span>{data.liquidityPositions.length} positions</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Max Slippage:</span>
               <span>{data.maxSlippage || 5}%</span>
