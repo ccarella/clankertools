@@ -145,6 +145,7 @@ export async function POST(request: NextRequest) {
     const imageFile = formData.get('image') as Blob;
     const fid = formData.get('fid') as string;
     const castContextString = formData.get('castContext') as string;
+    const creatorFeePercentage = formData.get('creatorFeePercentage') as string;
     
     // Enhanced debug logging for form data
     const formDebugInfo = {
@@ -402,7 +403,11 @@ export async function POST(request: NextRequest) {
 
     // Get configurable pool values
     const initialMarketCap = process.env.INITIAL_MARKET_CAP || '0.1';
-    const rawCreatorReward = parseInt(process.env.CREATOR_REWARD || '80', 10);
+    
+    // Use creator fee percentage from request, fallback to env variable or default
+    const rawCreatorReward = creatorFeePercentage 
+      ? parseInt(creatorFeePercentage, 10)
+      : parseInt(process.env.CREATOR_REWARD || '80', 10);
     
     // Validate creator reward percentage (0-100)
     const creatorReward = (isNaN(rawCreatorReward) || rawCreatorReward < 0 || rawCreatorReward > 100) 

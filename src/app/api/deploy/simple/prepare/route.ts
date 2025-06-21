@@ -56,6 +56,8 @@ export async function POST(request: NextRequest) {
       description = '', 
       userFid,
       walletAddress,
+      creatorFeePercentage,
+      platformFeePercentage,
     } = body;
 
     // Validate required fields
@@ -79,6 +81,8 @@ export async function POST(request: NextRequest) {
               imageFile: !!imageFile,
               userFid,
               walletAddress: !!walletAddress,
+              creatorFeePercentage,
+              platformFeePercentage,
             },
             requestContext,
           }
@@ -174,7 +178,9 @@ export async function POST(request: NextRequest) {
 
     // Get configurable pool values
     const initialMarketCap = process.env.INITIAL_MARKET_CAP || '0.1';
-    const rawCreatorReward = parseInt(process.env.CREATOR_REWARD || '80', 10);
+    
+    // Use creator fee percentage from request, fallback to env variable or default
+    const rawCreatorReward = creatorFeePercentage ?? parseInt(process.env.CREATOR_REWARD || '80', 10);
     
     // Validate creator reward percentage (0-100)
     const creatorReward = (isNaN(rawCreatorReward) || rawCreatorReward < 0 || rawCreatorReward > 100) 
