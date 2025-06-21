@@ -183,4 +183,68 @@ describe('Prepare route', () => {
     expect(data.error).toBe('Failed to upload image');
     expect(data.errorDetails.details).toContain('Invalid file type');
   });
+
+  it('should use custom fee configuration when provided', async () => {
+    const mockImageUrl = 'ipfs://QmTestFee';
+    mockUploadToIPFS.mockResolvedValue(mockImageUrl);
+
+    const pngBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    
+    const requestBody = {
+      tokenName: 'Fee Token',
+      tokenSymbol: 'FEE',
+      imageFile: pngBase64,
+      description: 'Test with custom fees',
+      userFid: 123,
+      walletAddress: '0x1234567890123456789012345678901234567890',
+      creatorFeePercentage: 90,
+      platformFeePercentage: 10,
+    };
+
+    const request = new MockNextRequest('http://localhost:3000/api/deploy/simple/prepare', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    }) as unknown as NextRequest;
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.deploymentData.creatorReward).toBe(90);
+  });
+
+  it('should fallback to default fee when no custom fee provided', async () => {
+    const mockImageUrl = 'ipfs://QmTestDefault';
+    mockUploadToIPFS.mockResolvedValue(mockImageUrl);
+
+    const pngBase64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==';
+    
+    const requestBody = {
+      tokenName: 'Default Fee Token',
+      tokenSymbol: 'DEFAULT',
+      imageFile: pngBase64,
+      description: '',
+      userFid: 123,
+      walletAddress: '0x1234567890123456789012345678901234567890',
+    };
+
+    const request = new MockNextRequest('http://localhost:3000/api/deploy/simple/prepare', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    }) as unknown as NextRequest;
+
+    const response = await POST(request);
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.deploymentData.creatorReward).toBe(80); // Default value
+  });
 });

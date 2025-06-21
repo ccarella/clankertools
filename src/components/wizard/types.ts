@@ -20,6 +20,8 @@ export interface WizardData {
   dynamicFees?: boolean;
   minFee?: number;
   maxFee?: number;
+  creatorFeePercentage?: number;
+  platformFeePercentage?: number;
   
   // Rewards & Splits
   creatorRewardsEnabled?: boolean;

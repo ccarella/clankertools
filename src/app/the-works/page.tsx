@@ -69,7 +69,7 @@ const wizardSteps: WizardStep[] = [
     id: "fees",
     title: "Fee Configuration",
     description: "Set up fee structure",
-    fields: ["swapFee", "protocolFee", "dynamicFees", "minFee", "maxFee"],
+    fields: ["swapFee", "protocolFee", "dynamicFees", "minFee", "maxFee", "creatorFeePercentage", "platformFeePercentage"],
     component: FeesStep,
     validate: async (data) => {
       const errors: string[] = [];

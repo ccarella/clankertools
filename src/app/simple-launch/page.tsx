@@ -1,11 +1,14 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Plus, Camera, Upload, Check, Wallet } from "lucide-react";
+import { ArrowLeft, Plus, Camera, Upload, Check, Wallet, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { useWallet } from "@/providers/WalletProvider";
@@ -13,11 +16,15 @@ import { useFarcasterAuth } from "@/components/providers/FarcasterAuthProvider";
 import { WalletButton } from "@/components/wallet/WalletButton";
 import { CastContextDisplay } from "@/components/CastContextDisplay";
 import { ClientDeployment } from "@/components/deploy/ClientDeployment";
+import { cn } from "@/lib/utils";
+import { PRESET_FEE_STRUCTURES, calculateCreatorPlatformSplit } from "@/lib/feeCalculations";
 
 type FormData = {
   name: string;
   symbol: string;
   image: File | null;
+  creatorFeePercentage: number;
+  platformFeePercentage: number;
 };
 
 type ViewState = "form" | "review" | "deploying" | "success" | "error";
@@ -76,6 +83,8 @@ export default function SimpleLaunchPage() {
       name: "",
       symbol: "",
       image: null,
+      creatorFeePercentage: PRESET_FEE_STRUCTURES.standard.creatorPercentage,
+      platformFeePercentage: PRESET_FEE_STRUCTURES.standard.platformPercentage,
     },
   });
 
@@ -188,6 +197,8 @@ export default function SimpleLaunchPage() {
           userFid: user?.fid || 0,
           walletAddress: address || "",
           castContext: castContext || undefined,
+          creatorFeePercentage: data.creatorFeePercentage,
+          platformFeePercentage: data.platformFeePercentage,
         };
 
         // Debug logging
@@ -468,9 +479,69 @@ export default function SimpleLaunchPage() {
 
             {/* Split Information */}
             <div className="pt-8 border-t border-border">
-              <p className="text-center text-lg font-medium text-foreground mb-8">
-                80% / 20% split
-              </p>
+              <TooltipProvider>
+                <Card className="mb-6">
+                  <CardContent className="pt-6">
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <Label>Fee Split</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="w-4 h-4 text-muted-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Configure how trading fees are distributed</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
+                        <span className="text-sm font-medium">
+                          {watch("creatorFeePercentage")}% / {watch("platformFeePercentage")}%
+                        </span>
+                      </div>
+                      
+                      <Slider
+                        value={[watch("creatorFeePercentage") || 80]}
+                        onValueChange={(value) => {
+                          const split = calculateCreatorPlatformSplit(value[0]);
+                          setValue("creatorFeePercentage", split.creatorPercentage);
+                          setValue("platformFeePercentage", split.platformPercentage);
+                        }}
+                        min={50}
+                        max={95}
+                        step={5}
+                        className="w-full"
+                      />
+                      
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Creator: {watch("creatorFeePercentage")}%</span>
+                        <span>Platform: {watch("platformFeePercentage")}%</span>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-2 mt-4">
+                        {Object.values(PRESET_FEE_STRUCTURES).map((preset) => (
+                          <Button
+                            key={preset.name}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setValue("creatorFeePercentage", preset.creatorPercentage);
+                              setValue("platformFeePercentage", preset.platformPercentage);
+                            }}
+                            className={cn(
+                              "text-xs",
+                              watch("creatorFeePercentage") === preset.creatorPercentage && "ring-2 ring-primary"
+                            )}
+                          >
+                            {preset.description}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TooltipProvider>
               
               {/* Launch Button */}
               <Button
@@ -556,12 +627,12 @@ export default function SimpleLaunchPage() {
                   </div>
                   <div className="ml-4 space-y-1">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">80% Creator</span>
-                      <span>0.8%</span>
+                      <span className="text-muted-foreground">{watch("creatorFeePercentage")}% Creator</span>
+                      <span>{(watch("creatorFeePercentage") / 100).toFixed(1)}%</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">20% Platform</span>
-                      <span>0.2%</span>
+                      <span className="text-muted-foreground">{watch("platformFeePercentage")}% Platform</span>
+                      <span>{(watch("platformFeePercentage") / 100).toFixed(1)}%</span>
                     </div>
                   </div>
                 </div>
