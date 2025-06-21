@@ -246,6 +246,8 @@ describe('SimpleLaunchPage - Form Submission', () => {
         description: '',
         userFid: 123,
         walletAddress: '0x1234567890123456789012345678901234567890',
+        creatorFeePercentage: 80,
+        platformFeePercentage: 20,
       });
     });
   });

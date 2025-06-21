@@ -1,14 +1,35 @@
-import { GET } from '../route';
-import { NextRequest } from 'next/server';
-import { Redis } from '@upstash/redis';
+/**
+ * @jest-environment node
+ */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-// Mock Redis
-jest.mock('@upstash/redis', () => ({
-  Redis: jest.fn().mockImplementation(() => ({
-    get: jest.fn(),
-    setex: jest.fn(),
-  })),
-}));
+// Mock NextRequest
+class MockNextRequest {
+  url: string;
+  method: string;
+  headers: Headers;
+  
+  constructor(url: string, init?: RequestInit) {
+    this.url = url;
+    this.method = init?.method || 'GET';
+    this.headers = new Headers(init?.headers as HeadersInit);
+  }
+}
+
+// Mock Redis - must be done before imports
+jest.mock('@upstash/redis', () => {
+  const mockGet = jest.fn();
+  const mockSetex = jest.fn();
+  
+  return {
+    Redis: jest.fn(() => ({
+      get: mockGet,
+      setex: mockSetex,
+    })),
+    __mockGet: mockGet,
+    __mockSetex: mockSetex,
+  };
+});
 
 // Mock network config
 jest.mock('@/lib/network-config', () => ({
@@ -23,10 +44,11 @@ jest.mock('@/lib/network-config', () => ({
 }));
 
 // Mock viem
+const mockReadContract = jest.fn();
 jest.mock('viem', () => ({
-  createPublicClient: jest.fn().mockReturnValue({
-    readContract: jest.fn(),
-  }),
+  createPublicClient: jest.fn(() => ({
+    readContract: mockReadContract,
+  })),
   http: jest.fn(),
   formatUnits: jest.fn().mockImplementation(() => '1000000000'),
 }));
@@ -35,6 +57,9 @@ jest.mock('viem/chains', () => ({
   base: { id: 8453, name: 'Base' },
   baseSepolia: { id: 84532, name: 'Base Sepolia' },
 }));
+
+// Now import after all mocks are set up
+import { GET } from '../route';
 
 // Mock console.error to avoid cluttering test output
 const originalConsoleError = console.error;
@@ -49,13 +74,21 @@ afterAll(() => {
 describe('GET /api/token/[address]', () => {
   let mockRedisGet: jest.Mock;
   let mockRedisSetex: jest.Mock;
-
+  
   beforeEach(() => {
     jest.clearAllMocks();
-    const MockedRedis = Redis as unknown as jest.Mock;
-    const mockRedisInstance = new MockedRedis();
-    mockRedisGet = mockRedisInstance.get as jest.Mock;
-    mockRedisSetex = mockRedisInstance.setex as jest.Mock;
+    
+    // Get the mock functions from the module
+    const upstashMocks = jest.requireMock('@upstash/redis');
+    mockRedisGet = upstashMocks.__mockGet;
+    mockRedisSetex = upstashMocks.__mockSetex;
+    
+    // Setup default viem mock responses
+    mockReadContract
+      .mockResolvedValueOnce('Test Token') // name
+      .mockResolvedValueOnce('TEST') // symbol
+      .mockResolvedValueOnce(18) // decimals
+      .mockResolvedValueOnce(BigInt('1000000000000000000000000000')); // totalSupply
   });
 
   it('should validate token address format', async () => {
@@ -68,7 +101,7 @@ describe('GET /api/token/[address]', () => {
     ];
 
     for (const address of invalidAddresses) {
-      const request = new NextRequest(`http://localhost:3000/api/token/${address}`);
+      const request = new MockNextRequest(`http://localhost:3000/api/token/${address}`) as any;
       const response = await GET(request, { params: Promise.resolve({ address: address as string }) });
       const data = await response.json();
       
@@ -94,7 +127,7 @@ describe('GET /api/token/[address]', () => {
 
     mockRedisGet.mockResolvedValueOnce(mockTokenData);
 
-    const request = new NextRequest('http://localhost:3000/api/token/0x1234567890123456789012345678901234567890');
+    const request = new MockNextRequest('http://localhost:3000/api/token/0x1234567890123456789012345678901234567890') as any;
     const response = await GET(request, { 
       params: Promise.resolve({ address: '0x1234567890123456789012345678901234567890' }) 
     });
@@ -103,7 +136,7 @@ describe('GET /api/token/[address]', () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.data).toEqual(mockTokenData);
-    expect(mockRedisGet).toHaveBeenCalledWith('token:0x1234567890123456789012345678901234567890');
+    expect(mockRedisGet).toHaveBeenCalledWith('token:testnet:0x1234567890123456789012345678901234567890');
     expect(mockRedisSetex).not.toHaveBeenCalled();
   });
 
@@ -111,7 +144,7 @@ describe('GET /api/token/[address]', () => {
     mockRedisGet.mockResolvedValueOnce(null);
     mockRedisSetex.mockResolvedValueOnce('OK');
 
-    const request = new NextRequest('http://localhost:3000/api/token/0x1234567890123456789012345678901234567890');
+    const request = new MockNextRequest('http://localhost:3000/api/token/0x1234567890123456789012345678901234567890') as any;
     const response = await GET(request, { 
       params: Promise.resolve({ address: '0x1234567890123456789012345678901234567890' }) 
     });
@@ -122,7 +155,7 @@ describe('GET /api/token/[address]', () => {
     expect(data.data).toBeDefined();
     expect(mockRedisGet).toHaveBeenCalled();
     expect(mockRedisSetex).toHaveBeenCalledWith(
-      'token:0x1234567890123456789012345678901234567890',
+      'token:testnet:0x1234567890123456789012345678901234567890',
       300, // 5 minutes
       expect.any(Object)
     );
@@ -131,7 +164,7 @@ describe('GET /api/token/[address]', () => {
   it('should handle errors gracefully', async () => {
     mockRedisGet.mockRejectedValueOnce(new Error('Redis error'));
 
-    const request = new NextRequest('http://localhost:3000/api/token/0x1234567890123456789012345678901234567890');
+    const request = new MockNextRequest('http://localhost:3000/api/token/0x1234567890123456789012345678901234567890') as any;
     const response = await GET(request, { 
       params: Promise.resolve({ address: '0x1234567890123456789012345678901234567890' }) 
     });
@@ -149,15 +182,15 @@ describe('GET /api/token/[address]', () => {
     mockRedisGet.mockResolvedValueOnce(null);
     mockRedisSetex.mockResolvedValueOnce('OK');
 
-    const request = new NextRequest(`http://localhost:3000/api/token/${upperAddress}`);
+    const request = new MockNextRequest(`http://localhost:3000/api/token/${upperAddress}`) as any;
     const response = await GET(request, { 
       params: Promise.resolve({ address: upperAddress }) 
     });
     
     expect(response.status).toBe(200);
-    expect(mockRedisGet).toHaveBeenCalledWith(`token:${lowerAddress}`);
+    expect(mockRedisGet).toHaveBeenCalledWith(`token:testnet:${lowerAddress}`);
     expect(mockRedisSetex).toHaveBeenCalledWith(
-      `token:${lowerAddress}`,
+      `token:testnet:${lowerAddress}`,
       300,
       expect.any(Object)
     );

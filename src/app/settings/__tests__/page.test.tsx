@@ -3,6 +3,8 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import sdk from '@farcaster/frame-sdk';
 import Settings from '../page';
 import { useHaptic } from '@/providers/HapticProvider';
+import { WalletProvider } from '@/providers/WalletProvider';
+import { FarcasterAuthProvider } from '@/components/providers/FarcasterAuthProvider';
 
 jest.mock('@/providers/HapticProvider', () => ({
   useHaptic: jest.fn(),
@@ -15,6 +17,32 @@ jest.mock('@farcaster/frame-sdk', () => ({
       addMiniApp: jest.fn(),
     },
   },
+}));
+
+jest.mock('@/providers/WalletProvider', () => ({
+  WalletProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useWallet: () => ({
+    address: null,
+    isConnected: false,
+    isLoading: false,
+    connect: jest.fn(),
+    disconnect: jest.fn(),
+    balance: null,
+    networkName: null,
+    error: null,
+  }),
+}));
+
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  FarcasterAuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  useFarcasterAuth: () => ({
+    user: null,
+    isAuthenticated: false,
+    isLoading: false,
+    login: jest.fn(),
+    logout: jest.fn(),
+    authError: null,
+  }),
 }));
 
 describe('Settings Page', () => {
@@ -36,6 +64,16 @@ describe('Settings Page', () => {
     cardSelect: jest.fn().mockResolvedValue(undefined),
   };
 
+  const renderWithProviders = (ui: React.ReactElement) => {
+    return render(
+      <FarcasterAuthProvider>
+        <WalletProvider>
+          {ui}
+        </WalletProvider>
+      </FarcasterAuthProvider>
+    );
+  };
+
   beforeEach(() => {
     jest.clearAllMocks();
     (useHaptic as jest.Mock).mockReturnValue(mockHaptic);
@@ -44,7 +82,7 @@ describe('Settings Page', () => {
   });
 
   it('renders the settings page with all sections', () => {
-    render(<Settings />);
+    renderWithProviders(<Settings />);
     
     expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.getByText('User Preferences')).toBeInTheDocument();
@@ -54,13 +92,13 @@ describe('Settings Page', () => {
   });
 
   it('renders the save mini app button', () => {
-    render(<Settings />);
+    renderWithProviders(<Settings />);
     
     expect(screen.getByRole('button', { name: /save mini app/i })).toBeInTheDocument();
   });
 
   it('handles haptic feedback toggle', () => {
-    render(<Settings />);
+    renderWithProviders(<Settings />);
     
     const checkbox = screen.getByRole('checkbox', { name: /enable haptic feedback/i });
     expect(checkbox).toBeChecked();
@@ -72,7 +110,7 @@ describe('Settings Page', () => {
   it('shows haptic feedback as disabled when not supported', () => {
     mockHaptic.isSupported.mockReturnValue(false);
     
-    render(<Settings />);
+    renderWithProviders(<Settings />);
     
     const checkbox = screen.getByRole('checkbox', { name: /enable haptic feedback/i });
     expect(checkbox).toBeDisabled();
@@ -83,7 +121,7 @@ describe('Settings Page', () => {
     const mockAddMiniApp = sdk.actions.addMiniApp as jest.Mock;
     mockAddMiniApp.mockResolvedValueOnce(undefined);
 
-    render(<Settings />);
+    renderWithProviders(<Settings />);
     
     const button = screen.getByRole('button', { name: /save mini app/i });
     fireEvent.click(button);
@@ -98,7 +136,7 @@ describe('Settings Page', () => {
     const mockAddMiniApp = sdk.actions.addMiniApp as jest.Mock;
     mockAddMiniApp.mockRejectedValueOnce(new Error('RejectedByUser'));
 
-    render(<Settings />);
+    renderWithProviders(<Settings />);
     
     const button = screen.getByRole('button', { name: /save mini app/i });
     fireEvent.click(button);
