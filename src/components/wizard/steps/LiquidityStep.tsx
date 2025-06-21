@@ -9,12 +9,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WizardStepProps } from '../types';
 import { Info } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { LiquidityCurveDesigner, LiquidityPosition } from './LiquidityCurveDesigner';
 
 const LIQUIDITY_CURVES = [
   { value: 'linear', label: 'Linear', description: 'Constant price curve' },
   { value: 'exponential', label: 'Exponential', description: 'Rapid price growth' },
   { value: 'logarithmic', label: 'Logarithmic', description: 'Gradual price growth' },
   { value: 'sigmoid', label: 'Sigmoid', description: 'S-shaped curve' },
+  { value: 'custom', label: 'Custom', description: 'Design your own liquidity distribution' },
 ];
 
 export function LiquidityStep({ data, onChange, errors, isActive }: WizardStepProps) {
@@ -96,6 +98,15 @@ export function LiquidityStep({ data, onChange, errors, isActive }: WizardStepPr
           )}
         </div>
 
+        {data.liquidityCurve === 'custom' && (
+          <div className="mt-6">
+            <LiquidityCurveDesigner
+              positions={(data.curvePositions as LiquidityPosition[]) || []}
+              onChange={(positions) => onChange('curvePositions', positions)}
+            />
+          </div>
+        )}
+
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label htmlFor="lpTokenSymbol">LP Token Symbol</Label>
@@ -166,6 +177,12 @@ export function LiquidityStep({ data, onChange, errors, isActive }: WizardStepPr
               <span className="text-muted-foreground">Curve Type:</span>
               <span className="capitalize">{data.liquidityCurve || 'Linear'}</span>
             </div>
+            {data.liquidityCurve === 'custom' && data.curvePositions && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Positions:</span>
+                <span>{(data.curvePositions as LiquidityPosition[]).length}</span>
+              </div>
+            )}
             <div className="flex justify-between">
               <span className="text-muted-foreground">Max Slippage:</span>
               <span>{data.maxSlippage || 5}%</span>
