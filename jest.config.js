@@ -16,6 +16,7 @@ const customJestConfig = {
     '^clanker-sdk$': '<rootDir>/src/__mocks__/clanker-sdk.ts',
     '^@neynar/nodejs-sdk$': '<rootDir>/src/__mocks__/@neynar/nodejs-sdk.ts',
     '^viem$': '<rootDir>/src/__mocks__/viem.ts',
+    '^lucide-react$': '<rootDir>/src/__mocks__/lucide-react.tsx',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(@farcaster/frame-sdk|@upstash/redis|uncrypto|clanker-sdk|zod|viem|abitype)/)'

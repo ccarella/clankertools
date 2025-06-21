@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 import { CastContext } from '@/lib/types/cast-context';
 import { formatCastUrl, truncateCastId } from '@/lib/cast-context';
 import { ExternalLink, MessageSquare } from 'lucide-react';
@@ -22,14 +23,15 @@ export const CastContextDisplay: React.FC<CastContextDisplayProps> = ({ context 
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0">
           {context.author.pfpUrl ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+            <div className="relative h-10 w-10">
+              <Image
                 src={context.author.pfpUrl}
                 alt={context.author.displayName}
-                className="h-10 w-10 rounded-full"
+                fill
+                className="rounded-full object-cover"
+                sizes="40px"
               />
-            </>
+            </div>
           ) : (
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
               <span className="text-sm font-medium">

@@ -75,3 +75,85 @@ jest.mock('@/providers/HapticProvider', () => ({
     cardSelect: jest.fn(),
   }),
 }))
+
+// Mock IndexedDB for cache tests
+class MockIDBRequest {
+  constructor() {
+    this.onsuccess = null;
+    this.onerror = null;
+    this.result = null;
+  }
+}
+
+class MockIDBTransaction {
+  constructor() {
+    this.oncomplete = null;
+    this.onerror = null;
+  }
+  
+  objectStore() {
+    return new MockIDBObjectStore();
+  }
+}
+
+class MockIDBObjectStore {
+  constructor() {
+    this.indexNames = [];
+  }
+  
+  get() {
+    return new MockIDBRequest();
+  }
+  
+  put() {
+    return new MockIDBRequest();
+  }
+  
+  delete() {
+    return new MockIDBRequest();
+  }
+  
+  clear() {
+    return new MockIDBRequest();
+  }
+  
+  index() {
+    return new MockIDBIndex();
+  }
+  
+  createIndex() {
+    return {};
+  }
+}
+
+class MockIDBIndex {
+  openCursor() {
+    return new MockIDBRequest();
+  }
+}
+
+class MockIDBDatabase {
+  constructor() {
+    this.objectStoreNames = { contains: () => false };
+  }
+  
+  transaction() {
+    return new MockIDBTransaction();
+  }
+  
+  createObjectStore() {
+    return new MockIDBObjectStore();
+  }
+  
+  close() {}
+}
+
+global.indexedDB = {
+  open: jest.fn(() => new MockIDBRequest()),
+};
+
+global.IDBKeyRange = {
+  upperBound: jest.fn((value) => ({ value, type: 'upperBound' })),
+  lowerBound: jest.fn((value) => ({ value, type: 'lowerBound' })),
+  bound: jest.fn((lower, upper) => ({ lower, upper, type: 'bound' })),
+};

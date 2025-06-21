@@ -4,8 +4,8 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider'
 import { useUserTokens } from '@/hooks/useUserTokens'
-import { TokenList } from '@/components/token'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { VirtualizedTokenList } from '@/components/token'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/optimized-avatar'
 
 export default function Dashboard() {
   const router = useRouter()
@@ -38,7 +38,7 @@ export default function Dashboard() {
         <div className="px-4 py-6 border-b">
           <div className="flex items-center gap-3 mb-4">
             <Avatar className="h-12 w-12">
-              <AvatarImage src={user?.pfpUrl} alt={user?.displayName} />
+              <AvatarImage src={user?.pfpUrl} alt={user?.displayName} sizes="48px" />
               <AvatarFallback>
                 {user?.displayName?.slice(0, 2).toUpperCase() || 'U'}
               </AvatarFallback>
@@ -56,7 +56,7 @@ export default function Dashboard() {
           </div>
         </div>
         
-        <TokenList
+        <VirtualizedTokenList
           tokens={tokens}
           loading={loading}
           error={error || undefined}
