@@ -1,3 +1,5 @@
+import type { LiquidityPosition } from './steps/LiquidityCurveDesigner';
+
 export interface WizardData {
   // Token Basics
   name?: string;
@@ -10,6 +12,7 @@ export interface WizardData {
   liquidityCurve?: string;
   lpTokenSymbol?: string;
   maxSlippage?: number;
+  curvePositions?: LiquidityPosition[];
   
   // Fee Configuration
   swapFee?: number;

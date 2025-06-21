@@ -38,7 +38,7 @@ const wizardSteps: WizardStep[] = [
     id: "liquidity",
     title: "Liquidity Settings",
     description: "Configure liquidity parameters",
-    fields: ["liquidityAmount", "liquidityCurve", "lpTokenSymbol", "maxSlippage"],
+    fields: ["liquidityAmount", "liquidityCurve", "lpTokenSymbol", "maxSlippage", "curvePositions"],
     component: LiquidityStep,
     validate: async (data) => {
       const errors: string[] = [];
@@ -46,6 +46,19 @@ const wizardSteps: WizardStep[] = [
       if (data.liquidityAmount && parseFloat(data.liquidityAmount) < 0.01) {
         errors.push("Minimum liquidity is 0.01 ETH");
       }
+      
+      if (data.liquidityCurve === 'custom') {
+        const positions = (data.curvePositions as { allocation: number }[]) || [];
+        if (positions.length === 0) {
+          errors.push("At least one liquidity position is required for custom curves");
+        } else {
+          const totalAllocation = positions.reduce((sum, pos) => sum + (pos.allocation || 0), 0);
+          if (Math.abs(totalAllocation - 100) > 0.01) {
+            errors.push("Total allocation must equal 100%");
+          }
+        }
+      }
+      
       return {
         isValid: errors.length === 0,
         errors,
