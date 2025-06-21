@@ -87,7 +87,7 @@ describe('CastContextDisplay', () => {
     render(<CastContextDisplay context={castContext} />);
 
     const profileImage = screen.getByAltText('Test User');
-    expect(profileImage).toHaveAttribute('src', 'https://example.com/pfp.png');
+    expect(profileImage).toHaveAttribute('src', expect.stringContaining('https%3A%2F%2Fexample.com%2Fpfp.png'));
   });
 
   it('should display placeholder when no profile image', () => {

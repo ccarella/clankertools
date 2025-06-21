@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle2, Copy, ExternalLink, TrendingUp, Users, Activity, Loader2 } from 'lucide-react';
+import Image from 'next/image';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 import ShareTemplateSelector from '@/components/token/ShareTemplateSelector';
 import { getIpfsUrl } from '@/lib/ipfs';
@@ -175,12 +176,16 @@ export default function TokenSuccessPage() {
           {/* Token Header */}
           <div className="bg-card rounded-xl p-6 shadow-sm">
             <div className="flex items-center gap-4 mb-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={getIpfsUrl(tokenData.imageUrl)}
-                alt={tokenData.name}
-                className="w-16 h-16 rounded-full object-cover"
-              />
+              <div className="relative w-16 h-16">
+                <Image
+                  src={getIpfsUrl(tokenData.imageUrl)}
+                  alt={tokenData.name}
+                  fill
+                  className="rounded-full object-cover"
+                  sizes="64px"
+                  priority
+                />
+              </div>
               <div>
                 <h2 className="text-2xl font-bold">{tokenData.name}</h2>
                 <p className="text-muted-foreground">${tokenData.symbol}</p>

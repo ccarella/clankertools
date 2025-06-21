@@ -51,8 +51,9 @@ describe('ProfileBadge', () => {
 
   it('renders profile picture container', () => {
     render(<ProfileBadge user={mockUser} />)
-    const avatarContainer = screen.getByText('T').closest('[data-slot="avatar"]')
-    expect(avatarContainer).toBeInTheDocument()
+    const avatarFallback = screen.getByTestId('avatar-fallback')
+    expect(avatarFallback).toBeInTheDocument()
+    expect(avatarFallback).toHaveTextContent('T')
   })
 
   it('handles missing profile picture gracefully', () => {
