@@ -32,8 +32,8 @@ const launchOptions = [
   },
   {
     title: 'The Works (Advanced)',
-    description: 'Full configuration options',
-    href: '/the-works',
+    description: 'Custom liquidity curves & advanced features',
+    href: '/launch/advanced',
     icon: Settings,
     iconColor: 'bg-purple-500',
   },

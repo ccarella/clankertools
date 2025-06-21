@@ -188,6 +188,7 @@ export function PhotoPicker({
       ) : (
         <Card className="p-4">
           <div className="relative">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={imagePreview}
               alt="Selected image"

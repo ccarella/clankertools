@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { getClientNetworkConfig } from '@/lib/client-network-config';
+import { LiquidityPositionData } from '@/components/liquidity/types';
+import { convertPositionsToSDKFormat } from '@/lib/liquidity-utils';
 
 interface TokenData {
   name: string;
@@ -20,14 +22,25 @@ interface TokenData {
   deployerAddress: string;
 }
 
+interface AdvancedTokenData extends TokenData {
+  liquidityPositions?: LiquidityPositionData[];
+  devBuyAmount?: number;
+  lockupPercentage?: number;
+  vestingDays?: number;
+  feeType?: 'static' | 'dynamic';
+  clankerFeeBps?: number;
+  pairedFeeBps?: number;
+}
+
 interface ClientDeploymentProps {
-  tokenData: TokenData;
+  tokenData: TokenData | AdvancedTokenData;
   onSuccess: (result: { tokenAddress: string; transactionHash: string; poolAddress?: string }) => void;
   onError: (error: Error) => void;
   targetChainId?: number;
+  deploymentMode?: 'simple' | 'advanced';
 }
 
-export function ClientDeployment({ tokenData, onSuccess, onError, targetChainId }: ClientDeploymentProps) {
+export function ClientDeployment({ tokenData, onSuccess, onError, targetChainId, deploymentMode = 'simple' }: ClientDeploymentProps) {
   const { isConnected, address, chainId } = useWallet();
   const [isDeploying, setIsDeploying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +48,8 @@ export function ClientDeployment({ tokenData, onSuccess, onError, targetChainId 
   const networkConfig = getClientNetworkConfig();
   const expectedChainId = targetChainId || networkConfig.chainId;
   const isCorrectChain = chainId === expectedChainId;
+  
+  const isAdvanced = deploymentMode === 'advanced' && 'liquidityPositions' in tokenData;
 
   const handleDeploy = async () => {
     if (!isConnected || !address) {
@@ -101,7 +116,7 @@ export function ClientDeployment({ tokenData, onSuccess, onError, targetChainId 
       };
 
       // Deploy token using Clanker SDK
-      const { Clanker } = await import('clanker-sdk');
+      const { Clanker, TokenConfigV4Builder } = await import('clanker-sdk');
       const clanker = new Clanker({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         wallet: walletClient as any,
@@ -109,7 +124,65 @@ export function ClientDeployment({ tokenData, onSuccess, onError, targetChainId 
         publicClient: publicClient as any,
       });
 
-      const deploymentResult = await clanker.deployToken(deploymentData);
+      let deploymentResult;
+      
+      if (isAdvanced && 'liquidityPositions' in tokenData && tokenData.liquidityPositions) {
+        // Advanced deployment with custom liquidity positions
+        const advancedData = tokenData as AdvancedTokenData;
+        const sdkPositions = convertPositionsToSDKFormat(advancedData.liquidityPositions);
+        
+        // Build V4 configuration
+        const builder = new TokenConfigV4Builder()
+          .withTokenConfig({
+            name: advancedData.name,
+            symbol: advancedData.symbol,
+            image: advancedData.imageUrl,
+            initialSupply: '1000000' // 1M tokens default
+          })
+          .withPoolConfig({
+            pairedToken: '0x4200000000000000000000000000000000000006' as `0x${string}`, // WETH
+            positions: sdkPositions
+          })
+          .withRewardsConfig({
+            creatorReward: advancedData.creatorReward,
+            creatorAdmin: address as `0x${string}`,
+            creatorRewardRecipient: address as `0x${string}`,
+            interfaceAdmin: (process.env.NEXT_PUBLIC_INTERFACE_ADMIN || address) as `0x${string}`,
+            interfaceRewardRecipient: (process.env.NEXT_PUBLIC_INTERFACE_REWARD_RECIPIENT || address) as `0x${string}`,
+          });
+        
+        // Add optional configurations
+        if (advancedData.devBuyAmount && advancedData.devBuyAmount > 0) {
+          builder.withDevBuy({
+            enabled: true,
+            amount: advancedData.devBuyAmount
+          });
+        }
+        
+        if (advancedData.lockupPercentage && advancedData.lockupPercentage > 0 && advancedData.vestingDays) {
+          const vestingUnlockDate = Math.floor(Date.now() / 1000) + (advancedData.vestingDays * 24 * 60 * 60);
+          builder.withLocker({
+            enabled: true,
+            liquidityPercentage: advancedData.lockupPercentage,
+            vestingPeriodUnlock: vestingUnlockDate
+          });
+        }
+        
+        if (advancedData.feeType === 'static' && advancedData.clankerFeeBps !== undefined && advancedData.pairedFeeBps !== undefined) {
+          builder.withStaticFeeConfig({
+            clankerFeeBps: advancedData.clankerFeeBps,
+            pairedFeeBps: advancedData.pairedFeeBps
+          });
+        } else if (advancedData.feeType === 'dynamic') {
+          builder.withDynamicFeeConfig();
+        }
+        
+        const config = builder.build();
+        deploymentResult = await clanker.deployTokenV4(config);
+      } else {
+        // Simple deployment
+        deploymentResult = await clanker.deployToken(deploymentData);
+      }
       
       // Handle different return types from SDK
       let tokenAddress: string;
