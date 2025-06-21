@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { ArrowLeft, Plus, Camera, Upload, Check, Wallet } from "lucide-react";
+import { ArrowLeft, Check, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import { useFarcasterAuth } from "@/components/providers/FarcasterAuthProvider";
 import { WalletButton } from "@/components/wallet/WalletButton";
 import { CastContextDisplay } from "@/components/CastContextDisplay";
 import { ClientDeployment } from "@/components/deploy/ClientDeployment";
+import { PhotoPicker } from "@/components/PhotoPicker";
 
 type FormData = {
   name: string;
@@ -47,8 +48,6 @@ export default function SimpleLaunchPage() {
   const [errorDetails, setErrorDetails] = useState<Record<string, unknown> | null>(null);
   const [debugInfo, setDebugInfo] = useState<Record<string, unknown> | null>(null);
   const [, setTokenAddress] = useState<string>("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [cameraSupported, setCameraSupported] = useState(false);
   const [enableCreatorRewards, setEnableCreatorRewards] = useState(true);
   const [showDebug, setShowDebug] = useState(false);
   const [requireWallet, setRequireWallet] = useState(false);
@@ -79,14 +78,6 @@ export default function SimpleLaunchPage() {
     },
   });
 
-  // Check for camera support
-  useState(() => {
-    if (typeof navigator !== "undefined" && navigator.mediaDevices?.getUserMedia) {
-      navigator.mediaDevices.getUserMedia({ video: true })
-        .then(() => setCameraSupported(true))
-        .catch(() => setCameraSupported(false));
-    }
-  });
 
   // Fetch wallet requirement config
   useEffect(() => {
@@ -105,35 +96,14 @@ export default function SimpleLaunchPage() {
       });
   }, []);
 
-  const handleImageUpload = (file: File) => {
+  const handleImageSelect = (file: File, preview: string) => {
     setValue("image", file);
     trigger("image");
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    setImagePreview(preview);
   };
 
-  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      handleImageUpload(file);
-    }
-  };
-
-  const handleCameraCapture = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      // Camera capture logic would go here
-      // For now, just trigger file input
-      fileInputRef.current?.click();
-      stream.getTracks().forEach(track => track.stop());
-    } catch (error) {
-      console.error("Camera access denied:", error);
-      fileInputRef.current?.click();
-    }
+  const handleImageError = (message: string) => {
+    console.error("Image upload error:", message);
   };
 
   const onSubmit = async (data: FormData) => {
@@ -345,68 +315,14 @@ export default function SimpleLaunchPage() {
             {/* Image Upload */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-foreground">Image</label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                capture={cameraSupported ? "environment" : undefined}
-                className="hidden"
-                onChange={handleFileInputChange}
-                data-testid="file-input"
+              <PhotoPicker
+                onImageSelect={handleImageSelect}
+                onError={handleImageError}
+                maxSizeMB={5}
+                showCamera={true}
+                capture="environment"
+                value={watch("image")}
               />
-              
-              {!imagePreview ? (
-                <Card 
-                  className="p-8 border-2 border-dashed border-border hover:border-primary/50 transition-colors cursor-pointer"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-4">
-                      <Plus className="w-6 h-6 text-muted-foreground" />
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Click to upload or drag and drop
-                    </p>
-                    {cameraSupported && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="mt-2"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleCameraCapture();
-                        }}
-                      >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Take Photo
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ) : (
-                <Card className="p-4">
-                  <div className="relative">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={imagePreview}
-                      alt="Token preview"
-                      className="w-full h-48 object-cover rounded-lg"
-                    />
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={() => fileInputRef.current?.click()}
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Change
-                    </Button>
-                  </div>
-                </Card>
-              )}
-              
               <input type="hidden" {...register("image", { required: "Image is required" })} />
               {errors.image && (
                 <p className="text-sm text-destructive">{errors.image.message}</p>
