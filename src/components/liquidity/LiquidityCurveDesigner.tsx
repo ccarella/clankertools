@@ -43,7 +43,7 @@ export function LiquidityCurveDesigner({
   const handleAddPosition = useCallback(() => {
     if (!canAddPosition) return;
     
-    haptic.buttonPress('primary');
+    haptic.buttonPress('default');
     
     const newPosition: LiquidityPositionData = {
       id: `pos-${Date.now()}`,
