@@ -55,7 +55,7 @@ describe('LiquidityCurveDesigner', () => {
         allocation: 100,
       }),
     ]);
-    expect(mockHaptic.buttonPress).toHaveBeenCalledWith('primary');
+    expect(mockHaptic.buttonPress).toHaveBeenCalledWith('default');
   });
 
   it('prevents adding more than max positions', () => {

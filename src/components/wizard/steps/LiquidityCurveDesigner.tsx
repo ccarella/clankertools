@@ -56,7 +56,7 @@ export function LiquidityCurveDesigner({
   const addPosition = () => {
     if (positions.length >= maxPositions) return;
 
-    haptic.buttonPress('primary');
+    haptic.buttonPress('default');
     const newPosition: LiquidityPosition = {
       id: `pos-${Date.now()}`,
       minPrice: 0,
