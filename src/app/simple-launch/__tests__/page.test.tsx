@@ -18,8 +18,8 @@ interface MockFormData {
 }
 
 // Mock form state for testing different scenarios
-let mockFormState = {
-  errors: {} as any,
+const mockFormState = {
+  errors: {} as Record<string, { message: string }>,
   isSubmitting: false,
   isValid: true,
 };
@@ -142,7 +142,7 @@ const setMockFormValid = () => {
   };
 };
 
-const setMockFormErrors = (errors: any, data?: Partial<typeof mockFormData>) => {
+const setMockFormErrors = (errors: Record<string, { message: string }>, data?: Partial<typeof mockFormData>) => {
   mockFormState.errors = errors;
   mockFormState.isValid = false;
   if (data) {
@@ -318,7 +318,7 @@ describe('SimpleLaunchPage', () => {
       setMockFormErrors({ image: { message: 'Image is required' } }, { 
         name: 'Test Token', 
         symbol: 'TEST', 
-        image: undefined as any 
+        image: undefined as unknown as File 
       });
       
       render(<SimpleLaunchPage />);
