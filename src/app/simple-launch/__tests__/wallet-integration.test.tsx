@@ -24,6 +24,43 @@ jest.mock('@/components/wallet/WalletButton', () => ({
 
 jest.mock('@/providers/HapticProvider');
 
+// Mock react-hook-form
+interface MockFormData {
+  name: string;
+  symbol: string;
+  image: File;
+  creatorFeePercentage: number;
+  platformFeePercentage: number;
+}
+
+jest.mock('react-hook-form', () => ({
+  useForm: () => ({
+    register: jest.fn(() => ({ name: 'test', onChange: jest.fn(), onBlur: jest.fn(), ref: jest.fn() })),
+    handleSubmit: (callback: (data: MockFormData) => void) => (e: React.FormEvent) => {
+      e?.preventDefault?.();
+      callback({
+        name: 'Test Token',
+        symbol: 'TEST',
+        image: new File(['test'], 'test.png', { type: 'image/png' }),
+        creatorFeePercentage: 80,
+        platformFeePercentage: 20,
+      });
+    },
+    formState: { errors: {}, isSubmitting: false },
+    watch: jest.fn((field) => {
+      if (field === 'symbol') return 'TEST';
+      if (field === 'name') return 'Test Token';
+      if (field === 'image') return new File(['test'], 'test.png', { type: 'image/png' });
+      if (field === 'creatorFeePercentage') return 80;
+      if (field === 'platformFeePercentage') return 20;
+      return undefined;
+    }),
+    setValue: jest.fn(),
+    reset: jest.fn(),
+    trigger: jest.fn(),
+  }),
+}));
+
 // Mock fetch
 global.fetch = jest.fn();
 
@@ -47,7 +84,31 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       if (url === '/api/config/wallet-requirement') {
         return Promise.resolve({
           ok: true,
-          json: async () => ({ required: false }),
+          json: async () => ({ requireWallet: false }),
+        });
+      }
+      if (url === '/api/connectWallet') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({ success: true }),
+        });
+      }
+      if (url === '/api/deploy/simple/prepare') {
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({
+            success: true,
+            deploymentData: {
+              name: 'Test Token',
+              symbol: 'TEST',
+              imageUrl: 'https://example.com/image.png',
+              marketCap: '0.1',
+              creatorReward: 80,
+              deployerAddress: '0x1234567890123456789012345678901234567890',
+            },
+            chainId: 84532,
+            networkName: 'Base Sepolia',
+          }),
         });
       }
       return Promise.resolve({
@@ -132,38 +193,18 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
 
     render(<SimpleLaunchPage />);
 
-    // Fill in form fields
-    const nameInput = screen.getByPlaceholderText('My Token');
-    const symbolInput = screen.getByPlaceholderText('MYT');
-    
-    fireEvent.change(nameInput, { target: { value: 'Test Token' } });
-    fireEvent.change(symbolInput, { target: { value: 'TEST' } });
-    
-    // Mock file upload
-    const file = new File(['test'], 'test.png', { type: 'image/png' });
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
-    Object.defineProperty(fileInput, 'files', {
-      value: [file],
-      writable: false,
+    // Wait for initial load
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /launch token/i })).toBeInTheDocument();
     });
-    fireEvent.change(fileInput);
 
-    // Submit form to go to review
-    const launchButton = screen.getByText('Launch Token');
+    // Submit form to go to review (form data is mocked)
+    const launchButton = screen.getByRole('button', { name: /launch token/i });
     fireEvent.click(launchButton);
 
     // Wait for review state
     await waitFor(() => {
       expect(screen.getByText('Review Your Token')).toBeInTheDocument();
-    });
-
-    // Mock deployment API response
-    (fetch as jest.Mock).mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({
-        success: true,
-        tokenAddress: '0xtoken123',
-      }),
     });
 
     // Confirm and launch
@@ -186,17 +227,12 @@ describe('SimpleLaunchPage - Wallet Integration', () => {
       }),
     });
 
-    // Verify deployment API was called with fid
-    expect(fetch).toHaveBeenCalledWith('/api/deploy/simple', {
+    // Verify deployment prepare API was called
+    expect(fetch).toHaveBeenCalledWith('/api/deploy/simple/prepare', {
       method: 'POST',
-      body: expect.any(FormData),
+      headers: { 'Content-Type': 'application/json' },
+      body: expect.stringContaining('"userFid":"12345"'),
     });
-
-    const deploymentCall = (fetch as jest.Mock).mock.calls.find(
-      call => call[0] === '/api/deploy/simple'
-    );
-    const formData = deploymentCall[1].body as FormData;
-    expect(formData.get('fid')).toBe('12345');
   });
 
   it('should show creator wallet in review when connected with rewards enabled', async () => {

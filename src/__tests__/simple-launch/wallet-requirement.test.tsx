@@ -86,7 +86,11 @@ jest.mock('react-hook-form', () => ({
     watch: jest.fn((field) => {
       if (field === 'symbol') return 'TEST';
       if (field === 'name') return 'Test Token';
-      return { name: 'Test Token', symbol: 'TEST' };
+      if (field === 'image') return null;
+      if (field === 'creatorFeePercentage') return 80;
+      if (field === 'platformFeePercentage') return 20;
+      // If no field specified, return undefined
+      return undefined;
     }),
     setValue: jest.fn(),
     reset: jest.fn(),
