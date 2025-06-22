@@ -1,15 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getIpfsUrl } from '@/lib/ipfs';
+import { escapeHtml, sanitizeUrl, validateInput, schemas } from '@/lib/security/input-validation';
+import { securityHeaders } from '@/lib/security/auth-middleware';
+import { rateLimiters } from '@/lib/security/rate-limiter';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ address: string }> }
 ) {
+  // Apply rate limiting
+  const rateLimitResult = await rateLimiters.public.middleware(request);
+  if (rateLimitResult) {
+    return rateLimitResult;
+  }
+
   const { address } = await params;
   
   // Validate address format
-  if (!address || !address.match(/^0x[a-fA-F0-9]{40}$/)) {
-    return NextResponse.json({ error: 'Invalid token address' }, { status: 400 });
+  const addressValidation = validateInput(address, schemas.tokenAddress);
+  if (!addressValidation.success) {
+    return NextResponse.json(
+      { error: 'Invalid token address' }, 
+      { status: 400, headers: securityHeaders() }
+    );
   }
 
   try {
@@ -25,22 +38,31 @@ export async function GET(
     }
 
     const { data } = tokenData;
-    const imageUrl = getIpfsUrl(data.imageUrl);
+    
+    // Sanitize all user-provided data to prevent XSS
+    const safeName = escapeHtml(data.name || '');
+    const safeSymbol = escapeHtml(data.symbol || '');
+    const safeDescription = escapeHtml(data.description || '');
+    
+    // Validate and sanitize image URL
+    const rawImageUrl = getIpfsUrl(data.imageUrl);
+    const imageUrl = sanitizeUrl(rawImageUrl) || '';
+    
     const frameVersion = request.nextUrl.searchParams.get('version') || 'vNext';
 
-    // Generate frame metadata HTML
+    // Generate frame metadata HTML with escaped content
     const html = `
 <!DOCTYPE html>
 <html>
   <head>
-    <meta property="fc:frame" content="${frameVersion}" />
+    <meta property="fc:frame" content="${escapeHtml(frameVersion)}" />
     ${frameVersion === 'v2' ? '<meta property="fc:frame:version" content="v2" />' : ''}
-    <meta property="fc:frame:image" content="${imageUrl}" />
+    <meta property="fc:frame:image" content="${escapeHtml(imageUrl)}" />
     <meta property="fc:frame:image:aspect_ratio" content="1:1" />
     
-    <meta property="og:title" content="${data.name} ($${data.symbol})" />
-    <meta property="og:description" content="Market Cap: $${formatNumber(data.marketCap)} | Holders: ${data.holders} | 24h Volume: $${formatNumber(data.volume24h)}" />
-    <meta property="og:image" content="${imageUrl}" />
+    <meta property="og:title" content="${safeName} ($${safeSymbol})" />
+    <meta property="og:description" content="Market Cap: $${formatNumber(data.marketCap)} | Holders: ${escapeHtml(String(data.holders))} | 24h Volume: $${formatNumber(data.volume24h)}" />
+    <meta property="og:image" content="${escapeHtml(imageUrl)}" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="${request.nextUrl.origin}/token/${address}" />
     
@@ -54,14 +76,15 @@ export async function GET(
     
     <meta property="fc:frame:button:3" content="Share" />
     <meta property="fc:frame:button:3:action" content="link" />
-    <meta property="fc:frame:button:3:target" content="https://warpcast.com/~/compose?text=${encodeURIComponent(`Check out ${data.name} ($${data.symbol}) on @clanker!`)}&embeds[]=${encodeURIComponent(request.url)}" />
+    <meta property="fc:frame:button:3:target" content="https://warpcast.com/~/compose?text=${encodeURIComponent(`Check out ${safeName} ($${safeSymbol}) on @clanker!`)}&embeds[]=${encodeURIComponent(request.url)}" />
   </head>
   <body>
-    <h1>${data.name} ($${data.symbol})</h1>
-    <img src="${imageUrl}" alt="${data.name}" width="400" height="400" />
+    <h1>${safeName} ($${safeSymbol})</h1>
+    <img src="${escapeHtml(imageUrl)}" alt="${safeName}" width="400" height="400" />
     <p>Market Cap: $${formatNumber(data.marketCap)}</p>
-    <p>Holders: ${data.holders}</p>
+    <p>Holders: ${escapeHtml(String(data.holders))}</p>
     <p>24h Volume: $${formatNumber(data.volume24h)}</p>
+    ${safeDescription ? `<p>${safeDescription}</p>` : ''}
   </body>
 </html>`;
 
@@ -69,13 +92,14 @@ export async function GET(
       headers: {
         'Content-Type': 'text/html',
         'Cache-Control': 'public, max-age=60, stale-while-revalidate=300',
+        ...securityHeaders(),
       },
     });
   } catch (error) {
     console.error('Error generating frame metadata:', error);
     return NextResponse.json(
       { error: 'Failed to fetch token data' },
-      { status: 500 }
+      { status: 500, headers: securityHeaders() }
     );
   }
 }

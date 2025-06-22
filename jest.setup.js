@@ -10,10 +10,26 @@ global.TextDecoder = TextDecoder
 if (typeof globalThis.Request === 'undefined') {
   global.Request = class Request {
     constructor(url, init) {
-      this.url = url;
+      this._url = url;
       this.method = init?.method || 'GET';
       this.headers = new Headers(init?.headers);
       this.body = init?.body;
+    }
+    
+    get url() {
+      return this._url;
+    }
+    
+    formData() {
+      return Promise.resolve(this.body);
+    }
+    
+    json() {
+      return Promise.resolve(JSON.parse(this.body));
+    }
+    
+    text() {
+      return Promise.resolve(this.body);
     }
   };
 }
