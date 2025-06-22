@@ -17,7 +17,7 @@ export interface VestingCalculation {
 }
 
 export function validateVestingSchedule(schedule: VestingSchedule): { valid: boolean; error?: string } {
-  if (schedule.totalAmount <= 0n) {
+  if (schedule.totalAmount <= BigInt(0)) {
     return { valid: false, error: 'Total amount must be greater than 0' };
   }
 
@@ -47,17 +47,17 @@ export function validateVestingSchedule(schedule: VestingSchedule): { valid: boo
 export function calculateLinearVesting(
   schedule: VestingSchedule,
   currentTime: number,
-  releasedAmount: bigint = 0n
+  releasedAmount: bigint = BigInt(0)
 ): VestingCalculation {
   if (currentTime <= schedule.startTime) {
     return {
-      vestedAmount: 0n,
+      vestedAmount: BigInt(0),
       unvestedAmount: schedule.totalAmount,
-      releasableAmount: 0n,
+      releasableAmount: BigInt(0),
       percentVested: 0,
       isFullyVested: false,
       nextReleaseTime: schedule.startTime,
-      nextReleaseAmount: 0n,
+      nextReleaseAmount: BigInt(0),
     };
   }
 
@@ -65,9 +65,9 @@ export function calculateLinearVesting(
     const cliffEndTime = schedule.startTime + schedule.cliffDuration;
     if (currentTime < cliffEndTime) {
       return {
-        vestedAmount: 0n,
+        vestedAmount: BigInt(0),
         unvestedAmount: schedule.totalAmount,
-        releasableAmount: 0n,
+        releasableAmount: BigInt(0),
         percentVested: 0,
         isFullyVested: false,
         nextReleaseTime: cliffEndTime,
@@ -79,7 +79,7 @@ export function calculateLinearVesting(
   const vestedAmount = calculateVestedAtTime(schedule, currentTime);
   const unvestedAmount = schedule.totalAmount - vestedAmount;
   const releasableAmount = vestedAmount - releasedAmount;
-  const percentVested = Number((vestedAmount * 100n) / schedule.totalAmount);
+  const percentVested = Number((vestedAmount * BigInt(100)) / schedule.totalAmount);
   const isFullyVested = currentTime >= schedule.endTime;
 
   let nextReleaseTime: number | undefined;
@@ -105,15 +105,15 @@ export function calculateLinearVesting(
 export function calculateCliffVesting(
   schedule: VestingSchedule,
   currentTime: number,
-  releasedAmount: bigint = 0n
+  releasedAmount: bigint = BigInt(0)
 ): VestingCalculation {
   const cliffEndTime = schedule.endTime;
 
   if (currentTime < cliffEndTime) {
     return {
-      vestedAmount: 0n,
+      vestedAmount: BigInt(0),
       unvestedAmount: schedule.totalAmount,
-      releasableAmount: 0n,
+      releasableAmount: BigInt(0),
       percentVested: 0,
       isFullyVested: false,
       nextReleaseTime: cliffEndTime,
@@ -123,7 +123,7 @@ export function calculateCliffVesting(
 
   return {
     vestedAmount: schedule.totalAmount,
-    unvestedAmount: 0n,
+    unvestedAmount: BigInt(0),
     releasableAmount: schedule.totalAmount - releasedAmount,
     percentVested: 100,
     isFullyVested: true,
@@ -133,7 +133,7 @@ export function calculateCliffVesting(
 export function calculateVesting(
   schedule: VestingSchedule,
   currentTime: number,
-  releasedAmount: bigint = 0n
+  releasedAmount: bigint = BigInt(0)
 ): VestingCalculation {
   const validation = validateVestingSchedule(schedule);
   if (!validation.valid) {
@@ -149,7 +149,7 @@ export function calculateVesting(
 
 function calculateVestedAtTime(schedule: VestingSchedule, time: number): bigint {
   if (time <= schedule.startTime) {
-    return 0n;
+    return BigInt(0);
   }
 
   if (time >= schedule.endTime) {
@@ -161,7 +161,7 @@ function calculateVestedAtTime(schedule: VestingSchedule, time: number): bigint 
     : schedule.startTime;
 
   if (time < effectiveStartTime) {
-    return 0n;
+    return BigInt(0);
   }
 
   const totalDuration = schedule.endTime - effectiveStartTime;

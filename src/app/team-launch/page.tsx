@@ -62,7 +62,7 @@ const VESTING_PRESETS = {
 export default function TeamLaunchPage() {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useFarcasterAuth();
-  const { triggerHaptic } = useHaptic();
+  const haptic = useHaptic();
   const [currentStep, setCurrentStep] = useState<Step>("team");
   const [isDeploying, setIsDeploying] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -147,7 +147,7 @@ export default function TeamLaunchPage() {
     }));
     
     setValue("teamMembers", adjustedMembers);
-    triggerHaptic("selection");
+    haptic.buttonPress();
   };
 
   const removeTeamMember = (id: string) => {
@@ -164,7 +164,7 @@ export default function TeamLaunchPage() {
     }));
     
     setValue("teamMembers", adjustedMembers);
-    triggerHaptic("selection");
+    haptic.buttonPress();
   };
 
   const applyVestingPreset = (preset: keyof typeof VESTING_PRESETS) => {
@@ -175,7 +175,7 @@ export default function TeamLaunchPage() {
       vestingDuration: duration,
       preset,
     });
-    triggerHaptic("selection");
+    haptic.buttonPress();
   };
 
   const validateStep = (step: Step): boolean => {
@@ -260,9 +260,9 @@ export default function TeamLaunchPage() {
     if (currentIndex < STEPS.length - 1) {
       if (validateStep(currentStep)) {
         setCurrentStep(STEPS[currentIndex + 1].id);
-        triggerHaptic("selection");
+        haptic.buttonPress();
       } else {
-        triggerHaptic("error");
+        haptic.buttonPress();
       }
     }
   };
@@ -271,7 +271,7 @@ export default function TeamLaunchPage() {
     const currentIndex = STEPS.findIndex(s => s.id === currentStep);
     if (currentIndex > 0) {
       setCurrentStep(STEPS[currentIndex - 1].id);
-      triggerHaptic("selection");
+      haptic.buttonPress();
     } else {
       router.back();
     }
@@ -279,12 +279,12 @@ export default function TeamLaunchPage() {
 
   const handleDeploy = async () => {
     if (!validateStep("token")) {
-      triggerHaptic("error");
+      haptic.buttonPress();
       return;
     }
     
     setIsDeploying(true);
-    triggerHaptic("success");
+    haptic.buttonPress();
     
     try {
       // TODO: Implement actual deployment
@@ -295,7 +295,7 @@ export default function TeamLaunchPage() {
     } catch (error) {
       console.error("Deployment error:", error);
       toast.error("Failed to deploy token. Please try again.");
-      triggerHaptic("error");
+      haptic.buttonPress();
     } finally {
       setIsDeploying(false);
     }

@@ -13,7 +13,7 @@ export const Root = React.forwardRef<
     return React.Children.map(children, child => {
       if (React.isValidElement(child)) {
         if (child.type === Item || child.props['data-slot'] === 'radio-group-item' || child.props.role === 'radio') {
-          return React.cloneElement(child as React.ReactElement<any>, {
+          return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
             'aria-checked': child.props.value === value,
             checked: child.props.value === value,
             onChange: () => onValueChange?.(child.props.value),
@@ -22,7 +22,7 @@ export const Root = React.forwardRef<
           });
         } else if (child.props.children) {
           // Process nested children (like inside labels)
-          return React.cloneElement(child as React.ReactElement<any>, {
+          return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
             children: processChildren(child.props.children),
           });
         }
@@ -50,7 +50,7 @@ export const Item = React.forwardRef<
     disabled?: boolean;
     className?: string;
   }>
->(({ value, id, checked, onChange, disabled, children, ...props }, ref) => {
+>(({ id, checked, onChange, disabled, children, ...props }, ref) => {
   return (
     <button
       ref={ref}

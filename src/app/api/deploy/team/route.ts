@@ -655,12 +655,10 @@ export async function POST(request: NextRequest) {
     try {
       if (txHash) {
         await trackTransaction(txHash, {
-          type: 'team_token_deployment',
+          type: 'token_deployment',
           tokenAddress,
           name,
           symbol,
-          teamMembers,
-          treasuryPercentage,
         });
       }
     } catch (error) {
@@ -705,7 +703,6 @@ export async function POST(request: NextRequest) {
           name,
           symbol,
           createdAt: new Date().toISOString(),
-          type: 'team',
         });
       } catch (error) {
         console.error('Failed to store user token:', error);
@@ -722,11 +719,8 @@ export async function POST(request: NextRequest) {
       network: networkConfig.name,
       chainId: networkConfig.chainId,
       teamMembers,
+      ...(treasuryAllocation && { treasuryAllocation }),
     };
-
-    if (treasuryAllocation) {
-      response.treasuryAllocation = treasuryAllocation;
-    }
 
     return NextResponse.json(response, { headers: getSecurityHeaders(request) });
   } catch (error) {
