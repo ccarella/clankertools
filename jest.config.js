@@ -17,6 +17,8 @@ const customJestConfig = {
     '^@neynar/nodejs-sdk$': '<rootDir>/src/__mocks__/@neynar/nodejs-sdk.ts',
     '^viem$': '<rootDir>/src/__mocks__/viem.ts',
     '^lucide-react$': '<rootDir>/src/__mocks__/lucide-react.tsx',
+    '^@radix-ui/react-slider$': '<rootDir>/src/__mocks__/@radix-ui/react-slider.tsx',
+    '^@radix-ui/react-radio-group$': '<rootDir>/src/__mocks__/@radix-ui/react-radio-group.tsx',
   },
   transformIgnorePatterns: [
     'node_modules/(?!(@farcaster/frame-sdk|@upstash/redis|uncrypto|clanker-sdk|zod|viem|abitype)/)'
