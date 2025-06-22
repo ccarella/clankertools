@@ -56,7 +56,7 @@ export interface ScanConfig {
 interface SecurityScannerConfig {
   projectRoot: string;
   outputDir: string;
-  redis: typeof redis;
+  redis?: typeof redis | null;
   config?: ScanConfig;
   timeout?: number;
 }
@@ -162,6 +162,10 @@ export class SecurityScanner {
   }
 
   async cleanupOldScans(daysOld: number): Promise<number> {
+    if (!this.config.redis) {
+      return 0;
+    }
+    
     const keys = await this.config.redis.keys('security:scan:*');
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysOld);
@@ -172,7 +176,7 @@ export class SecurityScanner {
       const reportStr = await this.config.redis.get(key);
       if (reportStr) {
         try {
-          const report = JSON.parse(reportStr) as ScanReport;
+          const report = JSON.parse(reportStr as string) as ScanReport;
           if (new Date(report.timestamp) < cutoffDate) {
             await this.config.redis.del(key);
             deletedCount++;
@@ -303,7 +307,9 @@ export class SecurityScanner {
   }
 
   private async storeScanResult(report: ScanReport): Promise<void> {
-    await storeScanResult(report, this.config.redis);
+    if (this.config.redis) {
+      await storeScanResult(report, this.config.redis);
+    }
   }
 
   private aggregateVulnerabilities(vulnerabilities: Vulnerability[]): ScanSummary {
