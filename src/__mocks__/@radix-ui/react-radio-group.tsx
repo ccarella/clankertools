@@ -12,18 +12,29 @@ export const Root = React.forwardRef<
   const processChildren = (children: React.ReactNode): React.ReactNode => {
     return React.Children.map(children, child => {
       if (React.isValidElement(child)) {
-        if (child.type === Item || child.props['data-slot'] === 'radio-group-item' || child.props.role === 'radio') {
+        const childProps = child.props as Record<string, unknown>;
+        if (child.type === Item || childProps['data-slot'] === 'radio-group-item' || childProps.role === 'radio' || 
+            (typeof child.type === 'function' && child.type.name === 'RadioGroupItem') || 
+            childProps.value !== undefined) {
+          const handleClick = (e: React.MouseEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!childProps.disabled && !props.disabled) {
+              onValueChange?.(childProps.value as string);
+            }
+          };
+          
           return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
-            'aria-checked': child.props.value === value,
-            checked: child.props.value === value,
-            onChange: () => onValueChange?.(child.props.value),
-            onClick: () => !child.props.disabled && !props.disabled && onValueChange?.(child.props.value),
-            disabled: props.disabled || child.props.disabled,
+            'aria-checked': childProps.value === value,
+            checked: childProps.value === value,
+            onChange: () => onValueChange?.(childProps.value as string),
+            onClick: handleClick,
+            disabled: props.disabled || childProps.disabled,
           });
-        } else if (child.props.children) {
+        } else if (childProps.children) {
           // Process nested children (like inside labels)
           return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
-            children: processChildren(child.props.children),
+            children: processChildren(childProps.children),
           });
         }
       }

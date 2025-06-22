@@ -1,20 +1,24 @@
 /**
  * @jest-environment node
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { POST } from '../route';
 
 // Mock NextRequest
 class MockNextRequest {
   method: string;
-  body: any;
+  url: string;
+  nextUrl: { searchParams: URLSearchParams };
   headers: Headers;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  body: any;
   
-  constructor(url: string, init: RequestInit) {
-    this.method = init.method || 'GET';
-    this.body = init.body;
-    this.headers = new Headers(init.headers as HeadersInit);
+  constructor(url: string, init?: RequestInit) {
+    this.method = init?.method || 'GET';
+    this.url = url;
+    const urlObj = new URL(url);
+    this.nextUrl = { searchParams: urlObj.searchParams };
+    this.headers = new Headers(init?.headers || {});
+    this.body = init?.body;
   }
   
   async json() {
@@ -24,13 +28,53 @@ class MockNextRequest {
 
 // Mock Redis at the module level
 const mockRedis = {
-  set: jest.fn(),
   get: jest.fn(),
+  set: jest.fn(),
+  setex: jest.fn(),
+  incr: jest.fn(),
+  ttl: jest.fn(),
   expire: jest.fn(),
+  pipeline: jest.fn(() => ({
+    get: jest.fn().mockReturnThis(),
+    ttl: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValue([null, -1]),
+  })),
 };
 
 jest.mock('@upstash/redis', () => ({
-  Redis: jest.fn(() => mockRedis),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Redis: jest.fn(() => mockRedis as any),
+}));
+
+// Mock authentication
+jest.mock('@/lib/security/auth-middleware', () => ({
+  verifyFarcasterAuth: jest.fn().mockResolvedValue(null), // null means auth passed
+  securityHeaders: jest.fn(() => new Headers()),
+}));
+
+// Mock rate limiter
+jest.mock('@/lib/security/rate-limiter', () => ({
+  rateLimiters: {
+    api: {
+      middleware: jest.fn().mockResolvedValue(null), // null means rate limit passed
+    },
+  },
+}));
+
+// Mock input validation
+jest.mock('@/lib/security/input-validation', () => ({
+  validateInput: jest.fn((data: any, schema: any) => ({
+    success: true,
+    data: {
+      fid: data.fid || '12345',
+      walletAddress: data.walletAddress || '0x1234567890123456789012345678901234567890',
+      enableCreatorRewards: data.enableCreatorRewards ?? true,
+    },
+  })),
+  schemas: {
+    fid: {},
+    walletAddress: {},
+  },
 }));
 
 describe('POST /api/connectWallet', () => {
@@ -86,6 +130,13 @@ describe('POST /api/connectWallet', () => {
   });
 
   it('should return 400 for missing fid', async () => {
+    // Mock validation to fail for missing fid
+    const { validateInput } = require('@/lib/security/input-validation');
+    validateInput.mockReturnValueOnce({
+      success: false,
+      errors: ['Missing required fields'],
+    });
+
     const request = new MockNextRequest('http://localhost:3000/api/connectWallet', {
       method: 'POST',
       headers: {
@@ -100,11 +151,18 @@ describe('POST /api/connectWallet', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Missing required fields');
+    expect(data.error).toBe('Validation failed');
     expect(mockRedis.set).not.toHaveBeenCalled();
   });
 
   it('should return 400 for missing wallet address', async () => {
+    // Mock validation to fail for missing wallet address
+    const { validateInput } = require('@/lib/security/input-validation');
+    validateInput.mockReturnValueOnce({
+      success: false,
+      errors: ['Missing required fields'],
+    });
+
     const request = new MockNextRequest('http://localhost:3000/api/connectWallet', {
       method: 'POST',
       headers: {
@@ -119,11 +177,18 @@ describe('POST /api/connectWallet', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Missing required fields');
+    expect(data.error).toBe('Validation failed');
     expect(mockRedis.set).not.toHaveBeenCalled();
   });
 
   it('should return 400 for invalid wallet address format', async () => {
+    // Mock validation to fail for invalid wallet address
+    const { validateInput } = require('@/lib/security/input-validation');
+    validateInput.mockReturnValueOnce({
+      success: false,
+      errors: ['Invalid wallet address format'],
+    });
+
     const request = new MockNextRequest('http://localhost:3000/api/connectWallet', {
       method: 'POST',
       headers: {
@@ -139,7 +204,7 @@ describe('POST /api/connectWallet', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Invalid wallet address format');
+    expect(data.error).toBe('Validation failed');
     expect(mockRedis.set).not.toHaveBeenCalled();
   });
 

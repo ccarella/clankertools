@@ -3,10 +3,17 @@ import { Redis } from '@upstash/redis';
 type TransactionStatus = 'pending' | 'confirmed' | 'failed';
 
 interface TransactionMetadata {
-  type: 'token_deployment';
+  type: 'token_deployment' | 'team_token_deployment';
   tokenAddress: string;
   name: string;
   symbol: string;
+  teamMembers?: Array<{
+    address: string;
+    percentage: number;
+    role?: string;
+    vestingMonths?: number;
+  }>;
+  treasuryPercentage?: number;
 }
 
 interface TransactionData extends TransactionMetadata {

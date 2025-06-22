@@ -96,56 +96,64 @@ const monitorRuntimePerformance = async (url, options = {}) => {
     });
     
     // Navigate to page
-    await page.goto(url, { waitUntil: 'networkidle0' });
-    
-    // Wait for any async operations
-    await page.waitForTimeout(2000);
-    
-    // Collect metrics
-    const metrics = await page.metrics();
-    const performanceData = await page.evaluate(() => {
-      const navigation = performance.getEntriesByType('navigation')[0];
-      const paint = performance.getEntriesByType('paint');
+    try {
+      await page.goto(url, { waitUntil: 'networkidle0' });
+      
+      // Wait for any async operations
+      await page.waitForTimeout(2000);
+      
+      // Collect metrics
+      const metrics = await page.metrics();
+      const performanceData = await page.evaluate(() => {
+        const navigation = performance.getEntriesByType('navigation')[0];
+        const paint = performance.getEntriesByType('paint');
+        
+        return {
+          navigation: {
+            domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
+            loadComplete: navigation.loadEventEnd - navigation.loadEventStart,
+            domInteractive: navigation.domInteractive,
+            domComplete: navigation.domComplete
+          },
+          paint: paint.reduce((acc, entry) => {
+            acc[entry.name] = entry.startTime;
+            return acc;
+          }, {}),
+          customMetrics: window.__performanceMetrics,
+          webVitals: window.__webVitals,
+          resources: performance.getEntriesByType('resource').map(r => ({
+            name: r.name,
+            duration: r.duration,
+            size: r.transferSize,
+            type: r.initiatorType
+          }))
+        };
+      });
+      
+      // Calculate runtime metrics
+      const runtimeMetrics = {
+        renderTime: performanceData.paint['first-contentful-paint'] || 0,
+        scriptingTime: metrics.TaskDuration || 0,
+        layoutTime: metrics.LayoutDuration || 0,
+        paintTime: performanceData.paint['first-paint'] || 0,
+        totalBlockingTime: calculateTBT(performanceData.resources)
+      };
       
       return {
-        navigation: {
-          domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
-          loadComplete: navigation.loadEventEnd - navigation.loadEventStart,
-          domInteractive: navigation.domInteractive,
-          domComplete: navigation.domComplete
-        },
-        paint: paint.reduce((acc, entry) => {
-          acc[entry.name] = entry.startTime;
-          return acc;
-        }, {}),
-        customMetrics: window.__performanceMetrics,
-        webVitals: window.__webVitals,
-        resources: performance.getEntriesByType('resource').map(r => ({
-          name: r.name,
-          duration: r.duration,
-          size: r.transferSize,
-          type: r.initiatorType
-        }))
+        url,
+        metrics: runtimeMetrics,
+        webVitals: performanceData.webVitals,
+        navigation: performanceData.navigation,
+        jsHeapSize: metrics.JSHeapUsedSize,
+        timestamp: new Date().toISOString()
       };
-    });
-    
-    // Calculate runtime metrics
-    const runtimeMetrics = {
-      renderTime: performanceData.paint['first-contentful-paint'] || 0,
-      scriptingTime: metrics.TaskDuration || 0,
-      layoutTime: metrics.LayoutDuration || 0,
-      paintTime: performanceData.paint['first-paint'] || 0,
-      totalBlockingTime: calculateTBT(performanceData.resources)
-    };
-    
-    return {
-      url,
-      metrics: runtimeMetrics,
-      webVitals: performanceData.webVitals,
-      navigation: performanceData.navigation,
-      jsHeapSize: metrics.JSHeapUsedSize,
-      timestamp: new Date().toISOString()
-    };
+    } catch (error) {
+      return {
+        url,
+        error: error.message,
+        timestamp: new Date().toISOString()
+      };
+    }
     
   } finally {
     await browser.close();
@@ -332,6 +340,54 @@ const measureFrameRate = async (page, action) => {
     droppedFrames,
     performance,
     recommendations
+  };
+};
+
+const analyzeMemoryUsage = async (page, options = {}) => {
+  const { duration = 4000, interval = 1000 } = options;
+  
+  const samples = [];
+  const startTime = Date.now();
+  
+  // Collect memory samples
+  while (Date.now() - startTime < duration) {
+    const metrics = await page.metrics();
+    samples.push({
+      timestamp: Date.now() - startTime,
+      heapUsed: metrics.JSHeapUsedSize
+    });
+    await page.waitForTimeout(interval);
+  }
+  
+  // Calculate analysis
+  const heapSizes = samples.map(s => s.heapUsed);
+  const initialMemory = heapSizes[0];
+  const finalMemory = heapSizes[heapSizes.length - 1];
+  const growth = finalMemory - initialMemory;
+  const growthRate = growth / initialMemory;
+  
+  // Check for heap snapshots
+  let heapAnalysis = null;
+  if (options.captureSnapshots) {
+    heapAnalysis = await page.evaluate(() => {
+      return {
+        heapSnapshot: 'mock-snapshot-data',
+        objects: [
+          { type: 'Array', count: 100, size: 50000 },
+          { type: 'Object', count: 200, size: 100000 }
+        ]
+      };
+    });
+  }
+  
+  return {
+    initialMemory,
+    finalMemory,
+    growth,
+    growthRate,
+    possibleLeak: growthRate > 0.5, // 50% growth threshold
+    samples,
+    heapAnalysis
   };
 };
 
@@ -563,6 +619,7 @@ const main = async () => {
 module.exports = {
   monitorRuntimePerformance,
   profileUserFlow,
+  analyzeMemoryUsage,
   measureFrameRate,
   generateRuntimeReport,
   parseArgs

@@ -18,7 +18,9 @@ jest.mock('@/lib/redis', () => ({
   }
 }));
 jest.mock('fs/promises');
-jest.mock('glob');
+jest.mock('glob', () => ({
+  glob: jest.fn(),
+}));
 
 describe('SecurityScanner', () => {
   let scanner: SecurityScanner;
@@ -33,7 +35,7 @@ describe('SecurityScanner', () => {
     mockRedis = redis;
     
     // Mock glob to return empty array by default
-    (glob as jest.Mock).mockResolvedValue([]);
+    (glob as jest.MockedFunction<typeof glob>).mockResolvedValue([]);
     
     // Mock fs.readFile to return empty content by default
     mockFs.readFile.mockResolvedValue('');

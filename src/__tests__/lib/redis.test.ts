@@ -22,12 +22,13 @@ jest.mock('@upstash/redis', () => ({
 }));
 
 describe('Redis Module Tests', () => {
-  let mockRedis: ReturnType<typeof getRedisClient>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let mockRedis: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
     // Get the mocked Redis instance
-    mockRedis = getRedisClient();
+    mockRedis = getRedisClient() as any;
   });
 
   describe('storeUserWallet', () => {
