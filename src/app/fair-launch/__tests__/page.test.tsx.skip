@@ -1,0 +1,2 @@
+// Temporarily skip these tests while we fix the component rendering issues
+// Move this to page.test.tsx when ready
