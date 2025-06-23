@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
         },
       },
       {
-        userId: data.fid,
+        userId: parseInt(data.fid),
         source: 'fair_launch',
       }
     );

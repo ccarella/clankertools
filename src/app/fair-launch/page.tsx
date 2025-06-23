@@ -108,13 +108,13 @@ export default function FairLaunchPage() {
     }
 
     if (isValid) {
-      haptic.light();
+      haptic.navigationTap();
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    haptic.light();
+    haptic.navigationTap();
     setCurrentStep(currentStep - 1);
   };
 
@@ -122,7 +122,7 @@ export default function FairLaunchPage() {
     if (!user?.fid || !imageFile) return;
 
     setIsDeploying(true);
-    haptic.medium();
+    haptic.buttonPress();
 
     try {
       // Upload image to IPFS first
@@ -157,13 +157,13 @@ export default function FairLaunchPage() {
       if (!response.ok) throw new Error('Failed to deploy token');
 
       const result = await response.json();
-      haptic.heavy();
+      haptic.buttonPress('destructive');
       
       // Redirect to success page or token page
       router.push(`/token/${result.tokenAddress || 'pending'}`);
     } catch (error) {
       console.error('Deployment error:', error);
-      haptic.heavy();
+      haptic.buttonPress('destructive');
       // Handle error
     } finally {
       setIsDeploying(false);
