@@ -35,6 +35,7 @@ jest.mock('@/lib/redis', () => ({
   getUserWallet: jest.fn(async (fid: string) => {
     return mockRedisInstance.get(`user:${fid}:wallet`);
   }),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   storeTokenData: jest.fn(async (fid: string, tokenData: any) => {
     const key = `user:${fid}:tokens`;
     return mockRedisInstance.set(key, JSON.stringify(tokenData));

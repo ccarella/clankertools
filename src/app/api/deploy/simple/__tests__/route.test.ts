@@ -53,7 +53,7 @@ jest.mock('next/server', () => {
   };
 });
 
-import { POST, OPTIONS } from '../route';
+import { POST } from '../route';
 import { Clanker } from 'clanker-sdk';
 import { uploadToIPFS } from '@/lib/ipfs';
 import { trackTransaction } from '@/lib/transaction-tracker';
