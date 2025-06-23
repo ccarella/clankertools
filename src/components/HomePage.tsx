@@ -26,7 +26,7 @@ const launchOptions = [
   {
     title: 'Memecoin Degen',
     description: 'For meme and community tokens',
-    href: '/memecoin-launch',
+    href: '/templates/meme',
     icon: Smile,
     iconColor: 'bg-purple-500',
   },
