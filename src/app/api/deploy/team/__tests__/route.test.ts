@@ -16,7 +16,10 @@
 import { POST } from '../route';
 import { Clanker } from 'clanker-sdk';
 import { uploadToIPFS } from '@/lib/ipfs';
-import { trackTransaction } from '@/lib/transaction-tracker';
+
+// Mock the TransactionManager and dependencies
+jest.mock('@/lib/transaction/TransactionManager');
+jest.mock('@/lib/transaction/processors/tokenDeploymentProcessor');
 
 // Mock NextRequest
 class MockNextRequest {
@@ -37,7 +40,15 @@ class MockNextRequest {
 
 jest.mock('clanker-sdk');
 jest.mock('@/lib/ipfs');
-jest.mock('@/lib/transaction-tracker');
+
+// Mock transaction manager
+const mockTransactionManager = {
+  queueTransaction: jest.fn(),
+  startAutoProcessing: jest.fn(),
+};
+
+// Mock the getTransactionManager function
+import { getTransactionManager } from '@/lib/transaction/TransactionManager';
 jest.mock('@/lib/redis', () => ({
   storeUserToken: jest.fn(),
 }));
@@ -73,7 +84,6 @@ jest.mock('viem/chains', () => ({
 describe('POST /api/deploy/team', () => {
   const mockDeployToken = jest.fn();
   const mockUploadToIPFS = uploadToIPFS as jest.MockedFunction<typeof uploadToIPFS>;
-  const mockTrackTransaction = trackTransaction as jest.MockedFunction<typeof trackTransaction>;
   const mockWaitForTransactionReceipt = jest.fn();
   const mockSendTransaction = jest.fn();
 
@@ -82,6 +92,10 @@ describe('POST /api/deploy/team', () => {
     (Clanker as jest.Mock).mockImplementation(() => ({
       deployToken: mockDeployToken,
     }));
+    
+    // Mock transaction manager
+    (getTransactionManager as jest.Mock).mockReturnValue(mockTransactionManager);
+    mockTransactionManager.queueTransaction.mockResolvedValue('tx_team_12345');
     process.env.DEPLOYER_PRIVATE_KEY = '0x0000000000000000000000000000000000000000000000000000000000000001';
     process.env.INTERFACE_ADMIN = '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace';
     process.env.INTERFACE_REWARD_RECIPIENT = '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace';
@@ -116,24 +130,10 @@ describe('POST /api/deploy/team', () => {
     delete process.env.KV_REST_API_TOKEN;
   });
 
-  it('should deploy a team token successfully', async () => {
-    const mockTokenAddress = '0x1234567890123456789012345678901234567890';
-    const mockImageUrl = 'ipfs://QmTest123';
-    const mockTxHash = '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
-    const mockTransactionReceipt = { 
-      transactionHash: mockTxHash, 
-      status: 'success',
-      blockNumber: BigInt(12345),
-      contractAddress: mockTokenAddress
-    };
-
-    mockUploadToIPFS.mockResolvedValue(mockImageUrl);
-    mockDeployToken.mockResolvedValue({ 
-      address: mockTokenAddress,
-      txHash: mockTxHash 
-    });
-    mockWaitForTransactionReceipt.mockResolvedValue(mockTransactionReceipt);
-    mockTrackTransaction.mockResolvedValue(undefined);
+  it('should queue team token deployment successfully', async () => {
+    const mockTransactionId = 'tx_team_12345';
+    
+    mockTransactionManager.queueTransaction.mockResolvedValue(mockTransactionId);
 
     const formData = new FormData();
     formData.append('name', 'Team Token');
@@ -172,31 +172,60 @@ describe('POST /api/deploy/team', () => {
     expect(response.status).toBe(200);
     expect(data).toEqual({
       success: true,
-      tokenAddress: mockTokenAddress,
-      txHash: mockTxHash,
-      imageUrl: mockImageUrl,
-      network: 'Base Sepolia',
-      chainId: 84532,
-      teamMembers: expect.any(Array),
+      transactionId: mockTransactionId,
+      message: 'Team token deployment queued successfully',
+      statusUrl: `/api/transaction/${mockTransactionId}`,
+      teamMembers: expect.arrayContaining([
+        expect.objectContaining({
+          address: '0x1111111111111111111111111111111111111111',
+          percentage: 10,
+          role: 'Co-founder',
+          vestingMonths: 12
+        }),
+        expect.objectContaining({
+          address: '0x2222222222222222222222222222222222222222',
+          percentage: 5,
+          role: 'Developer',
+          vestingMonths: 6
+        })
+      ]),
       treasuryAllocation: {
         percentage: 20,
         address: '0x3333333333333333333333333333333333333333'
       }
     });
 
-    expect(mockUploadToIPFS).toHaveBeenCalledWith(expect.any(Blob));
-    expect(mockDeployToken).toHaveBeenCalled();
-    expect(mockTrackTransaction).toHaveBeenCalledWith(
-      mockTxHash,
+    expect(mockTransactionManager.queueTransaction).toHaveBeenCalledWith(
       {
         type: 'team_token_deployment',
-        tokenAddress: mockTokenAddress,
-        name: 'Team Token',
-        symbol: 'TEAM',
-        teamMembers: expect.any(Array),
-        treasuryPercentage: 20
-      }
+        payload: {
+          name: 'Team Token',
+          symbol: 'TEAM',
+          imageFile: expect.any(Blob),
+          fid: '123456',
+          castContext: undefined,
+          creatorFeePercentage: undefined,
+          teamMembers: expect.arrayContaining([
+            expect.objectContaining({
+              address: '0x1111111111111111111111111111111111111111',
+              percentage: 10,
+              role: 'Co-founder',
+              vestingMonths: 12
+            })
+          ]),
+          treasuryAllocation: {
+            percentage: 20,
+            address: '0x3333333333333333333333333333333333333333'
+          }
+        },
+      },
+      {
+        userId: 123456,
+        description: 'Team token deployment: Team Token (TEAM) with 2 members',
+      },
+      'high'
     );
+    expect(mockTransactionManager.startAutoProcessing).toHaveBeenCalledWith(5000);
   });
 
   it('should validate team member data', async () => {
