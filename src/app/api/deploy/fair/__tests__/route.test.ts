@@ -1,10 +1,8 @@
 import { POST } from '../route';
 import { NextRequest } from 'next/server';
-import { getTransactionManager } from '@/lib/transaction/TransactionManager';
 
-jest.mock('@/lib/transaction/TransactionManager', () => ({
-  getTransactionManager: jest.fn()
-}));
+// Import first, then mock
+jest.mock('@/lib/transaction/TransactionManager');
 
 jest.mock('merkletreejs', () => ({
   MerkleTree: jest.fn().mockImplementation(() => ({
@@ -15,7 +13,7 @@ jest.mock('merkletreejs', () => ({
 describe('POST /api/deploy/fair', () => {
   let mockRequest: NextRequest;
   let mockTransactionManager: {
-    createTransaction: jest.Mock;
+    queueTransaction: jest.Mock;
     updateTransaction: jest.Mock;
   };
 
@@ -23,14 +21,12 @@ describe('POST /api/deploy/fair', () => {
     jest.clearAllMocks();
     
     mockTransactionManager = {
-      createTransaction: jest.fn().mockResolvedValue({
-        transactionId: 'test-tx-id',
-        status: 'pending',
-      }),
+      queueTransaction: jest.fn().mockResolvedValue('test-tx-id'),
       updateTransaction: jest.fn(),
     };
     
-    (getTransactionManager as jest.Mock).mockReturnValue(mockTransactionManager);
+    const { getTransactionManager } = jest.requireMock('@/lib/transaction/TransactionManager');
+    getTransactionManager.mockReturnValue(mockTransactionManager);
   });
 
   const createMockRequest = (body: unknown) => {
@@ -67,12 +63,17 @@ describe('POST /api/deploy/fair', () => {
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.transactionId).toBe('test-tx-id');
-    expect(mockTransactionManager.createTransaction).toHaveBeenCalledWith(
+    expect(mockTransactionManager.queueTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
-        fid: '123',
         type: 'fair_launch',
-        tokenName: 'Fair Token',
-        tokenSymbol: 'FAIR',
+        payload: expect.objectContaining({
+          tokenName: 'Fair Token',
+          tokenSymbol: 'FAIR',
+        }),
+      }),
+      expect.objectContaining({
+        userId: '123',
+        source: 'fair_launch',
       })
     );
   });
@@ -212,15 +213,19 @@ describe('POST /api/deploy/fair', () => {
 
     expect(response.status).toBe(200);
     expect(data.merkleRoot).toBeDefined();
-    expect(mockTransactionManager.createTransaction).toHaveBeenCalledWith(
+    expect(mockTransactionManager.queueTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
-        merkleRoot: expect.any(String),
-      })
+        type: 'fair_launch',
+        payload: expect.objectContaining({
+          merkleRoot: expect.any(String),
+        }),
+      }),
+      expect.any(Object)
     );
   });
 
   it('should handle server errors gracefully', async () => {
-    mockTransactionManager.createTransaction.mockRejectedValue(new Error('Database error'));
+    mockTransactionManager.queueTransaction.mockRejectedValue(new Error('Database error'));
 
     const validBody = {
       fid: '123',

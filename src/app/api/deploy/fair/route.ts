@@ -93,24 +93,29 @@ export async function POST(request: NextRequest) {
 
     // Create transaction record
     const transactionManager = getTransactionManager();
-    const transaction = await transactionManager.createTransaction({
-      fid: data.fid,
-      type: 'fair_launch',
-      tokenName: data.tokenName,
-      tokenSymbol: data.tokenSymbol,
-      description: data.description,
-      imageUrl: data.imageUrl,
-      metadata: {
-        whitelist: data.whitelist,
-        merkleRoot,
-        minContribution,
-        maxContribution,
-        targetRaise,
-        launchStartTime: launchStartTime.toISOString(),
-        launchDuration: data.launchDuration,
-        creatorWallet: data.creatorWallet,
+    const transactionId = await transactionManager.queueTransaction(
+      {
+        type: 'fair_launch',
+        payload: {
+          tokenName: data.tokenName,
+          tokenSymbol: data.tokenSymbol,
+          description: data.description,
+          imageUrl: data.imageUrl,
+          whitelist: data.whitelist,
+          merkleRoot,
+          minContribution,
+          maxContribution,
+          targetRaise,
+          launchStartTime: launchStartTime.toISOString(),
+          launchDuration: data.launchDuration,
+          creatorWallet: data.creatorWallet,
+        },
       },
-    });
+      {
+        userId: data.fid,
+        source: 'fair_launch',
+      }
+    );
 
     // In a real implementation, you would:
     // 1. Deploy the fair launch smart contract
@@ -120,7 +125,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      transactionId: transaction.transactionId,
+      transactionId,
       merkleRoot,
       message: 'Fair launch token deployment initiated',
     });
