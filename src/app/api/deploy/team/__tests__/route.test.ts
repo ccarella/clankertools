@@ -94,7 +94,7 @@ describe('POST /api/deploy/team', () => {
     }));
     
     // Mock transaction manager
-    getTransactionManager.mockReturnValue(mockTransactionManager);
+    (getTransactionManager as jest.Mock).mockReturnValue(mockTransactionManager);
     mockTransactionManager.queueTransaction.mockResolvedValue('tx_team_12345');
     process.env.DEPLOYER_PRIVATE_KEY = '0x0000000000000000000000000000000000000000000000000000000000000001';
     process.env.INTERFACE_ADMIN = '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace';

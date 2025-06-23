@@ -18,7 +18,7 @@ const mockTransactionManager = {
 
 // Mock the getTransactionManager function
 import { getTransactionManager } from '@/lib/transaction/TransactionManager';
-getTransactionManager.mockReturnValue(mockTransactionManager);
+(getTransactionManager as jest.Mock).mockReturnValue(mockTransactionManager);
 
 // Mock ReadableStream for Edge runtime
 global.ReadableStream = class ReadableStream {
@@ -60,7 +60,7 @@ describe('/api/transaction/[id]/events', () => {
         method: 'GET',
       });
 
-      const response = await GET(request, { params: { id: 'invalid_id' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'invalid_id' }) });
 
       expect(response.status).toBe(400);
       const text = await response.text();
@@ -92,7 +92,7 @@ describe('/api/transaction/[id]/events', () => {
         method: 'GET',
       });
 
-      const response = await GET(request, { params: { id: 'tx_valid123' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'tx_valid123' }) });
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/event-stream');
@@ -112,7 +112,7 @@ describe('/api/transaction/[id]/events', () => {
         method: 'GET',
       });
 
-      const response = await GET(request, { params: { id: 'tx_notfound' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'tx_notfound' }) });
 
       // The response should be a stream that sends an error event
       expect(response.status).toBe(200);
@@ -126,7 +126,7 @@ describe('/api/transaction/[id]/events', () => {
         method: 'GET',
       });
 
-      const response = await GET(request, { params: { id: 'tx_error' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'tx_error' }) });
 
       expect(response.status).toBe(200);
       expect(response.headers.get('Content-Type')).toBe('text/event-stream');
@@ -157,7 +157,7 @@ describe('/api/transaction/[id]/events', () => {
           method: 'GET',
         });
 
-        const response = await GET(request, { params: { id: `tx_${testCase.status}` } });
+        const response = await GET(request, { params: Promise.resolve({ id: `tx_${testCase.status}` }) });
 
         expect(response.status).toBe(200);
         expect(mockRedis.hgetall).toHaveBeenCalledWith(`tx:data:tx_${testCase.status}`);
@@ -182,7 +182,7 @@ describe('/api/transaction/[id]/events', () => {
         method: 'GET',
       });
 
-      const response = await GET(request, { params: { id: 'tx_security' } });
+      const response = await GET(request, { params: Promise.resolve({ id: 'tx_security' }) });
 
       expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
       expect(response.headers.get('X-Frame-Options')).toBe('DENY');

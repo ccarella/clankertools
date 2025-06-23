@@ -35,8 +35,8 @@ describe('TransactionProvider', () => {
     it('should throw error when used outside provider', () => {
       const { result } = renderHook(() => useTransactionProvider());
       
-      expect(result.error).toBeDefined();
-      expect(result.error.message).toBe('useTransactionProvider must be used within a TransactionProvider');
+      expect((result as { error?: Error }).error).toBeDefined();
+      expect((result as { error?: Error }).error?.message).toBe('useTransactionProvider must be used within a TransactionProvider');
     });
 
     it('should provide context value when used within provider', () => {
@@ -192,7 +192,7 @@ describe('TransactionProvider', () => {
     });
 
     it('should return null when no transaction ID provided', () => {
-      const { result } = renderHook(() => useTransactionSubscription(null), {
+      const { result } = renderHook(() => useTransactionSubscription(''), {
         wrapper: TransactionProviderWrapper,
       });
 
