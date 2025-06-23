@@ -4,6 +4,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 import { FarcasterProvider } from "@/components/providers/FarcasterProvider";
 import { TransactionProvider } from "@/components/providers/TransactionProvider";
 import { HapticProvider } from "@/providers/HapticProvider";
+import { WebSocketProvider } from "@/components/providers/WebSocketProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -42,13 +43,15 @@ export default function RootLayout({
         <FarcasterProvider>
           <HapticProvider>
             <TransactionProvider>
-              <div className="flex h-screen flex-col overflow-hidden">
-                <header className="flex items-center justify-between p-3 bg-background shrink-0">
-                  <h1 className="text-lg font-bold truncate">Clanker Tools</h1>
-                </header>
-                <main className="flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch">{children}</main>
-                <BottomNavigation />
-              </div>
+              <WebSocketProvider>
+                <div className="flex h-screen flex-col overflow-hidden">
+                  <header className="flex items-center justify-between p-3 bg-background shrink-0">
+                    <h1 className="text-lg font-bold truncate">Clanker Tools</h1>
+                  </header>
+                  <main className="flex-1 overflow-y-auto overflow-x-hidden -webkit-overflow-scrolling-touch">{children}</main>
+                  <BottomNavigation />
+                </div>
+              </WebSocketProvider>
             </TransactionProvider>
           </HapticProvider>
         </FarcasterProvider>
