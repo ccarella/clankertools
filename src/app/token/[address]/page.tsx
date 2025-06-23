@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, CheckCircle2, Copy, ExternalLink, TrendingUp, Users, Activity, Loader2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Copy, ExternalLink, TrendingUp, Users, Activity, Loader2, Wifi, WifiOff } from 'lucide-react';
 import Image from 'next/image';
 import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
+import { useWebSocket } from '@/components/providers/WebSocketProvider';
 import ShareTemplateSelector from '@/components/token/ShareTemplateSelector';
 import { getIpfsUrl } from '@/lib/ipfs';
 import { cn } from '@/lib/utils';
@@ -27,27 +28,60 @@ export default function TokenSuccessPage() {
   const params = useParams();
   const router = useRouter();
   const { } = useFarcasterAuth();
+  const { subscribeToToken, unsubscribeFromToken, lastTokenUpdate, lastPriceUpdate, isConnected, isConnecting } = useWebSocket();
   const [tokenData, setTokenData] = useState<TokenData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [showCelebration, setShowCelebration] = useState(true);
+  const [lastUpdateTime, setLastUpdateTime] = useState<Date | null>(null);
 
   const tokenAddress = params.address as string;
 
   useEffect(() => {
     fetchTokenData();
-    const interval = setInterval(() => { fetchTokenData(); }, 30000); // Refresh every 30 seconds
+    subscribeToToken(tokenAddress);
     
     // Hide celebration after 3 seconds
     const celebrationTimer = setTimeout(() => setShowCelebration(false), 3000);
     
     return () => {
-      clearInterval(interval);
+      unsubscribeFromToken(tokenAddress);
       clearTimeout(celebrationTimer);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenAddress]);
+
+  // Handle WebSocket updates
+  useEffect(() => {
+    if (lastTokenUpdate && lastTokenUpdate.address.toLowerCase() === tokenAddress.toLowerCase()) {
+      setTokenData(prevData => {
+        if (!prevData) return prevData;
+        return {
+          ...prevData,
+          marketCap: lastTokenUpdate.marketCap,
+          holders: lastTokenUpdate.holders,
+          volume24h: lastTokenUpdate.volume24h,
+          priceChange24h: lastTokenUpdate.priceChange24h
+        };
+      });
+      setLastUpdateTime(new Date());
+    }
+  }, [lastTokenUpdate, tokenAddress]);
+
+  useEffect(() => {
+    if (lastPriceUpdate && lastPriceUpdate.address.toLowerCase() === tokenAddress.toLowerCase()) {
+      setTokenData(prevData => {
+        if (!prevData) return prevData;
+        return {
+          ...prevData,
+          marketCap: lastPriceUpdate.marketCap,
+          priceChange24h: lastPriceUpdate.priceChange24h
+        };
+      });
+      setLastUpdateTime(new Date());
+    }
+  }, [lastPriceUpdate, tokenAddress]);
 
   async function fetchTokenData() {
     try {
@@ -153,14 +187,36 @@ export default function TokenSuccessPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-4 mb-8">
-        <button
-          onClick={() => router.back()}
-          className="btn btn-ghost btn-sm"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </button>
-        <h1 className="text-xl font-semibold">Token Launched!</h1>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.back()}
+            className="btn btn-ghost btn-sm"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <h1 className="text-xl font-semibold">Token Launched!</h1>
+        </div>
+        
+        {/* WebSocket Connection Status */}
+        <div className="flex items-center gap-2 text-sm">
+          {isConnecting ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin text-yellow-500" />
+              <span className="text-muted-foreground">Connecting...</span>
+            </>
+          ) : isConnected ? (
+            <>
+              <Wifi className="h-4 w-4 text-green-500" />
+              <span className="text-muted-foreground">Live updates</span>
+            </>
+          ) : (
+            <>
+              <WifiOff className="h-4 w-4 text-red-500" />
+              <span className="text-muted-foreground">Offline</span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Token Info */}
@@ -218,7 +274,10 @@ export default function TokenSuccessPage() {
 
           {/* Metrics */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-card rounded-xl p-4 shadow-sm">
+            <div className={cn(
+              "bg-card rounded-xl p-4 shadow-sm transition-all duration-300",
+              lastUpdateTime && new Date().getTime() - lastUpdateTime.getTime() < 1000 && "ring-2 ring-primary ring-opacity-50 animate-pulse"
+            )}>
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <TrendingUp className="h-4 w-4" />
                 <span className="text-sm">Market Cap</span>
@@ -226,7 +285,10 @@ export default function TokenSuccessPage() {
               <p className="text-xl font-semibold">{formatCurrency(tokenData.marketCap)}</p>
             </div>
             
-            <div className="bg-card rounded-xl p-4 shadow-sm">
+            <div className={cn(
+              "bg-card rounded-xl p-4 shadow-sm transition-all duration-300",
+              lastUpdateTime && new Date().getTime() - lastUpdateTime.getTime() < 1000 && "ring-2 ring-primary ring-opacity-50 animate-pulse"
+            )}>
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <Users className="h-4 w-4" />
                 <span className="text-sm">Holders</span>
@@ -234,7 +296,10 @@ export default function TokenSuccessPage() {
               <p className="text-xl font-semibold">{formatNumber(tokenData.holders)}</p>
             </div>
             
-            <div className="bg-card rounded-xl p-4 shadow-sm">
+            <div className={cn(
+              "bg-card rounded-xl p-4 shadow-sm transition-all duration-300",
+              lastUpdateTime && new Date().getTime() - lastUpdateTime.getTime() < 1000 && "ring-2 ring-primary ring-opacity-50 animate-pulse"
+            )}>
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <Activity className="h-4 w-4" />
                 <span className="text-sm">24h Volume</span>
@@ -242,13 +307,16 @@ export default function TokenSuccessPage() {
               <p className="text-xl font-semibold">{formatCurrency(tokenData.volume24h)}</p>
             </div>
             
-            <div className="bg-card rounded-xl p-4 shadow-sm">
+            <div className={cn(
+              "bg-card rounded-xl p-4 shadow-sm transition-all duration-300",
+              lastUpdateTime && new Date().getTime() - lastUpdateTime.getTime() < 1000 && "ring-2 ring-primary ring-opacity-50 animate-pulse"
+            )}>
               <div className="flex items-center gap-2 text-muted-foreground mb-1">
                 <TrendingUp className="h-4 w-4" />
                 <span className="text-sm">24h Change</span>
               </div>
               <p className={cn(
-                "text-xl font-semibold",
+                "text-xl font-semibold transition-colors duration-300",
                 tokenData.priceChange24h >= 0 ? "text-green-600" : "text-red-600"
               )}>
                 {tokenData.priceChange24h >= 0 ? '+' : ''}{tokenData.priceChange24h}%
