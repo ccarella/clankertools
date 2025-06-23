@@ -34,7 +34,7 @@ export const Root = React.forwardRef<
         } else if (childProps.children) {
           // Process nested children (like inside labels)
           return React.cloneElement(child as React.ReactElement<Record<string, unknown>>, {
-            children: processChildren(childProps.children),
+            children: processChildren(childProps.children as React.ReactNode),
           });
         }
       }
@@ -44,7 +44,7 @@ export const Root = React.forwardRef<
 
   return (
     <div ref={ref} role="radiogroup" {...props}>
-      {processChildren(children)}
+      {processChildren(children) || null}
     </div>
   );
 });

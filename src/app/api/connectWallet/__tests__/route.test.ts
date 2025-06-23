@@ -63,7 +63,8 @@ jest.mock('@/lib/security/rate-limiter', () => ({
 
 // Mock input validation
 jest.mock('@/lib/security/input-validation', () => ({
-  validateInput: jest.fn((data: any, schema: any) => ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
+  validateInput: jest.fn((data: any, _schema: any) => ({
     success: true,
     data: {
       fid: data.fid || '12345',
@@ -110,6 +111,7 @@ describe('POST /api/connectWallet', () => {
     mockRedis.set.mockResolvedValueOnce('OK');
     mockRedis.expire.mockResolvedValueOnce(1);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await POST(request as any);
     const data = await response.json();
 
@@ -131,6 +133,7 @@ describe('POST /api/connectWallet', () => {
 
   it('should return 400 for missing fid', async () => {
     // Mock validation to fail for missing fid
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { validateInput } = require('@/lib/security/input-validation');
     validateInput.mockReturnValueOnce({
       success: false,
@@ -147,6 +150,7 @@ describe('POST /api/connectWallet', () => {
       }),
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await POST(request as any);
     const data = await response.json();
 
@@ -157,6 +161,7 @@ describe('POST /api/connectWallet', () => {
 
   it('should return 400 for missing wallet address', async () => {
     // Mock validation to fail for missing wallet address
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { validateInput } = require('@/lib/security/input-validation');
     validateInput.mockReturnValueOnce({
       success: false,
@@ -173,6 +178,7 @@ describe('POST /api/connectWallet', () => {
       }),
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await POST(request as any);
     const data = await response.json();
 
@@ -183,6 +189,7 @@ describe('POST /api/connectWallet', () => {
 
   it('should return 400 for invalid wallet address format', async () => {
     // Mock validation to fail for invalid wallet address
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { validateInput } = require('@/lib/security/input-validation');
     validateInput.mockReturnValueOnce({
       success: false,
@@ -200,6 +207,7 @@ describe('POST /api/connectWallet', () => {
       }),
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await POST(request as any);
     const data = await response.json();
 
@@ -224,8 +232,9 @@ describe('POST /api/connectWallet', () => {
     mockRedis.set.mockResolvedValueOnce('OK');
     mockRedis.expire.mockResolvedValueOnce(1);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await POST(request as any);
-    const data = await response.json();
+    await response.json();
 
     expect(response.status).toBe(200);
     expect(mockRedis.set).toHaveBeenCalledWith(
@@ -250,6 +259,7 @@ describe('POST /api/connectWallet', () => {
 
     mockRedis.set.mockRejectedValueOnce(new Error('Redis connection failed'));
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await POST(request as any);
     const data = await response.json();
 
@@ -272,6 +282,7 @@ describe('POST /api/connectWallet', () => {
       }),
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const response = await POST(request as any);
     const data = await response.json();
 

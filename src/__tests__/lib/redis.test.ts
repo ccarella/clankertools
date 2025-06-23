@@ -28,6 +28,7 @@ describe('Redis Module Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     // Get the mocked Redis instance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockRedis = getRedisClient() as any;
   });
 

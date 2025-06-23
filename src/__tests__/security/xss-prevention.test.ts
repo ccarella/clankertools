@@ -5,7 +5,8 @@ describe('XSS Prevention Tests', () => {
   describe('Token Frame API - XSS in HTML generation', () => {
     it('should escape malicious token names in frame HTML', async () => {
       // Mock the internal token API endpoint to return malicious data
-      global.fetch = jest.fn().mockResolvedValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global as any).fetch = jest.fn(() => Promise.resolve({
         ok: true,
         json: async () => ({
           success: true,
@@ -20,7 +21,7 @@ describe('XSS Prevention Tests', () => {
             holders: 100,
           }
         })
-      });
+      }));
       
       const { GET } = await import('@/app/api/frame/token/[address]/route');
       
@@ -72,7 +73,8 @@ describe('XSS Prevention Tests', () => {
       
       for (const url of maliciousUrls) {
         // Mock the internal token API endpoint for each malicious URL
-        global.fetch = jest.fn().mockResolvedValue({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (global as any).fetch = jest.fn(() => Promise.resolve({
           ok: true,
           json: async () => ({
             success: true,
@@ -86,7 +88,7 @@ describe('XSS Prevention Tests', () => {
               holders: 1,
             }
           })
-        });
+        }));
         
         const { GET } = await import('@/app/api/frame/token/[address]/route');
         
@@ -397,7 +399,8 @@ describe('XSS Prevention Tests', () => {
       
       // Test that any string data in the response is properly JSON-encoded
       if (data.tokens && Array.isArray(data.tokens)) {
-        data.tokens.forEach(token => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        data.tokens.forEach((token: any) => {
           if (token.name) {
             // JSON.stringify automatically escapes dangerous characters
             const encodedName = JSON.stringify(token.name);

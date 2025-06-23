@@ -7,6 +7,20 @@ import { NotificationService } from '@/services/notification';
 import crypto from 'crypto';
 
 jest.mock('@/services/notification');
+jest.mock('@/lib/security/auth-middleware', () => ({
+  verifyWebhookSignature: jest.fn((payload: string, signature: string, secret: string) => {
+    // Simple mock implementation for testing
+    return signature === crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  }),
+  securityHeaders: jest.fn(() => ({}))
+}));
+jest.mock('@/lib/security/rate-limiter', () => ({
+  rateLimiters: {
+    webhook: {
+      middleware: jest.fn().mockResolvedValue(null)
+    }
+  }
+}));
 
 // Mock NextRequest
 class MockNextRequest {
@@ -40,15 +54,21 @@ class MockNextRequest {
 
 describe('POST /api/webhook/farcaster', () => {
   let mockNotificationService: jest.Mocked<NotificationService>;
+  const originalEnv = process.env;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    process.env = { ...originalEnv, FARCASTER_WEBHOOK_SECRET: 'test-secret' };
     mockNotificationService = {
       saveNotificationToken: jest.fn(),
       removeNotificationToken: jest.fn(),
     } as any;
     
     (NotificationService as jest.MockedClass<typeof NotificationService>).mockImplementation(() => mockNotificationService);
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
   });
 
   describe('webhook signature validation', () => {
