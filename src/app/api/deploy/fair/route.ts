@@ -20,8 +20,22 @@ const fairLaunchSchema = z.object({
 });
 
 function generateMerkleTree(whitelist: string[]): { root: string; tree: MerkleTree } {
-  const leaves = whitelist.map((address) => keccak256(toUtf8Bytes(address)));
-  const tree = new MerkleTree(leaves, keccak256, { sortPairs: true });
+  // Convert addresses to hex strings for hashing
+  const leaves = whitelist.map((address) => {
+    const bytes = toUtf8Bytes(address);
+    return keccak256(bytes);
+  });
+  
+  // Use a custom hash function that handles hex strings properly
+  const hashFn = (data: string | Buffer) => {
+    if (typeof data === 'string') {
+      return keccak256(data);
+    }
+    // Convert Buffer to hex string
+    return keccak256('0x' + data.toString('hex'));
+  };
+  
+  const tree = new MerkleTree(leaves, hashFn, { sortPairs: true });
   const root = tree.getHexRoot();
   return { root, tree };
 }

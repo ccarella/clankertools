@@ -1,7 +1,16 @@
 import { POST } from '../route';
 import { NextRequest } from 'next/server';
+import { getTransactionManager } from '@/lib/transaction/TransactionManager';
 
-jest.mock('@/lib/transaction/TransactionManager');
+jest.mock('@/lib/transaction/TransactionManager', () => ({
+  getTransactionManager: jest.fn()
+}));
+
+jest.mock('merkletreejs', () => ({
+  MerkleTree: jest.fn().mockImplementation(() => ({
+    getHexRoot: jest.fn().mockReturnValue('0x1234567890abcdef')
+  }))
+}));
 
 describe('POST /api/deploy/fair', () => {
   let mockRequest: NextRequest;
@@ -21,8 +30,7 @@ describe('POST /api/deploy/fair', () => {
       updateTransaction: jest.fn(),
     };
     
-    const transactionModule = jest.requireMock('@/lib/transaction/TransactionManager');
-    transactionModule.TransactionManager = jest.fn(() => mockTransactionManager);
+    (getTransactionManager as jest.Mock).mockReturnValue(mockTransactionManager);
   });
 
   const createMockRequest = (body: unknown) => {
@@ -154,7 +162,7 @@ describe('POST /api/deploy/fair', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toContain('Whitelist must contain at least one user');
+    expect(data.error.whitelist?.[0]).toContain('Whitelist must contain at least one user');
   });
 
   it('should validate launch duration is reasonable', async () => {

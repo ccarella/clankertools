@@ -3,15 +3,15 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import FairLaunchPage from '../page';
 import { useRouter } from 'next/navigation';
-import { useFarcasterContext } from '@/components/providers/FarcasterProvider';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 import { useHaptic } from '@/providers/HapticProvider';
 
 jest.mock('next/navigation', () => ({
   useRouter: jest.fn(),
 }));
 
-jest.mock('@/components/providers/FarcasterProvider', () => ({
-  useFarcasterContext: jest.fn(),
+jest.mock('@/components/providers/FarcasterAuthProvider', () => ({
+  useFarcasterAuth: jest.fn(),
 }));
 
 jest.mock('@/providers/HapticProvider', () => ({
@@ -66,7 +66,7 @@ describe('FairLaunchPage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useRouter as jest.Mock).mockReturnValue(mockRouter);
-    (useFarcasterContext as jest.Mock).mockReturnValue(mockFarcasterContext);
+    (useFarcasterAuth as jest.Mock).mockReturnValue(mockFarcasterContext);
     (useHaptic as jest.Mock).mockReturnValue(mockHaptic);
   });
 
@@ -161,7 +161,7 @@ describe('FairLaunchPage', () => {
   });
 
   it('should handle unauthenticated users', () => {
-    (useFarcasterContext as jest.Mock).mockReturnValue({
+    (useFarcasterAuth as jest.Mock).mockReturnValue({
       isAuthenticated: false,
       user: null,
     });
