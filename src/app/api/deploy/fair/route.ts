@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { TransactionManager } from '@/lib/transaction/TransactionManager';
+import { getTransactionManager } from '@/lib/transaction/TransactionManager';
 import { keccak256, toUtf8Bytes } from 'ethers';
 import { MerkleTree } from 'merkletreejs';
 
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const { root: merkleRoot } = generateMerkleTree(data.whitelist);
 
     // Create transaction record
-    const transactionManager = new TransactionManager();
+    const transactionManager = getTransactionManager();
     const transaction = await transactionManager.createTransaction({
       fid: data.fid,
       type: 'fair_launch',
