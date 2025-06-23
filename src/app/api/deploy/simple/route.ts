@@ -864,6 +864,41 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Store deployment details for monitoring
+    if (tokenAddress) {
+      try {
+        const redisClient = getRedisClient();
+        if (redisClient) {
+          const deploymentData = {
+            tokenAddress,
+            name,
+            symbol,
+            createdAt: new Date().toISOString(),
+            fid: fid || 'anonymous',
+            creatorAdmin,
+            creatorRewardRecipient,
+            creatorReward,
+            txHash: txHash || null,
+            interfaceAdmin,
+            interfaceRewardRecipient,
+            network: networkConfig.name,
+            chainId: networkConfig.chainId,
+          };
+          
+          await redisClient.set(
+            `deployment:${tokenAddress}`,
+            deploymentData,
+            {
+              ex: 365 * 24 * 60 * 60, // 1 year expiration
+            }
+          );
+        }
+      } catch (error) {
+        console.error('Failed to store deployment details:', error);
+        // Don't fail the request if storing fails
+      }
+    }
+
     return NextResponse.json({
       success: true,
       tokenAddress,

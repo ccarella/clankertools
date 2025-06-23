@@ -655,10 +655,12 @@ export async function POST(request: NextRequest) {
     try {
       if (txHash) {
         await trackTransaction(txHash, {
-          type: 'token_deployment',
+          type: 'team_token_deployment',
           tokenAddress,
           name,
           symbol,
+          teamMembers,
+          treasuryPercentage,
         });
       }
     } catch (error) {
