@@ -131,7 +131,7 @@ describe('Creator Rewards Security Tests', () => {
     });
 
     it('should validate split recipients and percentages', async () => {
-      const { POST } = await import('@/app/api/deploy/advanced/route');
+      const { POST } = await import('@/app/api/deploy/simple/route');
       
       const maliciousSplits = [
         // Percentages don't add up to 100

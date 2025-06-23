@@ -1,12 +1,64 @@
 /**
  * @jest-environment node
  */
+// Mock NextResponse for Edge runtime  
+jest.mock('next/server', () => {
+  // Mock NextRequest
+  class MockNextRequest {
+    method: string;
+    body: FormData;
+    headers: Headers;
+    
+    constructor(url: string, init: RequestInit) {
+      this.method = init.method || 'GET';
+      this.body = init.body as FormData;
+      this.headers = new Headers(init.headers as HeadersInit);
+    }
+    
+    async formData() {
+      return this.body;
+    }
+  }
+  
+  // Mock NextResponse class
+  class MockNextResponse extends Response {
+    constructor(body?: BodyInit | null, init?: ResponseInit) {
+      super(body, init);
+      // Copy headers from init to response
+      if (init?.headers) {
+        const headers = new Headers(init.headers as HeadersInit);
+        headers.forEach((value, key) => {
+          this.headers.set(key, value);
+        });
+      }
+    }
+    
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static json(data: any, init?: ResponseInit) {
+      const response = new Response(JSON.stringify(data), init);
+      // Copy headers from init to response
+      if (init?.headers) {
+        const headers = new Headers(init.headers as HeadersInit);
+        headers.forEach((value, key) => {
+          response.headers.set(key, value);
+        });
+      }
+      return response;
+    }
+  }
+  
+  return {
+    NextRequest: MockNextRequest,
+    NextResponse: MockNextResponse
+  };
+});
+
 import { POST } from '../route';
 import { Clanker } from 'clanker-sdk';
 import { uploadToIPFS } from '@/lib/ipfs';
 import { trackTransaction } from '@/lib/transaction-tracker';
 
-// Mock NextRequest
+// Mock NextRequest - for use in tests
 class MockNextRequest {
   method: string;
   body: FormData;
@@ -39,6 +91,36 @@ jest.mock('viem/accounts', () => ({
 jest.mock('viem/chains', () => ({
   base: {},
 }));
+
+// Mock the Headers class for Edge runtime
+global.Headers = class Headers {
+  private headers: Map<string, string> = new Map();
+  
+  constructor(init?: HeadersInit) {
+    if (init) {
+      if (init instanceof Headers) {
+        init.forEach((value, key) => this.headers.set(key, value));
+      } else if (Array.isArray(init)) {
+        init.forEach(([key, value]) => this.headers.set(key, value));
+      } else {
+        Object.entries(init).forEach(([key, value]) => this.headers.set(key, value));
+      }
+    }
+  }
+  
+  get(key: string) {
+    return this.headers.get(key) || null;
+  }
+  
+  set(key: string, value: string) {
+    this.headers.set(key, value);
+  }
+  
+  forEach(callback: (value: string, key: string) => void) {
+    this.headers.forEach((value, key) => callback(value, key));
+  }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+} as any;
 
 describe('POST /api/deploy/simple', () => {
   const mockDeployToken = jest.fn();

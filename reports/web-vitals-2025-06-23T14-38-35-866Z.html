@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Web Vitals Report - 2025-06-23T14:38:35.866Z</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #1a1a1a;
+        }
+        .score {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .score.good { background: #0cce6b; color: white; }
+        .score.needs-improvement { background: #ffa400; color: white; }
+        .score.poor { background: #ff4e42; color: white; }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+        }
+        .metric-card.good { border-left-color: #0cce6b; }
+        .metric-card.needs-improvement { border-left-color: #ffa400; }
+        .metric-card.poor { border-left-color: #ff4e42; }
+        .metric-name {
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .metric-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: bold;
+        }
+        .timestamp {
+            text-align: center;
+            color: #666;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Core Web Vitals Report</h1>
+        
+        <div class="score good">
+            Score: 85
+        </div>
+        
+        <h2>Metrics Summary</h2>
+        <div class="metrics-grid">
+            
+                <div class="metric-card good">
+                    <div class="metric-name">LCP</div>
+                    <div class="metric-value">2000ms</div>
+                    <div class="metric-details">
+                        <div>Median: 1800ms</div>
+                        <div>95th: 2200ms</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card needs-improvement">
+                    <div class="metric-name">FID</div>
+                    <div class="metric-value">125ms</div>
+                    <div class="metric-details">
+                        <div>Median: 100ms</div>
+                        <div>95th: 150ms</div>
+                    </div>
+                </div>
+                
+                <div class="metric-card needs-improvement">
+                    <div class="metric-name">CLS</div>
+                    <div class="metric-value">0.120</div>
+                    <div class="metric-details">
+                        <div>Median: 0.100</div>
+                        <div>95th: 0.150</div>
+                    </div>
+                </div>
+                
+        </div>
+        
+        <h2>Detailed Statistics</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Average</th>
+                    <th>Median (p50)</th>
+                    <th>p75</th>
+                    <th>p95</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                
+                    <tr>
+                        <td><strong>LCP</strong></td>
+                        <td>1900ms</td>
+                        <td>1800ms</td>
+                        <td>2000ms</td>
+                        <td>2200ms</td>
+                        <td><span class="good">good</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>FID</strong></td>
+                        <td>110ms</td>
+                        <td>100ms</td>
+                        <td>125ms</td>
+                        <td>150ms</td>
+                        <td><span class="needs-improvement">needs-improvement</span></td>
+                    </tr>
+                    
+                    <tr>
+                        <td><strong>CLS</strong></td>
+                        <td>0.110</td>
+                        <td>0.100</td>
+                        <td>0.120</td>
+                        <td>0.150</td>
+                        <td><span class="needs-improvement">needs-improvement</span></td>
+                    </tr>
+                    
+            </tbody>
+        </table>
+        
+        <div class="timestamp">
+            Generated on 6/23/2025, 8:38:35 AM
+        </div>
+    </div>
+</body>
+</html>

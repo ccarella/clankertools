@@ -83,6 +83,8 @@ jest.mock('../page', () => {
   };
 }, { virtual: true });
 
+import TeamLaunchPage from '../page';
+
 describe('TeamLaunchPage', () => {
   const mockRouter = { push: jest.fn(), back: jest.fn() };
   const mockUseFarcasterAuth = useFarcasterAuth as jest.MockedFunction<typeof useFarcasterAuth>;
@@ -182,9 +184,10 @@ describe('TeamLaunchPage', () => {
     });
 
     it('allows adding team members up to maximum of 10', async () => {
-      const TeamLaunchPage = (await import('../page')).default;
+      const TeamLaunchPageModule = await import('../page');
       // Update mock to handle adding team members
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPageModule.default as any).mockImplementation(() => {
         const [members, setMembers] = React.useState([{ id: 0 }]);
         
         const addMember = () => {
@@ -225,7 +228,8 @@ describe('TeamLaunchPage', () => {
     it('allows removing team members except the first one', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to handle removing team members
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [members, setMembers] = React.useState([
           { id: 0 }, { id: 1 }, { id: 2 }
         ]);
@@ -270,7 +274,8 @@ describe('TeamLaunchPage', () => {
     it('validates team member inputs', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show validation errors
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [errors, setErrors] = React.useState<Record<string, string>>({});
 
         return (
@@ -326,7 +331,8 @@ describe('TeamLaunchPage', () => {
     it('automatically adjusts allocations when adding/removing members', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show automatic allocation adjustment
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [members, setMembers] = React.useState([{ id: 0, allocation: 100 }]);
         
         const addMember = () => {
@@ -388,7 +394,8 @@ describe('TeamLaunchPage', () => {
     it('displays vesting schedule configuration UI', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to include vesting UI elements
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         return (
           <div data-testid="team-launch-container" className="px-4">
             <h2>Vesting Schedule</h2>
@@ -411,7 +418,8 @@ describe('TeamLaunchPage', () => {
     it('shows vesting options when enabled', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show vesting options
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [vestingEnabled, setVestingEnabled] = React.useState(false);
 
         return (
@@ -458,7 +466,8 @@ describe('TeamLaunchPage', () => {
     it('validates vesting inputs', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show vesting validation
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [errors, setErrors] = React.useState<Record<string, string>>({});
 
         return (
@@ -521,7 +530,8 @@ describe('TeamLaunchPage', () => {
     it('provides preset vesting options', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show preset options
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [cliff, setCliff] = React.useState('');
         const [vesting, setVesting] = React.useState('');
 
@@ -579,7 +589,8 @@ describe('TeamLaunchPage', () => {
     it('displays treasury allocation input', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to include treasury UI elements
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         return (
           <div data-testid="team-launch-container" className="px-4">
             <h2>Treasury Allocation</h2>
@@ -602,7 +613,8 @@ describe('TeamLaunchPage', () => {
     it('validates treasury allocation percentage', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show treasury validation
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [error, setError] = React.useState('');
 
         return (
@@ -649,7 +661,8 @@ describe('TeamLaunchPage', () => {
     it('shows remaining allocation after treasury', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show remaining allocation
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [treasury, setTreasury] = React.useState(0);
 
         return (
@@ -682,7 +695,8 @@ describe('TeamLaunchPage', () => {
     it('validates that all percentages add up to 100%', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show percentage validation
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [error, setError] = React.useState('');
 
         const handleContinue = () => {
@@ -718,7 +732,8 @@ describe('TeamLaunchPage', () => {
     it('validates valid Ethereum addresses for team members', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show address validation
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [errors, setErrors] = React.useState<Record<string, string>>({});
 
         const validateAddress = (value: string) => {
@@ -771,7 +786,8 @@ describe('TeamLaunchPage', () => {
     it('prevents duplicate team members', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show duplicate validation
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [error, setError] = React.useState('');
         const mockUser = mockUseFarcasterAuth().user;
 
@@ -818,7 +834,8 @@ describe('TeamLaunchPage', () => {
     it('navigates through wizard steps', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show step navigation
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [step, setStep] = React.useState(1);
 
         return (
@@ -859,7 +876,8 @@ describe('TeamLaunchPage', () => {
     it('shows progress indicator for steps', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to include progress indicators
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         return (
           <div data-testid="team-launch-container" className="px-4">
             <div>Step 1 of 4</div>
@@ -886,7 +904,8 @@ describe('TeamLaunchPage', () => {
     it('disables continue button when form is invalid', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show disabled continue button
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [isValid, setIsValid] = React.useState(false); // Start with invalid state
 
         return (
@@ -937,7 +956,8 @@ describe('TeamLaunchPage', () => {
     it('renders properly on mobile viewport', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to include proper heading for mobile
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const { useFarcasterAuth: mockUseFarcasterAuth } = jest.requireMock('@/components/providers/FarcasterAuthProvider');
         const { isAuthenticated, isLoading } = mockUseFarcasterAuth();
         const { useRouter: mockUseRouter } = jest.requireMock('next/navigation');
@@ -976,7 +996,8 @@ describe('TeamLaunchPage', () => {
     it('shows mobile-optimized team member cards', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show mobile-optimized cards
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         return (
           <div data-testid="team-launch-container" className="px-4">
             <div data-testid="team-member-0" className="p-4">
@@ -1001,7 +1022,8 @@ describe('TeamLaunchPage', () => {
     it('uses bottom sheet for vesting presets on mobile', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show mobile bottom sheet
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [showSheet, setShowSheet] = React.useState(false);
 
         return (
@@ -1028,7 +1050,8 @@ describe('TeamLaunchPage', () => {
     it('shows mobile-friendly error messages', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show mobile-friendly errors
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [error, setError] = React.useState('');
 
         return (
@@ -1067,7 +1090,8 @@ describe('TeamLaunchPage', () => {
     it('provides proper touch targets for interactive elements', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to ensure proper touch targets
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         return (
           <div data-testid="team-launch-container" className="px-4">
             <button style={{ height: '44px' }}>Add Team Member</button>
@@ -1092,7 +1116,8 @@ describe('TeamLaunchPage', () => {
     it('shows summary before deployment', async () => {
       const TeamLaunchPage = (await import('../page')).default;
       // Update mock to show summary
-      TeamLaunchPage.mockImplementation(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (TeamLaunchPage as any).mockImplementation(() => {
         const [showSummary, setShowSummary] = React.useState(false);
 
         if (showSummary) {

@@ -42,7 +42,8 @@ describe('API Authentication Security Tests', () => {
         ['x-farcaster-user-id', '99999'] // Spoofed FID
       ]);
       
-      (headers as jest.Mock).mockResolvedValue({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (headers as any).mockResolvedValue({
         get: (key: string) => mockHeaders.get(key)
       });
 

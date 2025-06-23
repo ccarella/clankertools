@@ -46,7 +46,7 @@ export async function GET(
     
     // Validate and sanitize image URL
     const rawImageUrl = getIpfsUrl(data.imageUrl);
-    const imageUrl = sanitizeUrl(rawImageUrl) || '';
+    const imageUrl = sanitizeUrl(rawImageUrl) || 'https://via.placeholder.com/400x400?text=Invalid+Image';
     
     const frameVersion = request.nextUrl.searchParams.get('version') || 'vNext';
 

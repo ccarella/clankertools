@@ -53,11 +53,14 @@ describe('LiquidityStep with Custom Curve', () => {
   it('shows curve designer when custom is selected', () => {
     render(<LiquidityStep {...defaultProps} />);
     
-    // Find the Custom card and click the radio button within it
-    const customCard = screen.getByText('Custom').closest('.cursor-pointer');
-    expect(customCard).toBeInTheDocument();
-    const radioButton = customCard?.querySelector('button[role="radio"][value="custom"]');
-    fireEvent.click(radioButton!);
+    // Find the custom radio button
+    const radioButtons = screen.getAllByRole('radio');
+    const customRadio = radioButtons.find(radio => 
+      radio.getAttribute('value') === 'custom'
+    );
+    
+    expect(customRadio).toBeInTheDocument();
+    fireEvent.click(customRadio!);
     
     expect(mockOnChange).toHaveBeenCalledWith('liquidityCurve', 'custom');
   });
@@ -137,10 +140,14 @@ describe('LiquidityStep with Custom Curve', () => {
     
     const { rerender } = render(<LiquidityStep {...props} />);
     
-    // Find the Custom card and click the radio button within it
-    const customCard = screen.getByText('Custom').closest('.cursor-pointer');
-    const radioButton = customCard?.querySelector('button[role="radio"][value="custom"]');
-    fireEvent.click(radioButton!);
+    // Find the custom radio button
+    const radioButtons = screen.getAllByRole('radio');
+    const customRadio = radioButtons.find(radio => 
+      radio.getAttribute('value') === 'custom'
+    );
+    
+    expect(customRadio).toBeInTheDocument();
+    fireEvent.click(customRadio!);
     
     expect(mockOnChange).toHaveBeenCalledWith('liquidityCurve', 'custom');
     

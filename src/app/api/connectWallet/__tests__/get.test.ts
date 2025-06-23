@@ -8,23 +8,40 @@ class MockNextRequest {
   method: string;
   url: string;
   nextUrl: { searchParams: URLSearchParams };
+  headers: Headers;
   
   constructor(url: string, init?: RequestInit) {
     this.method = init?.method || 'GET';
     this.url = url;
     const urlObj = new URL(url);
     this.nextUrl = { searchParams: urlObj.searchParams };
+    this.headers = new Headers(init?.headers || {});
   }
 }
 
 // Mock Redis at the module level
 const mockRedis = {
   get: jest.fn(),
+  set: jest.fn(),
+  setex: jest.fn(),
+  incr: jest.fn(),
+  ttl: jest.fn(),
+  pipeline: jest.fn(() => ({
+    get: jest.fn().mockReturnThis(),
+    ttl: jest.fn().mockReturnThis(),
+    exec: jest.fn().mockResolvedValue([null, -1]),
+  })),
 };
 
 jest.mock('@upstash/redis', () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   Redis: jest.fn(() => mockRedis as any),
+}));
+
+// Mock authentication
+jest.mock('@/lib/security/auth-middleware', () => ({
+  verifyFarcasterAuth: jest.fn().mockResolvedValue(null), // null means auth passed
+  securityHeaders: jest.fn(() => new Headers()),
 }));
 
 describe('GET /api/connectWallet', () => {
@@ -92,7 +109,7 @@ describe('GET /api/connectWallet', () => {
     expect(response.status).toBe(400);
     expect(data).toEqual({
       success: false,
-      error: 'Missing fid parameter',
+      error: 'Invalid FID format',
     });
     expect(mockRedis.get).not.toHaveBeenCalled();
   });

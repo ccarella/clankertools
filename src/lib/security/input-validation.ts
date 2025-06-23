@@ -20,6 +20,29 @@ export function escapeHtml(str: string): string {
 export function sanitizeUrl(url: string): string | null {
   if (!url) return null;
   
+  // First check for dangerous protocols before URL parsing
+  const lowercaseUrl = url.toLowerCase().trim();
+  const dangerousProtocols = [
+    'javascript:',
+    'vbscript:',
+    'data:text/html',
+    'data:text/javascript',
+    'data:application/javascript',
+    'file:',
+    'ftp:',
+  ];
+  
+  for (const protocol of dangerousProtocols) {
+    if (lowercaseUrl.startsWith(protocol)) {
+      return null;
+    }
+  }
+  
+  // Check for protocol-relative URLs that could be dangerous
+  if (lowercaseUrl.startsWith('//')) {
+    return null;
+  }
+  
   try {
     const parsed = new URL(url);
     

@@ -11,6 +11,7 @@ const customJestConfig = {
   testEnvironment: 'jest-environment-jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
+    '^@/lib/token-api$': '<rootDir>/src/__mocks__/@lib/token-api.ts',
     '^@farcaster/frame-sdk$': '<rootDir>/src/__mocks__/@farcaster/frame-sdk.ts',
     '^@upstash/redis$': '<rootDir>/src/__mocks__/@upstash/redis.ts',
     '^clanker-sdk$': '<rootDir>/src/__mocks__/clanker-sdk.ts',

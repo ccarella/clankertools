@@ -44,8 +44,92 @@ if (typeof globalThis.Response === 'undefined') {
     async json() {
       return JSON.parse(this.body);
     }
+    async text() {
+      return this.body;
+    }
+    ok = this.status >= 200 && this.status < 300;
+    static json(data, init) {
+      return new Response(JSON.stringify(data), {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {})
+        }
+      });
+    }
   };
 }
+
+// Mock NextResponse specifically
+jest.mock('next/server', () => ({
+  NextRequest: class NextRequest {
+    constructor(url, init) {
+      this.url = url;
+      this.method = init?.method || 'GET';
+      this.headers = new Headers(init?.headers || {});
+      this.body = init?.body;
+      this.nextUrl = new URL(url);
+    }
+    
+    async formData() {
+      return this.body || new FormData();
+    }
+    
+    async json() {
+      return JSON.parse(this.body || '{}');
+    }
+    
+    async text() {
+      return this.body || '';
+    }
+  },
+  NextResponse: class NextResponse {
+    constructor(body, init) {
+      this.body = body;
+      this.status = init?.status || 200;
+      this.headers = new Headers(init?.headers || {});
+      this.ok = this.status >= 200 && this.status < 300;
+    }
+    
+    async json() {
+      return typeof this.body === 'string' ? JSON.parse(this.body) : this.body;
+    }
+    
+    async text() {
+      return typeof this.body === 'string' ? this.body : JSON.stringify(this.body);
+    }
+    
+    static json(data, init) {
+      return new NextResponse(data, {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {})
+        }
+      });
+    }
+    
+    static next(init) {
+      return new NextResponse('', {
+        ...init,
+        headers: {
+          ...(init?.headers || {})
+        }
+      });
+    }
+    
+    static redirect(url, init) {
+      return new NextResponse('', {
+        ...init,
+        status: init?.status || 302,
+        headers: {
+          'Location': url,
+          ...(init?.headers || {})
+        }
+      });
+    }
+  },
+}));
 
 if (typeof globalThis.Headers === 'undefined') {
   global.Headers = class Headers {
