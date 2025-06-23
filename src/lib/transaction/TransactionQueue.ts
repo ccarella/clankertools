@@ -165,7 +165,7 @@ export class TransactionQueue {
           )
 
           return transaction
-        } catch (error) {
+        } catch {
           // Invalid JSON, continue to next item
           continue
         }
@@ -186,7 +186,7 @@ export class TransactionQueue {
       if (items && items.length > 0) {
         try {
           return JSON.parse(items[0]) as QueuedTransaction
-        } catch (error) {
+        } catch {
           // Invalid JSON, continue to next priority
           continue
         }
@@ -214,7 +214,7 @@ export class TransactionQueue {
       }
 
       return total
-    } catch (error) {
+    } catch {
       // Handle Redis errors gracefully
       return 0
     }
@@ -231,7 +231,7 @@ export class TransactionQueue {
           await this.redis.del(this.getQueueKey(p))
         }
       }
-    } catch (error) {
+    } catch {
       // Handle Redis errors gracefully
     }
   }
@@ -273,7 +273,7 @@ export class TransactionQueue {
     for (const item of items) {
       try {
         transactions.push(JSON.parse(item) as QueuedTransaction)
-      } catch (error) {
+      } catch {
         // Skip corrupted data
         continue
       }
@@ -396,7 +396,7 @@ export class TransactionQueue {
         try {
           const tx = JSON.parse(item) as QueuedTransaction
           transactions.push(tx)
-        } catch (error) {
+        } catch {
           // Skip invalid items
           continue
         }
@@ -444,7 +444,7 @@ export class TransactionQueue {
       await this.enqueue(transaction)
 
       return transaction
-    } catch (error) {
+    } catch {
       return null
     }
   }

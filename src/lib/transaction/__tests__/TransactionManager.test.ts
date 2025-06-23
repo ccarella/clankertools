@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { TransactionManager } from '../TransactionManager';
-import { Redis } from '@upstash/redis';
 
 // Mock Redis at the module level
 const mockRedis = {
@@ -198,7 +197,6 @@ describe('TransactionManager', () => {
 
     it('should process transactions from high priority queue first', async () => {
       const highPriorityTxId = 'tx_high_123';
-      const mediumPriorityTxId = 'tx_medium_456';
       
       mockRedis.rpop
         .mockResolvedValueOnce(highPriorityTxId)
@@ -675,7 +673,6 @@ describe('TransactionManager', () => {
       
       // Trigger the subscription callback
       const subscribeCall = mockRedis.subscribe.mock.calls[0];
-      const channel = subscribeCall[0];
       const handler = subscribeCall[1];
       
       handler(JSON.stringify(statusUpdate));
@@ -815,7 +812,7 @@ describe('TransactionManager', () => {
 
       mockRedis.lrange.mockResolvedValueOnce(oldTxIds);
       
-      for (const txId of oldTxIds) {
+      for (let i = 0; i < oldTxIds.length; i++) {
         mockRedis.hgetall.mockResolvedValueOnce({
           status: 'completed',
           createdAt: String(oneWeekAgo - 1000), // Older than 7 days
@@ -944,7 +941,7 @@ describe('TransactionManager', () => {
     it('should cancel multiple transactions in bulk', async () => {
       const txIds = ['tx_1', 'tx_2', 'tx_3'];
       
-      for (const txId of txIds) {
+      for (let i = 0; i < txIds.length; i++) {
         mockRedis.hgetall.mockResolvedValueOnce({
           transaction: JSON.stringify({ type: 'token_deployment', payload: {} }),
           metadata: JSON.stringify({ userId: 123 }),

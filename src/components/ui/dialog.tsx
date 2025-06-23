@@ -38,9 +38,10 @@ function DialogTrigger({
   }
 
   if (asChild && React.isValidElement(children)) {
-    return React.cloneElement(children, {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return React.cloneElement(children as any, {
       onClick: handleClick,
-      ...children.props,
+      ...(children.props as any), // eslint-disable-line @typescript-eslint/no-explicit-any
     })
   }
 

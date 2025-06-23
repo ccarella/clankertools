@@ -3,8 +3,6 @@ import {
   TransactionPriority,
   TransactionStatus,
   type QueuedTransaction,
-  type TransactionQueueOptions,
-  type QueueMetrics,
 } from '../types';
 
 // Mock Redis at the module level

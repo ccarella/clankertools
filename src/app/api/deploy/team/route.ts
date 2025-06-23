@@ -407,7 +407,7 @@ export async function POST(request: NextRequest) {
       const transactionId = await transactionManager.queueTransaction(
         {
           type: 'team_token_deployment',
-          payload: deploymentPayload,
+          payload: deploymentPayload as Record<string, unknown>,
         },
         {
           userId: parseInt(fid, 10),

@@ -60,7 +60,7 @@ export function TransactionStatusCard({
   
   // Subscribe to real-time updates if enabled and provider is available
   const realtimeSubscription = useTransactionSubscription(
-    enableRealTimeUpdates ? transaction.id : null,
+    enableRealTimeUpdates ? transaction.id : '',
     {
       autoReconnect: true,
       maxReconnectAttempts: 5,
@@ -94,7 +94,7 @@ export function TransactionStatusCard({
       if (currentTransaction.status === 'success') {
         haptic.cardSelect?.()
       }
-      setPreviousStatus(currentTransaction.status)
+      setPreviousStatus(currentTransaction.status as 'pending' | 'processing' | 'success' | 'failed')
     }
   }, [currentTransaction.status, previousStatus, haptic])
 

@@ -1,5 +1,4 @@
 import { Redis } from '@upstash/redis';
-import crypto from 'crypto';
 
 // Types and interfaces
 export interface Transaction {
@@ -84,7 +83,7 @@ export class TransactionManager {
   private config: Required<TransactionManagerConfig>;
   private redis: Redis;
   private autoProcessInterval?: NodeJS.Timeout;
-  private subscribers: Map<string, Set<(update: any) => void>> = new Map();
+  private subscribers: Map<string, Set<(update: { status: TransactionStatus; timestamp: number }) => void>> = new Map();
 
   private constructor(config: TransactionManagerConfig) {
     this.config = {
@@ -119,7 +118,7 @@ export class TransactionManager {
 
   // Method to reset instance for testing
   static resetInstance(): void {
-    TransactionManager.instance = null as any;
+    TransactionManager.instance = undefined as unknown as TransactionManager;
   }
 
   // Method to check if instance exists
@@ -137,7 +136,7 @@ export class TransactionManager {
       throw new Error('Invalid transaction: missing required field "type"');
     }
 
-    const txId = `tx_${crypto.randomBytes(8).toString('hex')}`;
+    const txId = `tx_${Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2, '0')).join('')}`;
     const txData: TransactionData = {
       id: txId,
       transaction,
@@ -338,7 +337,7 @@ export class TransactionManager {
 
   async subscribeToTransaction(
     txId: string,
-    callback: (update: any) => void
+    callback: (update: { status: TransactionStatus; timestamp: number }) => void
   ): Promise<() => Promise<void>> {
     const channel = `tx:status:${txId}`;
     
@@ -350,10 +349,7 @@ export class TransactionManager {
       this.subscribers.get(channel)!.add(callback);
 
       // Subscribe to Redis channel
-      await this.redis.subscribe(channel, (message: string) => {
-        const update = JSON.parse(message);
-        callback(update);
-      });
+      await this.redis.subscribe(channel);
 
       // Return unsubscribe function
       return async () => {
@@ -362,11 +358,12 @@ export class TransactionManager {
           subs.delete(callback);
           if (subs.size === 0) {
             this.subscribers.delete(channel);
-            await this.redis.unsubscribe(channel);
+            // Note: Upstash Redis doesn't support unsubscribe in the same way
+            // The subscription will be cleaned up automatically
           }
         }
       };
-    } catch (error) {
+    } catch {
       throw new Error('Failed to subscribe to transaction updates');
     }
   }
@@ -480,7 +477,7 @@ export class TransactionManager {
     await this.publishStatusUpdate(txId, { status, timestamp: Date.now() });
   }
 
-  private async publishStatusUpdate(txId: string, update: any): Promise<void> {
+  private async publishStatusUpdate(txId: string, update: { status: TransactionStatus; timestamp: number }): Promise<void> {
     await this.redis.publish(`tx:status:${txId}`, JSON.stringify(update));
   }
 

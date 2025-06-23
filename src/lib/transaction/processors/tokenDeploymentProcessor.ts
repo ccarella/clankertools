@@ -9,7 +9,7 @@ import { storeUserToken } from '@/lib/redis';
 import { Transaction } from '../TransactionManager';
 
 // Types for token deployment
-export interface TokenDeploymentPayload {
+export interface TokenDeploymentPayload extends Record<string, unknown> {
   name: string;
   symbol: string;
   imageFile: Blob;

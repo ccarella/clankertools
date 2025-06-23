@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis';
-import { getTransactionManager, TransactionData as TMTransactionData } from './transaction/TransactionManager';
+import { getTransactionManager, TransactionData as TMTransactionData, TransactionStatus as TMTransactionStatus, TransactionPriority as TMTransactionPriority } from './transaction/TransactionManager';
 import { tokenDeploymentProcessor } from './transaction/processors/tokenDeploymentProcessor';
 
 // Legacy types for backward compatibility
@@ -128,8 +128,8 @@ export async function getTransactionManagerStatus(
       id: transactionId,
       transaction: JSON.parse(txDataRaw.transaction as string),
       metadata: JSON.parse(txDataRaw.metadata as string),
-      status: txDataRaw.status as any,
-      priority: txDataRaw.priority as any,
+      status: txDataRaw.status as TMTransactionStatus,
+      priority: txDataRaw.priority as TMTransactionPriority,
       createdAt: parseInt(txDataRaw.createdAt as string, 10),
       updatedAt: txDataRaw.updatedAt ? parseInt(txDataRaw.updatedAt as string, 10) : undefined,
       completedAt: txDataRaw.completedAt ? parseInt(txDataRaw.completedAt as string, 10) : undefined,
@@ -151,7 +151,7 @@ export async function getTransactionManagerStatus(
 
 // Helper function to create a transaction using TransactionManager
 export async function createManagedTransaction(
-  payload: any,
+  payload: Record<string, unknown>,
   metadata: {
     userId: number;
     description: string;
@@ -166,7 +166,7 @@ export async function createManagedTransaction(
 
   return await transactionManager.queueTransaction(
     {
-      type: payload.type || 'token_deployment',
+      type: (payload.type as string) || 'token_deployment',
       payload,
     },
     metadata,

@@ -37,10 +37,10 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const transactionId = params.id;
+    const { id: transactionId } = await params;
 
     if (!transactionId) {
       return NextResponse.json(
@@ -166,10 +166,10 @@ export async function GET(
 // Helper endpoint to cancel a transaction
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const transactionId = params.id;
+    const { id: transactionId } = await params;
 
     if (!transactionId) {
       return NextResponse.json(

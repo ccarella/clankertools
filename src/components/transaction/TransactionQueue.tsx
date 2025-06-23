@@ -95,7 +95,7 @@ export function TransactionQueue({
   const [dismissedTxs, setDismissedTxs] = useState<Set<string>>(new Set())
   const [newTxAnnouncement, setNewTxAnnouncement] = useState('')
   const [completedTxNotification, setCompletedTxNotification] = useState('')
-  const searchDebounceRef = useRef<NodeJS.Timeout>()
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const previousTxCountRef = useRef(transactions.length)
   const previousTxStatusRef = useRef<Record<string, string>>({})
 

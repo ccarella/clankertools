@@ -75,7 +75,8 @@ export function useTransactionStatus(
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   const eventSourceRef = useRef<EventSource | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scheduleReconnectRef = useRef<(() => void) | null>(null);
   const mountedRef = useRef(true);
 
   const log = useCallback((message: string, ...args: unknown[]) => {
@@ -138,7 +139,7 @@ export function useTransactionStatus(
         }
       });
 
-      eventSource.addEventListener('heartbeat', (_event) => {
+      eventSource.addEventListener('heartbeat', () => {
         if (!mountedRef.current) return;
         log('Received heartbeat');
         // Heartbeat keeps connection alive, no action needed

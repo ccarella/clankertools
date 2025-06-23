@@ -275,7 +275,16 @@ export async function POST(request: NextRequest) {
       symbol,
       imageFile,
       fid,
-      castContext: castContext || undefined,
+      castContext: castContext ? {
+        type: castContext.type,
+        castId: castContext.castId,
+        parentCastId: castContext.parentCastId,
+        author: {
+          fid: castContext.author.fid.toString(),
+          username: castContext.author.username,
+        },
+        embedUrl: castContext.embedUrl,
+      } : undefined,
       creatorFeePercentage: creatorFeePercentage ? parseInt(creatorFeePercentage, 10) : undefined,
     };
 

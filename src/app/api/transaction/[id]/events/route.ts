@@ -41,9 +41,9 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const transactionId = params.id;
+  const { id: transactionId } = await params;
 
   // Validate transaction ID
   if (!transactionId || !transactionId.startsWith('tx_') || transactionId.length < 10) {
