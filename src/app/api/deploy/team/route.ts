@@ -1,13 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Clanker } from 'clanker-sdk';
-import { createPublicClient, createWalletClient, http } from 'viem';
-import { base, baseSepolia } from 'viem/chains';
-import { privateKeyToAccount } from 'viem/accounts';
-import { uploadToIPFS } from '@/lib/ipfs';
-import { trackTransaction } from '@/lib/transaction-tracker';
-import { getNetworkConfig } from '@/lib/network-config';
-import { Redis } from '@upstash/redis';
-import { storeUserToken } from '@/lib/redis';
+import { getTransactionManager } from '@/lib/transaction/TransactionManager';
+import { tokenDeploymentProcessor, TokenDeploymentPayload } from '@/lib/transaction/processors/tokenDeploymentProcessor';
 
 export const runtime = 'edge';
 
@@ -25,29 +18,6 @@ interface TreasuryAllocation {
   percentage: number;
   address: string;
   vestingMonths?: number;
-}
-
-// Initialize Redis client
-let redis: Redis | null = null;
-
-function getRedisClient(): Redis | null {
-  if (!redis) {
-    const url = process.env.KV_REST_API_URL;
-    const token = process.env.KV_REST_API_TOKEN;
-
-    if (!url || !token) {
-      console.warn('Redis configuration missing');
-      return null;
-    }
-
-    try {
-      redis = new Redis({ url, token });
-    } catch (error) {
-      console.error('Failed to initialize Redis client:', error);
-      return null;
-    }
-  }
-  return redis;
 }
 
 // Security headers configuration
@@ -415,316 +385,65 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check environment variables
-    const privateKey = process.env.DEPLOYER_PRIVATE_KEY;
-    const interfaceAdmin = process.env.INTERFACE_ADMIN;
-    const interfaceRewardRecipient = process.env.INTERFACE_REWARD_RECIPIENT;
-
-    if (!privateKey || !interfaceAdmin || !interfaceRewardRecipient) {
-      console.error('Missing required environment variables');
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Server configuration error',
-          errorDetails: {
-            type: 'CONFIGURATION_ERROR',
-            details: 'Required environment variables are not configured',
-            userMessage: 'The server is not properly configured. Please contact support.',
-          }
-        },
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
-    }
-
-    // Format private key
-    let formattedPrivateKey: `0x${string}`;
-    try {
-      const cleanKey = privateKey.trim();
-      if (cleanKey.startsWith('0x')) {
-        if (cleanKey.length !== 66) {
-          throw new Error(`Invalid private key length: expected 66 characters, got ${cleanKey.length}`);
-        }
-        formattedPrivateKey = cleanKey as `0x${string}`;
-      } else {
-        if (cleanKey.length !== 64) {
-          throw new Error(`Invalid private key length: expected 64 hex characters, got ${cleanKey.length}`);
-        }
-        formattedPrivateKey = `0x${cleanKey}`;
-      }
-      
-      if (!/^0x[a-fA-F0-9]{64}$/.test(formattedPrivateKey)) {
-        throw new Error('Private key must be a valid hexadecimal string');
-      }
-    } catch (error) {
-      console.error('Private key validation error:', error);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Invalid private key configuration',
-          errorDetails: {
-            type: 'CONFIGURATION_ERROR',
-            details: error instanceof Error ? error.message : 'Invalid private key format',
-            userMessage: 'The server private key is not properly configured. Please contact support.',
-          }
-        },
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
-    }
-
-    // Get network configuration
-    let networkConfig;
-    try {
-      networkConfig = getNetworkConfig();
-    } catch (error) {
-      console.error('Network configuration error:', error);
-      return NextResponse.json(
-        { success: false, error: 'Network configuration error' },
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
-    }
-
-    // Upload image to IPFS
-    let imageUrl: string;
-    try {
-      imageUrl = await uploadToIPFS(imageFile);
-    } catch (error) {
-      console.error('IPFS upload error:', error);
-      
-      let errorMessage = 'Failed to upload image';
-      let errorDetails: Record<string, unknown> = {
-        type: 'UPLOAD_ERROR',
-        details: 'Image upload failed',
-        userMessage: 'Failed to upload image. Please try again.',
-      };
-      
-      if (error instanceof Error) {
-        if (error.message.includes('IPFS credentials not configured')) {
-          errorMessage = 'Image upload service not configured. Please contact support.';
-          errorDetails = {
-            type: 'CONFIGURATION_ERROR',
-            details: 'PINATA_JWT environment variable is missing',
-            userMessage: 'The image upload service is not properly configured. Please notify the app developer.'
-          };
-        } else if (error.message.includes('File size exceeds')) {
-          errorMessage = error.message;
-          errorDetails = {
-            type: 'FILE_SIZE_ERROR',
-            details: 'Image file is larger than 10MB',
-            userMessage: 'Please use a smaller image file (max 10MB)'
-          };
-        }
-      }
-      
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: errorMessage,
-          errorDetails
-        },
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
-    }
-
-    // Setup wallet and clients
-    let account;
-    try {
-      account = privateKeyToAccount(formattedPrivateKey);
-    } catch (error) {
-      console.error('Failed to create account from private key:', error);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Failed to create wallet account',
-          errorDetails: {
-            type: 'CONFIGURATION_ERROR',
-            details: error instanceof Error ? error.message : 'Invalid private key format',
-            userMessage: 'Failed to initialize deployment wallet. Please contact support.',
-          }
-        },
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
-    }
-
-    const chain = networkConfig.isMainnet ? base : baseSepolia;
-    
-    const publicClient = createPublicClient({
-      chain,
-      transport: http(networkConfig.rpcUrl),
-    });
-    
-    const wallet = createWalletClient({
-      account,
-      chain,
-      transport: http(networkConfig.rpcUrl),
-    });
-
-    // Initialize Clanker SDK
-    const clanker = new Clanker({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      wallet: wallet as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      publicClient: publicClient as any,
-    });
-
-    // Get configurable values
-    const initialMarketCap = process.env.INITIAL_MARKET_CAP || '0.1';
-    const creatorReward = parseInt(process.env.CREATOR_REWARD || '80', 10);
-
-    // Deploy token
-    let tokenAddress: string | undefined;
-    let txHash: string | undefined;
-    
-    try {
-      console.log('[Deploy] Deploying team token...');
-      
-      const deploymentResult = await clanker.deployToken({
-        name,
-        symbol,
-        image: imageUrl,
-        pool: {
-          quoteToken: '0x4200000000000000000000000000000000000006' as `0x${string}`, // WETH on Base
-          initialMarketCap,
-        },
-        rewardsConfig: {
-          creatorReward,
-          creatorAdmin: account.address,
-          creatorRewardRecipient: account.address,
-          interfaceAdmin: interfaceAdmin as `0x${string}`,
-          interfaceRewardRecipient: interfaceRewardRecipient as `0x${string}`,
-        },
-      });
-
-      // Handle different return types from SDK
-      if (typeof deploymentResult === 'string') {
-        tokenAddress = deploymentResult;
-      } else if (deploymentResult && typeof deploymentResult === 'object') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const result = deploymentResult as any;
-        tokenAddress = result.address || result.tokenAddress || deploymentResult;
-        txHash = result.txHash || result.transactionHash;
-      }
-
-      // Wait for transaction confirmation
-      if (txHash) {
-        const receipt = await publicClient.waitForTransactionReceipt({ 
-          hash: txHash as `0x${string}`,
-          confirmations: 1,
-        });
-
-        if (receipt.status === 'reverted') {
-          throw new Error('Transaction failed on blockchain');
-        }
-
-        // Get token address from receipt if not already set
-        if (!tokenAddress && receipt.contractAddress) {
-          tokenAddress = receipt.contractAddress;
-        }
-      }
-    } catch (error) {
-      console.error('Token deployment failed:', error);
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: `Token deployment failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-          errorDetails: {
-            type: 'DEPLOYMENT_ERROR',
-            details: error instanceof Error ? error.message : 'Token deployment failed',
-            userMessage: 'Failed to deploy token. Please try again.',
-          }
-        },
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
-    }
-
-    if (!tokenAddress) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Token deployment failed',
-          errorDetails: {
-            type: 'DEPLOYMENT_ERROR',
-            details: 'No token address returned from deployment',
-            userMessage: 'Token deployment failed. Please try again.',
-          }
-        },
-        { status: 500, headers: getSecurityHeaders(request) }
-      );
-    }
-
-    // Track transaction
-    try {
-      if (txHash) {
-        await trackTransaction(txHash, {
-          type: 'team_token_deployment',
-          tokenAddress,
-          name,
-          symbol,
-          teamMembers,
-          treasuryPercentage,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to track transaction:', error);
-      // Don't fail the request if tracking fails
-    }
-
-    // Store deployment data in Redis
-    try {
-      const redisClient = getRedisClient();
-      if (redisClient) {
-        const deploymentData = {
-          tokenAddress,
-          name,
-          symbol,
-          teamMembers,
-          treasuryAllocation,
-          deployedBy: fid,
-          deployedAt: Date.now(),
-          network: networkConfig.name,
-          chainId: networkConfig.chainId,
-        };
-        
-        await redisClient.set(
-          `team-token:${tokenAddress}`,
-          deploymentData,
-          {
-            ex: 60 * 60 * 24 * 365, // 1 year expiration
-          }
-        );
-      }
-    } catch (error) {
-      console.error('Failed to store deployment data:', error);
-      // Don't fail the request if storing fails
-    }
-
-    // Store token in user's token list
-    if (fid && tokenAddress) {
-      try {
-        await storeUserToken(fid, {
-          address: tokenAddress,
-          name,
-          symbol,
-          createdAt: new Date().toISOString(),
-        });
-      } catch (error) {
-        console.error('Failed to store user token:', error);
-        // Don't fail the request if storing fails
-      }
-    }
-
-    // Return response
-    const response = {
-      success: true,
-      tokenAddress,
-      txHash: txHash || null,
-      imageUrl,
-      network: networkConfig.name,
-      chainId: networkConfig.chainId,
+    // Prepare token deployment payload for team deployment
+    const deploymentPayload: TokenDeploymentPayload = {
+      name,
+      symbol,
+      imageFile,
+      fid,
       teamMembers,
-      ...(treasuryAllocation && { treasuryAllocation }),
+      treasuryAllocation: treasuryAllocation || undefined,
     };
 
-    return NextResponse.json(response, { headers: getSecurityHeaders(request) });
+    // Initialize TransactionManager with token deployment processor
+    const transactionManager = getTransactionManager({
+      processor: tokenDeploymentProcessor,
+      maxRetries: 3,
+      retryDelay: 5000,
+    });
+
+    // Queue the team token deployment transaction
+    try {
+      const transactionId = await transactionManager.queueTransaction(
+        {
+          type: 'team_token_deployment',
+          payload: deploymentPayload,
+        },
+        {
+          userId: parseInt(fid, 10),
+          description: `Team token deployment: ${name} (${symbol}) with ${teamMembers.length} members`,
+        },
+        'high' // High priority for token deployments
+      );
+
+      // Start processing if not already running
+      transactionManager.startAutoProcessing(5000);
+
+      return NextResponse.json({
+        success: true,
+        transactionId,
+        message: 'Team token deployment queued successfully',
+        statusUrl: `/api/transaction/${transactionId}`,
+        teamMembers,
+        ...(treasuryAllocation && { treasuryAllocation }),
+      }, { headers: getSecurityHeaders(request) });
+
+    } catch (error) {
+      console.error('Failed to queue team token deployment:', error);
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Failed to queue team token deployment',
+          errorDetails: {
+            type: 'QUEUE_ERROR',
+            details: error instanceof Error ? error.message : 'Unknown error',
+            userMessage: 'Failed to start team token deployment. Please try again.',
+          }
+        },
+        { status: 500, headers: getSecurityHeaders(request) }
+      );
+    }
+
   } catch (error) {
     console.error('Unexpected error:', error);
     

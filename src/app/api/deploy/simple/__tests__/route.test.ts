@@ -135,15 +135,26 @@ jest.mock('next/server', () => {
 import { POST, OPTIONS } from '../route';
 import { Clanker } from 'clanker-sdk';
 import { uploadToIPFS } from '@/lib/ipfs';
-import { trackTransaction } from '@/lib/transaction-tracker';
 import { NextRequest } from 'next/server';
+
+// Mock the TransactionManager and dependencies
+jest.mock('@/lib/transaction/TransactionManager');
+jest.mock('@/lib/transaction/processors/tokenDeploymentProcessor');
 
 // Use the mocked NextRequest
 const MockNextRequest = NextRequest as jest.MockedClass<typeof NextRequest>;
 
 jest.mock('clanker-sdk');
 jest.mock('@/lib/ipfs');
-jest.mock('@/lib/transaction-tracker');
+
+// Mock transaction manager
+const mockTransactionManager = {
+  queueTransaction: jest.fn(),
+  startAutoProcessing: jest.fn(),
+};
+
+// Mock the getTransactionManager function
+import { getTransactionManager } from '@/lib/transaction/TransactionManager';
 jest.mock('@upstash/redis', () => ({
   Redis: jest.fn().mockImplementation(() => ({
     get: jest.fn(),
@@ -195,7 +206,6 @@ describe('POST /api/deploy/simple', () => {
   });
   const mockDeployToken = jest.fn();
   const mockUploadToIPFS = uploadToIPFS as jest.MockedFunction<typeof uploadToIPFS>;
-  const mockTrackTransaction = trackTransaction as jest.MockedFunction<typeof trackTransaction>;
   const mockWaitForTransactionReceipt = jest.fn();
   const mockSendTransaction = jest.fn();
 
@@ -204,6 +214,10 @@ describe('POST /api/deploy/simple', () => {
     (Clanker as jest.Mock).mockImplementation(() => ({
       deployToken: mockDeployToken,
     }));
+    
+    // Mock transaction manager
+    getTransactionManager.mockReturnValue(mockTransactionManager);
+    mockTransactionManager.queueTransaction.mockResolvedValue('tx_12345');
     process.env.DEPLOYER_PRIVATE_KEY = '0x0000000000000000000000000000000000000000000000000000000000000001';
     process.env.INTERFACE_ADMIN = '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace';
     process.env.INTERFACE_REWARD_RECIPIENT = '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace';
@@ -240,24 +254,10 @@ describe('POST /api/deploy/simple', () => {
     delete process.env.KV_REST_API_TOKEN;
   });
 
-  it('should deploy a token successfully with real transaction hash', async () => {
-    const mockTokenAddress = '0x1234567890123456789012345678901234567890';
-    const mockImageUrl = 'ipfs://QmTest123';
-    const mockTxHash = '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
-    const mockTransactionReceipt = { 
-      transactionHash: mockTxHash, 
-      status: 'success',
-      blockNumber: BigInt(12345),
-      contractAddress: mockTokenAddress
-    };
-
-    mockUploadToIPFS.mockResolvedValue(mockImageUrl);
-    mockDeployToken.mockResolvedValue({ 
-      address: mockTokenAddress,
-      txHash: mockTxHash 
-    });
-    mockWaitForTransactionReceipt.mockResolvedValue(mockTransactionReceipt);
-    mockTrackTransaction.mockResolvedValue(undefined);
+  it('should queue token deployment successfully', async () => {
+    const mockTransactionId = 'tx_12345';
+    
+    mockTransactionManager.queueTransaction.mockResolvedValue(mockTransactionId);
 
     const formData = new FormData();
     formData.append('name', 'Test Token');
@@ -279,48 +279,30 @@ describe('POST /api/deploy/simple', () => {
     expect(response.status).toBe(200);
     expect(data).toEqual({
       success: true,
-      tokenAddress: mockTokenAddress,
-      txHash: mockTxHash,
-      imageUrl: mockImageUrl,
-      network: 'Base Sepolia',
-      chainId: 84532,
+      transactionId: mockTransactionId,
+      message: 'Token deployment queued successfully',
+      statusUrl: `/api/transaction/${mockTransactionId}`,
     });
 
-    // Skip CORS header checks for now - mock implementation issue
-    // TODO: Fix header mock implementation
-    // expect(response.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
-    // expect(response.headers.get('Access-Control-Allow-Methods')).toBe('POST, OPTIONS');
-
-    expect(mockUploadToIPFS).toHaveBeenCalledWith(expect.any(Blob));
-    expect(mockDeployToken).toHaveBeenCalledWith({
-      name: 'Test Token',
-      symbol: 'TEST',
-      image: mockImageUrl,
-      pool: {
-        quoteToken: '0x4200000000000000000000000000000000000006',
-        initialMarketCap: '0.1',
-      },
-      rewardsConfig: {
-        creatorReward: 80,
-        creatorAdmin: '0xtest...',
-        creatorRewardRecipient: '0xtest...',
-        interfaceAdmin: '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace',
-        interfaceRewardRecipient: '0x1eaf444ebDf6495C57aD52A04C61521bBf564ace',
-      },
-    });
-    expect(mockWaitForTransactionReceipt).toHaveBeenCalledWith({ 
-      hash: mockTxHash,
-      confirmations: 1 
-    });
-    expect(mockTrackTransaction).toHaveBeenCalledWith(
-      mockTxHash,
+    expect(mockTransactionManager.queueTransaction).toHaveBeenCalledWith(
       {
         type: 'token_deployment',
-        tokenAddress: mockTokenAddress,
-        name: 'Test Token',
-        symbol: 'TEST',
-      }
+        payload: {
+          name: 'Test Token',
+          symbol: 'TEST',
+          imageFile: expect.any(Blob),
+          fid: null,
+          castContext: undefined,
+          creatorFeePercentage: undefined,
+        },
+      },
+      {
+        userId: 0,
+        description: 'Simple token deployment: Test Token (TEST)',
+      },
+      'high'
     );
+    expect(mockTransactionManager.startAutoProcessing).toHaveBeenCalledWith(5000);
   });
 
   it('should handle missing required fields', async () => {
@@ -351,8 +333,10 @@ describe('POST /api/deploy/simple', () => {
     expect(mockDeployToken).not.toHaveBeenCalled();
   });
 
-  it('should handle missing environment variables', async () => {
+  it('should queue transaction even without environment variables', async () => {
     delete process.env.DEPLOYER_PRIVATE_KEY;
+    const mockTransactionId = 'tx_no_env';
+    mockTransactionManager.queueTransaction.mockResolvedValue(mockTransactionId);
 
     const formData = new FormData();
     formData.append('name', 'Test Token');
@@ -369,13 +353,15 @@ describe('POST /api/deploy/simple', () => {
     }) as any;
 
     const response = await POST(request);
-    await response.json();
+    const data = await response.json();
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(200);
+    expect(data.success).toBe(true);
+    expect(data.transactionId).toBe(mockTransactionId);
   });
 
-  it('should handle IPFS upload failure', async () => {
-    mockUploadToIPFS.mockRejectedValue(new Error('IPFS upload failed: 500 Internal Server Error'));
+  it('should handle transaction queue failure', async () => {
+    mockTransactionManager.queueTransaction.mockRejectedValue(new Error('Queue is full'));
 
     const formData = new FormData();
     formData.append('name', 'Test Token');
@@ -396,9 +382,7 @@ describe('POST /api/deploy/simple', () => {
 
     expect(response.status).toBe(500);
     expect(data.success).toBe(false);
-    expect(data.error).toBe('Image upload service temporarily unavailable. Please try again.');
-
-    expect(mockDeployToken).not.toHaveBeenCalled();
+    expect(data.error).toBe('Failed to queue token deployment');
   });
 
   it.skip('should handle deployment failure with retry', async () => {
@@ -610,29 +594,15 @@ describe('POST /api/deploy/simple', () => {
     });
   });
 
-  it('should use configurable pool values from environment', async () => {
-    // Set custom pool configuration
-    process.env.INITIAL_MARKET_CAP = '0.5';
-    process.env.CREATOR_REWARD = '90';
-    
-    const mockTokenAddress = '0x1234567890123456789012345678901234567890';
-    const mockImageUrl = 'ipfs://QmTest123';
-    const mockTxHash = '0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890';
-
-    mockUploadToIPFS.mockResolvedValue(mockImageUrl);
-    mockDeployToken.mockResolvedValue({ 
-      address: mockTokenAddress,
-      txHash: mockTxHash 
-    });
-    mockWaitForTransactionReceipt.mockResolvedValue({ 
-      transactionHash: mockTxHash, 
-      status: 'success' 
-    });
+  it('should queue transaction with custom creator fee percentage', async () => {
+    const mockTransactionId = 'tx_custom_fee';
+    mockTransactionManager.queueTransaction.mockResolvedValue(mockTransactionId);
 
     const formData = new FormData();
     formData.append('name', 'Test Token');
     formData.append('symbol', 'TEST');
     formData.append('image', new Blob(['image data'], { type: 'image/png' }));
+    formData.append('creatorFeePercentage', '15');
 
     const request = new MockNextRequest('http://localhost:3000/api/deploy/simple', {
       method: 'POST',
@@ -643,18 +613,20 @@ describe('POST /api/deploy/simple', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     }) as any;
 
-    await POST(request);
+    const response = await POST(request);
+    const data = await response.json();
 
-    expect(mockDeployToken).toHaveBeenCalledWith(
+    expect(response.status).toBe(200);
+    expect(data.transactionId).toBe(mockTransactionId);
+    
+    expect(mockTransactionManager.queueTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
-        pool: {
-          quoteToken: '0x4200000000000000000000000000000000000006',
-          initialMarketCap: '0.5', // Custom value
-        },
-        rewardsConfig: expect.objectContaining({
-          creatorReward: 90, // Custom value
+        payload: expect.objectContaining({
+          creatorFeePercentage: 15,
         }),
-      })
+      }),
+      expect.any(Object),
+      'high'
     );
   });
 
