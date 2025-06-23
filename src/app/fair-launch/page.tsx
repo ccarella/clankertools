@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFarcasterContext } from '@/components/providers/FarcasterProvider';
+import { useFarcasterAuth } from '@/components/providers/FarcasterAuthProvider';
 import { useHaptic } from '@/providers/HapticProvider';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -33,7 +33,7 @@ type FairLaunchFormData = z.infer<typeof fairLaunchFormSchema>;
 
 export default function FairLaunchPage() {
   const router = useRouter();
-  const { isAuthenticated, user } = useFarcasterContext();
+  const { isAuthenticated, user } = useFarcasterAuth();
   const haptic = useHaptic();
   const [currentStep, setCurrentStep] = useState(1);
   const [imageFile, setImageFile] = useState<File | null>(null);

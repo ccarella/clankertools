@@ -21,8 +21,8 @@ describe('POST /api/deploy/fair', () => {
       updateTransaction: jest.fn(),
     };
     
-    const { TransactionManager } = require('@/lib/transaction/TransactionManager');
-    TransactionManager.mockImplementation(() => mockTransactionManager);
+    const transactionModule = jest.requireMock('@/lib/transaction/TransactionManager');
+    transactionModule.TransactionManager = jest.fn(() => mockTransactionManager);
   });
 
   const createMockRequest = (body: unknown) => {
@@ -151,9 +151,10 @@ describe('POST /api/deploy/fair', () => {
     mockRequest = createMockRequest(invalidBody);
     
     const response = await POST(mockRequest);
-    await response.json();
+    const data = await response.json();
 
     expect(response.status).toBe(400);
+    expect(data.error).toContain('Whitelist must contain at least one user');
   });
 
   it('should validate launch duration is reasonable', async () => {
@@ -202,6 +203,7 @@ describe('POST /api/deploy/fair', () => {
     const data = await response.json();
 
     expect(response.status).toBe(200);
+    expect(data.merkleRoot).toBeDefined();
     expect(mockTransactionManager.createTransaction).toHaveBeenCalledWith(
       expect.objectContaining({
         merkleRoot: expect.any(String),
